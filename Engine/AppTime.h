@@ -1,7 +1,7 @@
 #pragma once
-#include <time.h>
+#include "pch.h"
 
-class Time final 
+class AppTime final 
 {
 public:
 	inline static float Update()
@@ -36,7 +36,7 @@ private:
 	static float m_FixedTreshHold;
 };
 
-float Time::m_DeltaTime = 0.0f;
-float Time::m_LastTime = 0.0f;
-float Time::m_AccumulatedTime = 0.0f;
-float Time::m_FixedTreshHold = 1.0f / 30.0f;
+float AppTime::m_DeltaTime = 0.0f;
+float AppTime::m_LastTime = 0.0f;
+float AppTime::m_AccumulatedTime = 0.0f;
+float AppTime::m_FixedTreshHold = 1.0f / 30.0f;

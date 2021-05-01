@@ -11,6 +11,7 @@ ObjectStructure::ObjectStructure(Object* pObject)
 ObjectStructure::~ObjectStructure()
 {
 	m_pParent = nullptr;
+	m_pChildInstance = nullptr;
 	SafeDelete(m_Objects);
 }
 

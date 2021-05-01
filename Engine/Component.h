@@ -1,7 +1,7 @@
 #pragma once
 #include "BaseUpdateStructure.h"
 
-class Component : public BaseUpdateStructure
+class Component abstract : public BaseUpdateStructure
 {
 public:
 	Component();

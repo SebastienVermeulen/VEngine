@@ -21,13 +21,14 @@ public:
 	virtual void LateUpdate(const float deltaTime) override;
 	virtual void Render() const override;
 
-	inline void CreateScene(bool mainScene = false) 
+	inline Scene* CreateScene(bool mainScene = false) 
 	{
 		m_Scenes.push_back(new Scene());
 		if (mainScene)
 		{
 			m_pCurrentScene = m_Scenes[m_Scenes.size() - 1];
 		}
+		return *(m_Scenes.end() - 1);
 	}
 
 private:

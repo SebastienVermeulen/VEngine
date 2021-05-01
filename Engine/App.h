@@ -18,7 +18,7 @@ public:
 
 	int Run();
 
-	inline void OpenProject(Project& project){ m_pProject = &project; }
+	void OpenProject(Project* project);
 
 private:
 	LRESULT Init(HINSTANCE hInstance, const int nCmdShow);

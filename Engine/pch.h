@@ -1,9 +1,13 @@
+//Written by Sebastien Vermeulen | 14/04/2021
+//VEngine - DirectX rasterisation framework
+
 #pragma once
 #define DEBUG
 
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <ctime>
 
 // include the basic windows header file  and the Direct3D header files
 #include <windows.h>
@@ -25,7 +29,7 @@
 #include <vld.h>
 #endif
 
-#pragma region
+#pragma region Deletion/Release
 template<class Instance>
 inline static void SafeRelease(Instance& interfaceToRelease)
 {
@@ -38,18 +42,15 @@ inline static void SafeRelease(Instance& interfaceToRelease)
 template<class Instance>
 inline static void SafeRelease(std::vector<Instance>& interfaceToRelease)
 {
-	if (!interfaceToRelease.size())
+	for (int i = 0; i < interfaceToRelease.size(); i++)
 	{
-		for (int i = 0; i < interfaceToRelease.size(); i++)
+		if (interfaceToRelease[i] != nullptr)
 		{
-			if (interfaceToRelease[i] != nullptr)
-			{
-				interfaceToRelease[i]->Release();
-				interfaceToRelease[i] = nullptr;
-			}
+			interfaceToRelease[i]->Release();
+			interfaceToRelease[i] = nullptr;
 		}
-		interfaceToRelease.empty();
 	}
+	interfaceToRelease.empty();
 }
 template<class T>
 inline static void SafeDelete(T& objectToDelete)
@@ -63,17 +64,14 @@ inline static void SafeDelete(T& objectToDelete)
 template<class T>
 inline static void SafeDelete(std::vector<T>& objectToDelete)
 {
-	if (!objectToDelete.size())
+	for (int i = 0; i < objectToDelete.size(); i++)
 	{
-		for (int i = 0; i < objectToDelete.size(); i++)
+		if (objectToDelete[i] != nullptr)
 		{
-			if (objectToDelete[i] != nullptr)
-			{
-				delete(objectToDelete[i]);
-				objectToDelete[i] = nullptr;
-			}
+			delete(objectToDelete[i]);
+			objectToDelete[i] = nullptr;
 		}
-		objectToDelete.clear();
 	}
+	objectToDelete.clear();
 }
 #pragma endregion

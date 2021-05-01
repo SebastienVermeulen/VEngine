@@ -13,12 +13,9 @@ ComponentStructure::~ComponentStructure()
 
 void ComponentStructure::AddComponent(Component* pComponent)
 {
-	if (m_Components.size())
+	if (std::find(m_Components.begin(), m_Components.end(), pComponent) == m_Components.end())
 	{
-		if (std::find(m_Components.begin(), m_Components.end(), pComponent) == m_Components.end())
-		{
-			m_Components.push_back(pComponent);
-		}
+		m_Components.push_back(pComponent);
 	}
 }
 void ComponentStructure::RemoveComponent(Component* pComponent)

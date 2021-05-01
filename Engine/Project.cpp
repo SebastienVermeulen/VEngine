@@ -10,15 +10,22 @@ Project::Project()
 }
 Project::~Project()
 {
+	std::vector<Scene*>::iterator pScene =
+		std::find(m_Scenes.begin(), m_Scenes.end(), m_pCurrentScene);
+	m_Scenes.erase(pScene);
+
 	SafeDelete(m_pCurrentScene);
 	SafeDelete(m_Scenes);
 }
 
 void Project::Init() 
 {
-	m_pCurrentScene = new Scene();
-
-	m_pCurrentScene->Init();
+	if (!m_pCurrentScene)
+	{
+		m_pCurrentScene = new Scene();
+		m_Scenes.push_back(m_pCurrentScene);
+		m_pCurrentScene->Init();
+	}
 }
 void Project::Cleanup() 
 {

@@ -5,7 +5,7 @@
 #include "Renderer.h"
 #include "EngineManager.h"
 #include "Project.h"
-#include "Time.h"
+#include "AppTime.h"
 
 App::App(HINSTANCE hInstance, const int nCmdShow) 
 	:m_pWindow{}
@@ -17,6 +17,8 @@ App::App(HINSTANCE hInstance, const int nCmdShow)
 App::~App() 
 {
     Cleanup();
+
+    SafeDelete(m_pProject);
 }
 
 #pragma region InitAndClean
@@ -33,10 +35,17 @@ LRESULT App::Init(HINSTANCE hInstance, const int nCmdShow)
 	EngineDevice* pDevice = &EngineManager::Instance().GetDevice(m_pWindow->GetHWND(), &windowSettings);
 	m_pRenderer = &EngineManager::Instance().GetRenderer(pDevice);
 
+    if (m_pProject)
+    {
+        m_pProject->Init();
+    }
+
 	return true;
 }
 void App::Cleanup()
 {
+    m_pProject->Cleanup();
+
     SafeDelete(m_pWindow);
 
     EngineManager::ReleaseInstance();
@@ -67,11 +76,11 @@ int App::Run()
         }
         else
         {
-            float deltaTime = Time::Update();
+            float deltaTime = AppTime::Update();
 
             m_pProject->Update(deltaTime);
 
-            if (Time::FixedUpdate())
+            if (AppTime::FixedUpdate())
             {
                 m_pProject->FixedUpdate();
             }
@@ -85,4 +94,10 @@ int App::Run()
 
     //Return this part of the WM_QUIT message to Windows
     return int(msg.wParam);
+}
+
+void App::OpenProject(Project* project)
+{
+    m_pProject = project;
+    m_pProject->Init();
 }
