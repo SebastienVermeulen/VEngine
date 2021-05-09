@@ -16,7 +16,9 @@ App::App(HINSTANCE hInstance, const int nCmdShow)
 }
 App::~App() 
 {
-    Cleanup();
+    SafeDelete(m_pWindow);
+
+    EngineManager::ReleaseInstance();
 
     SafeDelete(m_pProject);
 }
@@ -41,14 +43,6 @@ LRESULT App::Init(HINSTANCE hInstance, const int nCmdShow)
     }
 
 	return true;
-}
-void App::Cleanup()
-{
-    m_pProject->Cleanup();
-
-    SafeDelete(m_pWindow);
-
-    EngineManager::ReleaseInstance();
 }
 #pragma endregion
 

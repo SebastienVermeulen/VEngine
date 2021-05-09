@@ -1,11 +1,12 @@
 #pragma once
 #include "BaseUpdateStructure.h"
+#include "Renderable.h"
 
-class Component abstract : public BaseUpdateStructure
+class Component abstract : public BaseUpdateStructure, public Renderable
 {
 public:
 	Component();
-	~Component();
+	virtual ~Component();
 
 	Component(Component& other) = delete;
 	Component(Component&& other) = delete;

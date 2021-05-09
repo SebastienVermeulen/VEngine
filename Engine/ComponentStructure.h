@@ -4,7 +4,7 @@ class Component;
 class ComponentStructure abstract 
 {
 public:
-	virtual void AddComponent(Component* pObject);
+	virtual Component* AddComponent(Component* pObject);
 	virtual void RemoveComponent(Component* pObject);
 
 protected:

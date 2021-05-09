@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ObjectStructure.h"
 #include "Object.h"
+#include "Renderable.h"
+#include "EngineManager.h"
 
 ObjectStructure::ObjectStructure(Object* pObject)
 	:m_pParent{ nullptr }
@@ -32,6 +34,18 @@ void ObjectStructure::AttachObject(Object* pObject)
 		{
 			m_Objects.push_back(pObject);
 			pObject->SetParent(m_pChildInstance);
+
+			if (pObject->HasInit()) 
+			{
+				pObject->Init();
+				pObject->MarkAsInit();
+			}
+
+			Renderable* pRenderableCast = dynamic_cast<Renderable*>(pObject);
+			if (pRenderableCast)
+			{
+				EngineManager::Instance().GetRenderer().AddRenderable(pRenderableCast);
+			}
 		}
 	}
 }
@@ -48,6 +62,12 @@ void ObjectStructure::DetachObject(Object* pObject)
 		{
 			m_Objects.erase(it);
 			pObject->SetParent(nullptr);
+
+			Renderable* pRenderableCast = dynamic_cast<Renderable*>(pObject);
+			if (pRenderableCast)
+			{
+				EngineManager::Instance().GetRenderer().RemoveRenderable(pRenderableCast);
+			}
 		}
 	}
 }

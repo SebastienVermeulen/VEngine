@@ -3,7 +3,7 @@
 
 class Object;
 
-class Scene final : public BaseUpdateStructure
+class Scene : public BaseUpdateStructure
 {
 public:
 	Scene();
@@ -14,13 +14,9 @@ public:
 	Scene operator=(Scene& other) = delete;
 	Scene& operator=(Scene&& other) = delete;
 
-	virtual void Init() override;
-	virtual void Cleanup() override;
-
 	virtual void Update(const float deltaTime) override;
 	virtual void FixedUpdate() override;
 	virtual void LateUpdate(const float deltaTime) override;
-	virtual void Render() const override;
 
 	Object* CreateObject();
 

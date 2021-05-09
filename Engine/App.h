@@ -22,7 +22,6 @@ public:
 
 private:
 	LRESULT Init(HINSTANCE hInstance, const int nCmdShow);
-	void Cleanup();
 
 	Project* m_pProject;
 	Window* m_pWindow;

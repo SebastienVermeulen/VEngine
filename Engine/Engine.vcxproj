@@ -176,7 +176,7 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="EngineManager.cpp" />
-    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -185,15 +185,18 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentStructure.h" />
     <ClInclude Include="EngineDevice.h" />
+    <ClInclude Include="FileManager.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectStructure.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Project.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Renderable.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="EngineManager.h" />
-    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="ShaderStructures.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="AppTime.h" />
     <ClInclude Include="Window.h" />

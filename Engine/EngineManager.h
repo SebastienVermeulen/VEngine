@@ -10,6 +10,11 @@ public:
 	EngineManager();
 	virtual ~EngineManager();
 
+	EngineManager(EngineManager& other) = delete;
+	EngineManager(EngineManager&& other) = delete;
+	EngineManager operator=(EngineManager& other) = delete;
+	EngineManager& operator=(EngineManager&& other) = delete;
+
 	inline EngineDevice& GetDevice(HWND windowHandle = nullptr, const WindowSettings* settings = nullptr)
 	{
 		if (!m_pDevice)

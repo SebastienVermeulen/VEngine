@@ -51,7 +51,7 @@
     <ClCompile Include="Renderer.cpp">
       <Filter>Engine Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
+    <ClCompile Include="Material.cpp">
       <Filter>Engine Files\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
@@ -101,7 +101,7 @@
     <ClInclude Include="Renderer.h">
       <Filter>Engine Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
+    <ClInclude Include="Material.h">
       <Filter>Engine Files\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
@@ -130,6 +130,15 @@
     </ClInclude>
     <ClInclude Include="MeshComponent.h">
       <Filter>Engine Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderStructures.h">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderable.h">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="FileManager.h">
+      <Filter>Engine Files\App</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

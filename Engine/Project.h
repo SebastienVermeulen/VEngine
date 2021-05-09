@@ -14,21 +14,21 @@ public:
 	Project& operator=(Project&& other) = delete;
 
 	virtual void Init() override;
-	virtual void Cleanup() override;
 
 	virtual void Update(const float deltaTime) override;
 	virtual void FixedUpdate() override;
 	virtual void LateUpdate(const float deltaTime) override;
 	virtual void Render() const override;
 
-	inline Scene* CreateScene(bool mainScene = false) 
+	template<class T>
+	inline T* CreateScene(bool mainScene = false) 
 	{
-		m_Scenes.push_back(new Scene());
+		m_Scenes.push_back(new T());
 		if (mainScene)
 		{
 			m_pCurrentScene = m_Scenes[m_Scenes.size() - 1];
 		}
-		return *(m_Scenes.end() - 1);
+		return dynamic_cast<T*>(*(m_Scenes.end() - 1));
 	}
 
 private:

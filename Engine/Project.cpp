@@ -7,6 +7,7 @@ Project::Project()
 	, m_Scenes{}
 	, m_pCurrentScene{}
 {
+	Init();
 }
 Project::~Project()
 {
@@ -26,10 +27,6 @@ void Project::Init()
 		m_Scenes.push_back(m_pCurrentScene);
 		m_pCurrentScene->Init();
 	}
-}
-void Project::Cleanup() 
-{
-	m_pCurrentScene->Cleanup();
 }
 
 void Project::Update(const float deltaTime) 

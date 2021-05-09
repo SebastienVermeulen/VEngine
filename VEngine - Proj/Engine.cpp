@@ -4,9 +4,7 @@
 #include "pch.h"
 #include "App.h"
 #include "Project.h"
-#include "Scene.h"
-#include "Object.h"
-#include "MeshComponent.h"
+#include "MainScene.h"
 
 // the entry point for any Windows program
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
@@ -14,16 +12,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(hPrevInstance);
 
-    Project* pProject = new Project();
-    Scene* pScene = pProject->CreateScene(true);
-    Object* pObject = pScene->CreateObject();
-    pObject->AddComponent(new MeshComponent());
+    //Create app
+    App pApp = App(hInstance, nCmdShow);
 
-    //Run app and cleanup afterwards
-    App* pApp = new App(hInstance, nCmdShow);
-    pApp->OpenProject(pProject);
-    int message = pApp->Run();
-    SafeDelete(pApp);
+    //Create a project and scene
+    Project* pProject = new Project();
+    MainScene* pScene = pProject->CreateScene<MainScene>(true);
+
+    //Open the project in the app and run the app
+    pApp.OpenProject(pProject);
+    int message = pApp.Run();
 
     return message;
 }

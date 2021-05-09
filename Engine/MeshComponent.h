@@ -1,7 +1,7 @@
 #pragma once
 #include "Component.h"
 
-class Shader;
+class Material;
 
 class MeshComponent : public Component
 {
@@ -15,8 +15,14 @@ public:
 	MeshComponent& operator=(MeshComponent&& other) = delete;
 
 	virtual void Init() override;
-	virtual void Cleanup() override;
+
+	virtual void Render(ID3D11Device& device, ID3D11DeviceContext& context) const override;
+
+	void SetMaterial(Material* pMat);
 
 private:
-	Shader* m_pShader;
+	Material* m_pMaterial;
+
+	ID3D11Buffer* m_pVertexBuffer;
+	int m_NrVerticies;
 };

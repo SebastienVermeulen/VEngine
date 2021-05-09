@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include <regex>
 
 // include the basic windows header file  and the Direct3D header files
 #include <windows.h>

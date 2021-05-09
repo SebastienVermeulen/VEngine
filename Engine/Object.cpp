@@ -6,6 +6,7 @@ Object::Object()
 	, ObjectStructure(this)
 	, ComponentStructure()
 {
+	Init();
 }
 Object::~Object() 
 {
@@ -13,17 +14,6 @@ Object::~Object()
 
 void Object::Init()
 {
-	for (int i = 0; i < m_Components.size(); i++) 
-	{
-		m_Components[i]->Init();
-	}
-}
-void Object::Cleanup()
-{
-	for (int i = 0; i < m_Components.size(); i++)
-	{
-		m_Components[i]->Cleanup();
-	}
 }
 
 void Object::Update(const float deltaTime)
@@ -45,12 +35,5 @@ void Object::LateUpdate(const float deltaTime)
 	for (int i = 0; i < m_Components.size(); i++)
 	{
 		m_Components[i]->LateUpdate(deltaTime);
-	}
-}
-void Object::Render() const
-{
-	for (int i = 0; i < m_Components.size(); i++)
-	{
-		m_Components[i]->Render();
 	}
 }
