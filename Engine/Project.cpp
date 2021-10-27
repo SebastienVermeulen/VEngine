@@ -19,14 +19,15 @@ Project::~Project()
 	SafeDelete(m_Scenes);
 }
 
-void Project::Init() 
+bool Project::Init() 
 {
 	if (!m_pCurrentScene)
 	{
 		m_pCurrentScene = new Scene();
 		m_Scenes.push_back(m_pCurrentScene);
-		m_pCurrentScene->Init();
+		return m_pCurrentScene->Init();
 	}
+	return true;
 }
 
 void Project::Update(const float deltaTime) 

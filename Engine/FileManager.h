@@ -1,6 +1,10 @@
 #pragma once
 #include "pch.h"
 
+struct VertexPNTU;
+class Texture;
+
+//TO-DO: save loaded files in managers so they only have to be loaded once
 class FileManager abstract final
 {
 public:
@@ -8,36 +12,23 @@ public:
 	/// Static function allows for the retrieval of the full path of the currently running executable.
 	/// </summary>
 	/// <returns>Full path of the currently running executable. (Without the 'name.exe')</returns>
-	static inline std::wstring GetAbsoluteExePath()
-	{
-		if(m_ExeFullPath.length())
-		{
-			return m_ExeFullPath;
-		}
+	static std::wstring GetAbsoluteExePath();
 
-		WCHAR fullPath[MAX_PATH];
-		if (!GetModuleFileNameW(NULL, fullPath, sizeof(fullPath) / 2))
-		{
-			return L"";
-		}
+	/// <summary>
+	/// Loads an fbx and places the data into the given buffers.
+	/// </summary>
+	static HRESULT LoadFBX(std::vector<VertexPNTU>& vertices, std::vector<unsigned int>& indices, std::wstring localFileDir);
 
-		std::wstring str(fullPath);
-		std::wregex reg(L"(.+\\\\).+\\.exe$");
-		std::wsmatch matches;
-		std::regex_match(str, matches, reg);
-
-		std::match_results results = std::match_results(matches);
-		if (!results.size()) 
-		{
-			return L"";
-		}
-
-		m_ExeFullPath = results[1].str();
-		return m_ExeFullPath;
-	}
+	static Texture* LoadDDS(ID3D11Device* pDevice, std::wstring localFileDir);
 
 private:
-	static std::wstring m_ExeFullPath;
-};
+	static void ReadAllChildNodesFBX(FbxNode* pNode, std::vector<VertexPNTU>& vertices, std::vector<unsigned int>& indices);
+	static void ReadMeshFBX(fbxsdk::FbxMesh* pMesh, std::vector<VertexPNTU>& vertices, std::vector<unsigned int>& indices);
 
-std::wstring FileManager::m_ExeFullPath = L"";
+	static DirectX::XMFLOAT2 GetUVFBX(const fbxsdk::FbxGeometryElementUV* pUVs, const int polygonNr,
+		const int vertexNr, const int vertexIdx, const bool uvUseIndex);
+	static DirectX::XMFLOAT3 GetNormalFBX(const fbxsdk::FbxGeometryElementNormal* pNormal, const int polygonNr,
+		const int vertexNr, const int vertexIdx, const bool normalUseIndex);
+	static DirectX::XMFLOAT3 GetTangentsFBX(const fbxsdk::FbxGeometryElementTangent* pTangent, const int polygonNr,
+		const int vertexNr, const int vertexIdx, const bool tangentsUseIndex);
+};

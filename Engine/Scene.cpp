@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "Scene.h"
 #include "Object.h"
+#include "Camera.h"
+#include "EngineManager.h"
+#include "Renderer.h"
+#include "AppTime.h"
 
 Scene::Scene() 
 	:BaseUpdateStructure()
@@ -35,9 +39,9 @@ void Scene::LateUpdate(const float deltaTime)
 	}
 }
 
-Object* Scene::CreateObject()
+Object* Scene::CreateObject(std::string& name)
 {
-	Object* pTemp = new Object();
+	Object* pTemp = new Object(name);
 	m_Objects.push_back(pTemp);
 	if (!pTemp->HasInit())
 	{

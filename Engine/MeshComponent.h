@@ -6,7 +6,7 @@ class Material;
 class MeshComponent : public Component
 {
 public:
-	MeshComponent();
+	MeshComponent(const std::wstring& fileName);
 	~MeshComponent();
 
 	MeshComponent(MeshComponent& other) = delete;
@@ -14,15 +14,13 @@ public:
 	MeshComponent operator=(MeshComponent& other) = delete;
 	MeshComponent& operator=(MeshComponent&& other) = delete;
 
-	virtual void Init() override;
+	virtual bool Init() override;
 
-	virtual void Render(ID3D11Device& device, ID3D11DeviceContext& context) const override;
-
-	void SetMaterial(Material* pMat);
+	virtual void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int passNr = 0) const override;
 
 private:
-	Material* m_pMaterial;
+	std::wstring m_FileName;
 
-	ID3D11Buffer* m_pVertexBuffer;
-	int m_NrVerticies;
+	ID3D11Buffer* m_pVertexBuffer, * m_pIndexBuffer;
+	UINT m_NrVerticies, m_NrIndicies;
 };

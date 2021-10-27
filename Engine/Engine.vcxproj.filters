@@ -31,6 +31,27 @@
     <Filter Include="Engine Files\Component">
       <UniqueIdentifier>{d1caf728-4fde-44ee-8322-d57d4d228e0f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\Scene\Objects">
+      <UniqueIdentifier>{3deea4e0-7a23-4a60-891f-12faa9232083}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Component\Derived">
+      <UniqueIdentifier>{c3f43b04-1aa5-4136-be27-0a1491faef6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Component\Derived\Lights">
+      <UniqueIdentifier>{70950b1b-7d20-4788-bbbf-a08c3a639ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\3rdParty">
+      <UniqueIdentifier>{bd1a81e7-f60b-4d58-8a62-2c285e8245b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\3rdParty\ImGui">
+      <UniqueIdentifier>{16a79ff0-6c9a-40b8-a4d5-f41b8afbf5b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\UI">
+      <UniqueIdentifier>{c784b6b8-8ec1-4e46-ac17-8fc26a1e2e1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Rendering\Materials">
+      <UniqueIdentifier>{db3ce08a-5c98-4555-9091-eef1f2f6b3bc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -51,13 +72,7 @@
     <ClCompile Include="Renderer.cpp">
       <Filter>Engine Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="Scene.cpp">
-      <Filter>Engine Files\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Object.cpp">
       <Filter>Engine Files\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Project.cpp">
@@ -66,14 +81,83 @@
     <ClCompile Include="Component.cpp">
       <Filter>Engine Files\Component</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectStructure.cpp">
-      <Filter>Engine Files\Scene</Filter>
+    <ClCompile Include="Object.cpp">
+      <Filter>Engine Files\Scene\Objects</Filter>
     </ClCompile>
     <ClCompile Include="ComponentStructure.cpp">
-      <Filter>Engine Files\Scene</Filter>
+      <Filter>Engine Files\Component</Filter>
     </ClCompile>
     <ClCompile Include="MeshComponent.cpp">
-      <Filter>Engine Files\Component</Filter>
+      <Filter>Engine Files\Component\Derived</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Engine Files\Scene\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="FileManager.cpp">
+      <Filter>Engine Files\App</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionalLight.cpp">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_draw.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_impl_dx11.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_impl_win32.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_tables.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_widgets.cpp">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="UIRenderer.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Engine Files\Rendering\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Widget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="TransformWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="LightWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="RendererWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraWidget.cpp">
+      <Filter>Engine Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -101,13 +185,7 @@
     <ClInclude Include="Renderer.h">
       <Filter>Engine Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
-      <Filter>Engine Files\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
       <Filter>Engine Files\Scene</Filter>
     </ClInclude>
     <ClInclude Include="BaseUpdateStructure.h">
@@ -122,15 +200,6 @@
     <ClInclude Include="Component.h">
       <Filter>Engine Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectStructure.h">
-      <Filter>Engine Files\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="ComponentStructure.h">
-      <Filter>Engine Files\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshComponent.h">
-      <Filter>Engine Files\Component</Filter>
-    </ClInclude>
     <ClInclude Include="ShaderStructures.h">
       <Filter>Engine Files\Rendering</Filter>
     </ClInclude>
@@ -139,6 +208,87 @@
     </ClInclude>
     <ClInclude Include="FileManager.h">
       <Filter>Engine Files\App</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Engine Files\Scene\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentStructure.h">
+      <Filter>Engine Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>Engine Files\Component\Derived</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Engine Files\Scene\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Engine Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalLight.h">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imconfig.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_impl_dx11.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_impl_win32.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_internal.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_rectpack.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_textedit.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_truetype.h">
+      <Filter>Engine Files\3rdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="UIRenderer.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Engine Files\Component\Derived\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Engine Files\Rendering\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Widget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="LightWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererWidget.h">
+      <Filter>Engine Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraWidget.h">
+      <Filter>Engine Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

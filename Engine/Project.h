@@ -6,29 +6,42 @@ class Project final : public BaseUpdateStructure
 {
 public:
 	Project();
-	~Project();
+	virtual ~Project();
 
 	Project(Project& other) = delete;
 	Project(Project&& other) = delete;
 	Project operator=(Project& other) = delete;
 	Project& operator=(Project&& other) = delete;
 
-	virtual void Init() override;
+	virtual bool Init() override;
 
 	virtual void Update(const float deltaTime) override;
 	virtual void FixedUpdate() override;
 	virtual void LateUpdate(const float deltaTime) override;
-	virtual void Render() const override;
+	void Render() const;
 
 	template<class T>
 	inline T* CreateScene(bool mainScene = false) 
 	{
-		m_Scenes.push_back(new T());
-		if (mainScene)
+		T* pNewClass = new T();
+		//Safety to check if the class inherits from scene
+		Scene* pNewScene = dynamic_cast<Scene*>(pNewClass);
+		if (pNewScene)
 		{
-			m_pCurrentScene = m_Scenes[m_Scenes.size() - 1];
+			m_Scenes.push_back(pNewScene);
+			if (mainScene)
+			{
+				m_pCurrentScene = pNewScene;
+			}
+			pNewScene->Init();
+			pNewScene->MarkAsInit();
 		}
-		return dynamic_cast<T*>(*(m_Scenes.end() - 1));
+		return (T*)pNewScene;
+	}
+	template<class T>
+	inline T* GetScene() const 
+	{
+		return m_pCurrentScene; 
 	}
 
 private:

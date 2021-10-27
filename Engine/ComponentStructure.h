@@ -7,6 +7,8 @@ public:
 	virtual Component* AddComponent(Component* pObject);
 	virtual void RemoveComponent(Component* pObject);
 
+	inline std::vector<Component*>& GetAllComponents() { return m_Components; }
+
 protected:
 	ComponentStructure();
 	virtual ~ComponentStructure();

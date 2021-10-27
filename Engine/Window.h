@@ -2,6 +2,8 @@
 #include "Singleton.h"
 #include "WindowSettings.h"
 
+class App;
+
 class Window final
 {
 public:
@@ -14,6 +16,7 @@ public:
 	Window& operator=(Window&& other) = delete;
 
 	inline HWND GetHWND() const { return m_HandleWindow; }
+	inline WindowSettings GetWindowSettings() const { return m_WindowSettings; }
 
 private:
 	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -22,7 +25,7 @@ private:
 
 	BOOL AdjustWindowsRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu);
 
-	// the handle for the window, filled by a function
+	//The handle for the window, filled by a function
 	HWND m_HandleWindow;
 	WindowSettings m_WindowSettings;
 };

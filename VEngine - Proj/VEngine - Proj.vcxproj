@@ -86,17 +86,17 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\bin\$(ProjectName)\</OutDir>
-    <IntDir>$(SolutionDir)\int\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)\bin\Debug\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\int\Debug\$(ProjectName)\</IntDir>
+    <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\bin\$(ProjectName)\</OutDir>
-    <IntDir>$(SolutionDir)\int\$(ProjectName)\</IntDir>
+    <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)\bin\Release\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\int\Release\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -136,13 +136,19 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11d.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e /y /i /r
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug\libfbxsdk.dll" "$(TargetDir)" /y /r</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -152,7 +158,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -160,7 +166,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e /y /i /r
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y /r
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />

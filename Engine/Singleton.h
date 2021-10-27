@@ -6,13 +6,13 @@ class Singleton
 public:
 	inline virtual ~Singleton() {}
 
-	static inline T& Instance()
+	static inline T* Instance()
 	{
 		if (!m_pInstance)
 		{
 			m_pInstance = new T();
 		}
-		return *m_pInstance;
+		return m_pInstance;
 	}
 	static inline void ReleaseInstance()
 	{

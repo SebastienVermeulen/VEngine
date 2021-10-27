@@ -3,75 +3,108 @@
 #include "Material.h"
 #include "ShaderStructures.h"
 #include "EngineManager.h"
+#include "FileManager.h"
+#include "MeshWidget.h"
 
-MeshComponent::MeshComponent()
+MeshComponent::MeshComponent(const std::wstring& fileName)
 	:Component()
-	, m_pMaterial{}
+	, m_FileName{ fileName }
 	, m_pVertexBuffer{}
+	, m_pIndexBuffer{}
 	, m_NrVerticies{}
+	, m_NrIndicies{}
 {
-	m_ShouldRender = true;
+	m_pWidget = new MeshWidget(this);
 }
 MeshComponent::~MeshComponent()
 {
-	SafeDelete(m_pMaterial);
 	SafeRelease(m_pVertexBuffer);
+	SafeRelease(m_pIndexBuffer);
 }
 
-void MeshComponent::Init()
+bool MeshComponent::Init()
 {
-	Vertex ourVertices[] =
+	m_ShouldRender = true;
+
+	//***********************************************************************************
+	// 	   Mesh
+	//***********************************************************************************
+	std::vector<VertexPNTU> vertices;
+	std::vector<unsigned int> indices;
+	FileManager::LoadFBX(vertices, indices, m_FileName);
+	VertexPNTU* verticesArray = &vertices[0];
+	m_NrVerticies = (UINT)vertices.size();
+	unsigned int* indicesArray = &indices[0];
+	m_NrIndicies = (UINT)indices.size();
+
+	D3D11_SUBRESOURCE_DATA vertexMS, indexMS;
+	D3D11_BUFFER_DESC vertexBD, indexBD;
+	HRESULT result;
+
+	//Vertex
+	vertexBD.Usage = D3D11_USAGE_DEFAULT;							
+	vertexBD.ByteWidth = sizeof(VertexPNTU) * m_NrVerticies;			
+	vertexBD.BindFlags = D3D11_BIND_VERTEX_BUFFER;					
+	vertexBD.CPUAccessFlags = 0;
+	vertexBD.MiscFlags = 0;
+	vertexBD.StructureByteStride = 0;
+
+	//Give the subresource structure a pointer to the vertex data.
+	vertexMS.pSysMem = verticesArray;
+	vertexMS.SysMemPitch = 0;
+	vertexMS.SysMemSlicePitch = 0;
+
+	//Now create the vertex buffer.
+	EngineDevice* pEngineDiv = EngineManager::Instance()->GetDevice();
+	result = pEngineDiv->GetDevice()->CreateBuffer(&vertexBD, &vertexMS, &m_pVertexBuffer);
+	if (FAILED(result))
 	{
-		{0.0f, 0.5f, 0.0f, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f)},
-		{0.45f, -0.5, 0.0f, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)},
-		{-0.45f, -0.5f, 0.0f, D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f)}
-	};
-	m_NrVerticies = 3;
+		//TO-DO: make logger
+		return false;
+	}
 
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
+	//Index
+	indexBD.Usage = D3D11_USAGE_DEFAULT;							
+	indexBD.ByteWidth = sizeof(unsigned int) * m_NrIndicies;		
+	indexBD.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBD.CPUAccessFlags = 0;
+	indexBD.MiscFlags = 0;
+	indexBD.StructureByteStride = 0;
+	
+	//Give the subresource structure a pointer to the index data.
+	indexMS.pSysMem = indicesArray;
+	indexMS.SysMemPitch = 0;
+	indexMS.SysMemSlicePitch = 0;
+	
+	//Now create the index buffer.
+	result = pEngineDiv->GetDevice()->CreateBuffer(&indexBD, &indexMS, &m_pIndexBuffer);
+	if (FAILED(result))
+	{
+		//TO-DO: make logger
+		return false;
+	}
 
-	bd.Usage = D3D11_USAGE_DYNAMIC;							// write access access by CPU and GPU
-	bd.ByteWidth = sizeof(Vertex) * 3;						// size is the VERTEX struct * 3
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;				// use as a vertex buffer
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;				// allow CPU to write in buffer
-
-	EngineDevice& engineDiv = EngineManager::Instance().GetDevice();
-	engineDiv.GetDevice().CreateBuffer(&bd, NULL, &m_pVertexBuffer);       // create the buffer
-
-	D3D11_MAPPED_SUBRESOURCE ms;
-	ID3D11DeviceContext& context = engineDiv.GetDeviceContext();
-	context.Map(m_pVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);		// map the buffer
-	memcpy(ms.pData, ourVertices, sizeof(ourVertices));							// copy the data
-	context.Unmap(m_pVertexBuffer, NULL);										// unmap the buffer
+	//Success
+	return true;
 }
 
-void MeshComponent::Render(ID3D11Device& device, ID3D11DeviceContext& context) const
+void MeshComponent::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int passNr) const
 {
-	if (!m_pMaterial) 
+	if (!m_pMaterial)
 	{
 		return;
 	}
 
-	// select which vertex buffer to display
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	context.IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+	//Select which vertex buffer to display
+	const UINT stride = sizeof(VertexPNTU);
+	const UINT offset = 0;
+	pContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 
-	// select which primtive type we are using
-	context.IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//Set the index buffer to active in the input assembler so it can be rendered.
+	pContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	// draw the vertex buffer to the back buffer
-	context.Draw(m_NrVerticies, 0);
-}
+	//Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-void MeshComponent::SetMaterial(Material* pMat) 
-{
-	m_pMaterial = pMat;
-
-	if (m_pMaterial)
-	{
-		EngineDevice& eDevice = EngineManager::Instance().GetDevice();
-		m_pMaterial->InitShader(eDevice.GetDevice(), eDevice.GetDeviceContext());
-	}
+	m_pMaterial->Render(pContext, m_NrIndicies, passNr);
 }

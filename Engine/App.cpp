@@ -6,43 +6,45 @@
 #include "EngineManager.h"
 #include "Project.h"
 #include "AppTime.h"
+#include "UIRenderer.h"
 
-App::App(HINSTANCE hInstance, const int nCmdShow) 
+App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 	:m_pWindow{}
     , m_pProject{}
     , m_pRenderer{}
 {
-	Init(hInstance, nCmdShow);
+	Init(hInstance, nCmdShow, settings);
 }
 App::~App() 
 {
-    SafeDelete(m_pWindow);
-
     EngineManager::ReleaseInstance();
+    UIRenderer::ReleaseInstance();
+    AppTime::ReleaseInstance();
 
     SafeDelete(m_pProject);
 }
 
 #pragma region InitAndClean
-LRESULT App::Init(HINSTANCE hInstance, const int nCmdShow)
+HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 {
-    WindowSettings windowSettings = WindowSettings::Windowed();
-	m_pWindow = new Window(hInstance, windowSettings, nCmdShow);
+    EngineManager* pEngineManager = EngineManager::Instance();
+
+    m_pWindow = pEngineManager->GetWindow(hInstance, settings, nCmdShow);
 	if (m_pWindow == nullptr) 
 	{
-		return false;
+        //TO-DO: make logger
+		return E_FAIL;
 	}
-
+    
 	//Init the device through the locator
-	EngineDevice* pDevice = &EngineManager::Instance().GetDevice(m_pWindow->GetHWND(), &windowSettings);
-	m_pRenderer = &EngineManager::Instance().GetRenderer(pDevice);
-
+	EngineDevice* pDevice = pEngineManager->GetDevice(m_pWindow->GetHWND(), &settings);
+	m_pRenderer = pEngineManager->GetRenderer(pDevice);
     if (m_pProject)
     {
         m_pProject->Init();
     }
 
-	return true;
+	return S_OK;
 }
 #pragma endregion
 
@@ -70,11 +72,11 @@ int App::Run()
         }
         else
         {
-            float deltaTime = AppTime::Update();
+            float deltaTime = AppTime::Instance()->Update();
 
             m_pProject->Update(deltaTime);
 
-            if (AppTime::FixedUpdate())
+            if (AppTime::Instance()->FixedUpdate())
             {
                 m_pProject->FixedUpdate();
             }
@@ -93,5 +95,12 @@ int App::Run()
 void App::OpenProject(Project* project)
 {
     m_pProject = project;
-    m_pProject->Init();
+    if (m_pProject->Init()) 
+    {
+        m_pProject->MarkAsInit();
+    }
+    if (m_pProject->HasInit()) 
+    {
+        EngineManager::Instance()->SetProject(m_pProject);
+    }
 }

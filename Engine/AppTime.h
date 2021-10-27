@@ -1,19 +1,29 @@
 #pragma once
 #include "pch.h"
+#include "Singleton.h"
 
-class AppTime final 
+class AppTime final : public Singleton<AppTime>
 {
 public:
-	inline static float Update()
+	AppTime()
+		:Singleton<AppTime>()
+		, m_DeltaTime{ 0.0f }
+		, m_LastTime{}
+		, m_AccumulatedTime{ 0.0f }
+		, m_FixedTreshHold{ 1.0f / 30.0f }
 	{
-		time_t val;
-		time(&val);
+		m_LastTime = std::chrono::steady_clock::now();
+	}
+	virtual ~AppTime() {}
 
-		m_DeltaTime = val - m_LastTime;
-		m_LastTime = (float)val;
+	inline float Update()
+	{
+		const std::chrono::steady_clock::time_point current = std::chrono::steady_clock::now();
+		m_DeltaTime = (float)(std::chrono::duration_cast<std::chrono::microseconds>(current - m_LastTime).count()) / 1000000.0f;
+		m_LastTime = current;
 		return m_DeltaTime;
 	}
-	inline static bool FixedUpdate()
+	inline bool FixedUpdate()
 	{
 		m_AccumulatedTime += m_DeltaTime;
 		if (m_AccumulatedTime >= m_FixedTreshHold)
@@ -24,19 +34,14 @@ public:
 		return false;
 	}
 
-	inline static float GetDeltaTime() { return m_DeltaTime / 1000.0f; }
+	inline float GetDeltaTime() { return m_DeltaTime / 1000.0f; }
 
 private:
 	//Values keeping track of delta
-	static float m_DeltaTime;
-	static float m_LastTime;
+	float m_DeltaTime;
+	std::chrono::steady_clock::time_point m_LastTime;
 
 	//Values keeping track of the fixed time
-	static float m_AccumulatedTime;
-	static float m_FixedTreshHold;
+	float m_AccumulatedTime;
+	float m_FixedTreshHold;
 };
-
-float AppTime::m_DeltaTime = 0.0f;
-float AppTime::m_LastTime = 0.0f;
-float AppTime::m_AccumulatedTime = 0.0f;
-float AppTime::m_FixedTreshHold = 1.0f / 30.0f;

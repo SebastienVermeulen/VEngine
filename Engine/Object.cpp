@@ -1,19 +1,25 @@
 #include "pch.h"
 #include "Object.h"
+#include "Transform.h"
+#include "ObjectWidget.h"
 
-Object::Object() 
+Object::Object(std::string& name) 
 	:BaseUpdateStructure()
-	, ObjectStructure(this)
 	, ComponentStructure()
+	, m_pObjectWidget{ new ObjectWidget(this, name) }
+	, m_pTransform{ new Transform()}
 {
 	Init();
 }
 Object::~Object() 
 {
+	SafeDelete(m_pTransform);
+	SafeDelete(m_pObjectWidget);
 }
 
-void Object::Init()
+bool Object::Init()
 {
+	return true;
 }
 
 void Object::Update(const float deltaTime)

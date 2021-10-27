@@ -5,15 +5,18 @@
 #include "App.h"
 #include "Project.h"
 #include "MainScene.h"
+#include "EngineManager.h"
 
-// the entry point for any Windows program
+//The entry point for any Windows program
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(hPrevInstance);
 
     //Create app
-    App pApp = App(hInstance, nCmdShow);
+    WindowSettings windowSettings = WindowSettings::Windowed();
+    windowSettings.windowWidth += 200; //Add 200 for details panel
+    App pApp = App(hInstance, nCmdShow, windowSettings);
 
     //Create a project and scene
     Project* pProject = new Project();

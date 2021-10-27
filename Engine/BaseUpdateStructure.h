@@ -7,12 +7,11 @@ public:
 	{
 	}
 
-	inline virtual void Init() {}
+	inline virtual bool Init() { return true; }
 
 	inline virtual void Update(const float deltaTime) {}
 	inline virtual void FixedUpdate() {}
 	inline virtual void LateUpdate(const float deltaTime) {}
-	inline virtual void Render() const {}
 
 	inline bool HasInit() const { return m_HasInit; }
 	inline void MarkAsInit() { m_HasInit = true; }

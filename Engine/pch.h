@@ -2,33 +2,72 @@
 //VEngine - DirectX rasterisation framework
 
 #pragma once
-#define DEBUG
+#pragma region Windows
+//Include the basic windows header file  and the Direct3D header files
+#include <windows.h>
+#include <windowsx.h>
 
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <ctime>
+#include <chrono>
 #include <regex>
+#include <locale>
+#include <codecvt>
+#pragma endregion
 
-// include the basic windows header file  and the Direct3D header files
-#include <windows.h>
-#include <windowsx.h>
-#pragma warning (push, 0) //Ignore all warnings from directX
-#pragma warning (disable : 26812)
-#pragma warning (disable : 26495)
-#include <d3d11.h>
-#include <d3dx11.h>
-#include <d3dx10.h>
-#pragma warning (pop)
-
-// include the Direct3D Library file
+#pragma region DirectX
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dx11.lib")
-#pragma comment (lib, "d3dx10.lib")
 
-#ifdef DEBUG
-#include <vld.h>
+#pragma warning (push, 0) //Ignore all warnings
+#include <directxmath.h>
+#pragma warning (pop)
+
+//Helps with effects 11
+#pragma warning (push, 0) //Ignore all warnings
+#include <d3dcompiler.h>
+#pragma warning (pop)
+#pragma comment(lib, "d3dcompiler.lib")
+
+#pragma warning (push, 0) //Ignore all warnings
+#include <d3dcommon.h>
+#pragma warning (pop)
+#pragma endregion
+
+#pragma region ThirdParty
+//Include the FBX SDK
+#pragma warning (push, 0) //Ignore all warnings
+#include <fbxsdk.h>
+#pragma warning (pop)
+#pragma comment (lib, "libfbxsdk.lib")
+
+//Effects 11 (Helper for loading Effects (D3DX11))
+//https://fx11.codeplex.com/
+#pragma warning (push, 0) //Ignore all warnings
+#include "d3dx11effect.h"
+#pragma warning (pop)
+#if defined(DEBUG) || defined(_DEBUG)
+#pragma comment(lib, "Effects11d.lib")
+#else 
+#pragma comment(lib, "Effects11.lib")
 #endif
+
+//Commented as it caused issues on other systems, uncomment might cause errors
+//#ifdef _DEBUG
+//#pragma warning (push, 0) //Ignore all warnings
+//#include <vld.h>
+//#pragma warning (pop)
+//#endif
+
+#pragma warning (push, 0) //Ignore all warnings
+#include <DDSTextureLoader.h>
+#pragma warning (pop)
+
+#include "../AdditionalDependencies/Includes/ImGUI/Include/imgui.h"
+#include "../AdditionalDependencies/Includes/ImGUI/Include/imgui_impl_win32.h"
+#include "../AdditionalDependencies/Includes/ImGUI/Include/imgui_impl_dx11.h"
+#pragma endregion
 
 #pragma region Deletion/Release
 template<class Instance>
@@ -51,7 +90,7 @@ inline static void SafeRelease(std::vector<Instance>& interfaceToRelease)
 			interfaceToRelease[i] = nullptr;
 		}
 	}
-	interfaceToRelease.empty();
+	interfaceToRelease.clear();
 }
 template<class T>
 inline static void SafeDelete(T& objectToDelete)
@@ -74,5 +113,33 @@ inline static void SafeDelete(std::vector<T>& objectToDelete)
 		}
 	}
 	objectToDelete.clear();
+}
+#pragma endregion
+
+#pragma region WCharConversions
+//Source https://www.py4u.net/discuss/64164
+//Convert a wide Unicode string to an UTF8 string
+inline static std::string UTF8Encode(const std::wstring& wstr)
+{
+	if (wstr.empty())
+	{
+		return std::string();
+	}
+	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+	std::string newString(sizeNeeded, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &newString[0], sizeNeeded, NULL, NULL);
+	return newString;
+}
+//Convert an UTF8 string to a wide Unicode String
+inline static std::wstring UTF8Decode(const std::string& str)
+{
+	if (str.empty())
+	{
+		return std::wstring();
+	}
+	int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	std::wstring newWstring(sizeNeeded, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &newWstring[0], sizeNeeded);
+	return newWstring;
 }
 #pragma endregion

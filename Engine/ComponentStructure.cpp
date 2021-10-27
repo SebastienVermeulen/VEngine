@@ -26,9 +26,10 @@ Component* ComponentStructure::AddComponent(Component* pComponent)
 		}
 		if (pComponent->ShouldRender())
 		{
-			EngineManager::Instance().GetRenderer().AddRenderable((Renderable*)pComponent);
+			EngineManager::Instance()->GetRenderer()->AddRenderable(pComponent);
 		}
 
+		pComponent->SetObject(static_cast<Object*>(this));
 		return pComponent;
 	}
 	return nullptr;
@@ -44,8 +45,10 @@ void ComponentStructure::RemoveComponent(Component* pComponent)
 
 			if (pComponent->ShouldRender())
 			{
-				EngineManager::Instance().GetRenderer().RemoveRenderable((Renderable*)pComponent);
+				EngineManager::Instance()->GetRenderer()->RemoveRenderable(pComponent);
 			}
+
+			pComponent->SetObject(nullptr);
 		}
 	}
 }
