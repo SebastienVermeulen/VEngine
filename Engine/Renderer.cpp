@@ -29,14 +29,13 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
 	, m_RenderType{RenderType::forwards}
 	, m_NrBasisRenderTargets{6}
-	, m_VSync{false}
+	, m_VSync{true} // Set to true atm. as the engine can get "crazy" fps and I don't want to create fire 
 	, m_UpdateLighting{false}
 {
     m_pDevice = pDevice;
 
-	m_pDeferredLightingMaterial = new Material(L"..\\Resources\\Shaders\\DeferredLighting.fx");
+	m_pDeferredLightingMaterial = new Material(L"..\\Resources\\Shaders\\DeferredLighting.fx", RenderType::lightingPass);
 	m_pDeferredLightingMaterial->InitShader(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext());
-	m_pDeferredLightingMaterial->SetIfDeferred(RenderType::lightingPass);
 
 	m_Lights.reserve(Light::GetMaxNrLights());
 
@@ -45,12 +44,12 @@ Renderer::Renderer(EngineDevice* pDevice)
 Renderer::~Renderer()
 {
 	SafeDelete(m_pRendererWidget);
-	for (int i = 0; i < m_Renderables.size(); i++)
+	for (int i = 0; i < m_Renderables.size(); ++i)
 	{
 		m_Renderables[i] = nullptr;
 	}
 	m_Renderables.clear();
-	for (int i = 0; i < m_pCameraList.size(); i++)
+	for (int i = 0; i < m_pCameraList.size(); ++i)
 	{
 		m_pCameraList[i] = nullptr;
 	}
@@ -73,7 +72,7 @@ void Renderer::Render()
 	//**********************************************************************
 	// 	   Main render loop
 	//**********************************************************************
-	for (int i = 0; i < m_Renderables.size(); i++)
+	for (int i = 0; i < m_Renderables.size(); ++i)
 	{
 		Material* pMaterial = m_Renderables[i]->GetMaterial();
 		if (pMaterial->GetIfDeferred() == RenderType::deferred && m_RenderType == RenderType::deferred)
@@ -134,6 +133,12 @@ void Renderer::Render()
 
 	//Switch the back buffer and the front buffer
 	m_pDevice->GetSwapChain()->Present(m_VSync, 0);
+
+	if (m_RenderType == RenderType::deferred)
+	{
+		//Unhook render targets from material
+		ExplicitlyUnbindingRenderTargets();
+	}
 }
 void Renderer::ClearBuffers()
 {
@@ -155,7 +160,7 @@ void Renderer::ClearBuffers()
 			pContext->ClearRenderTargetView(pViewToClear, &black.x);
 
 			//Get the next render target
-			index++;
+			++index;
 		}
 	} while (pRenderTarget && pViewToClear);
 	//Clear the depth buffer to the max value
@@ -164,7 +169,7 @@ void Renderer::ClearBuffers()
 void Renderer::RenderDeferred() 
 {
 	//Select which vertex buffer to display
-	const UINT stride = sizeof(VertexPU);
+	const UINT stride = sizeof(QuadVertex);
 	const UINT offset = 0;
 	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
@@ -301,7 +306,7 @@ void Renderer::UpdateLights(Material* pMaterial)
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};
 	lightsStructure.reserve(maxNrLights);
-	for (int i{}; i < maxNrLights; i++)
+	for (int i{}; i < maxNrLights; ++i)
 	{
 		if (m_Lights.size() > i && m_Lights[i]->ShouldRender())
 		{
@@ -329,31 +334,45 @@ void Renderer::UpdateLights(Material* pMaterial)
 
 void Renderer::SetupTargetsDeferredFirstPass() const
 {
-	D3D11_TEXTURE2D_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-	desc.Width = m_pDevice->GetDefaultWidth();
-	desc.Height = m_pDevice->GetDefaultHeight();
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
-	desc.SampleDesc.Count = 1;
-	desc.SampleDesc.Quality = 0;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	desc.CPUAccessFlags = 0;
-	desc.MiscFlags = 0;
+	//Setup
+	D3D11_TEXTURE2D_DESC desc1;
+	ZeroMemory(&desc1, sizeof(desc1));
+	desc1.Width = m_pDevice->GetDefaultWidth();
+	desc1.Height = m_pDevice->GetDefaultHeight();
+	desc1.MipLevels = 1;
+	desc1.ArraySize = 1;
+	desc1.Format = DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
+	desc1.SampleDesc.Count = 1;
+	desc1.SampleDesc.Quality = 0;
+	desc1.Usage = D3D11_USAGE_DEFAULT;
+	desc1.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc1.CPUAccessFlags = 0;
+	desc1.MiscFlags = 0;	
+	D3D11_TEXTURE2D_DESC desc2;
+	ZeroMemory(&desc2, sizeof(desc2));
+	desc2.Width = m_pDevice->GetDefaultWidth();
+	desc2.Height = m_pDevice->GetDefaultHeight();
+	desc2.MipLevels = 1;
+	desc2.ArraySize = 1;
+	desc2.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
+	desc2.SampleDesc.Count = 1;
+	desc2.SampleDesc.Quality = 0;
+	desc2.Usage = D3D11_USAGE_DEFAULT;
+	desc2.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc2.CPUAccessFlags = 0;
+	desc2.MiscFlags = 0;
 
 	//Set the render target
 	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	ID3D11RenderTargetView* renderTargs[] =
 	{
 		//Used for storing position, normals etc.
-		m_pDevice->TryGetRenderTarget(1, true, desc)->pRenderTargetView,		//Index 0 is guaranted to exists by design, but is the final render target (swapchain buffer)
-		m_pDevice->TryGetRenderTarget(2, true, desc)->pRenderTargetView,
-		m_pDevice->TryGetRenderTarget(3, true, desc)->pRenderTargetView,
-		m_pDevice->TryGetRenderTarget(4, false)->pRenderTargetView,
-		m_pDevice->TryGetRenderTarget(5, false)->pRenderTargetView,
-		m_pDevice->TryGetRenderTarget(6, false)->pRenderTargetView,
+		m_pDevice->TryGetRenderTarget(1, true, desc1)->pRenderTargetView,		// TO-DO : Fix this , Index 0 is guaranteed to exists by design, but is the final render target (swapchain buffer)
+		m_pDevice->TryGetRenderTarget(2, true, desc1)->pRenderTargetView,
+		m_pDevice->TryGetRenderTarget(3, true, desc1)->pRenderTargetView,
+		m_pDevice->TryGetRenderTarget(4, true, desc1)->pRenderTargetView,
+		m_pDevice->TryGetRenderTarget(5, true, desc1)->pRenderTargetView,
+		m_pDevice->TryGetRenderTarget(6, true, desc2)->pRenderTargetView,
 	};
 	pContext->OMSetRenderTargets(m_NrBasisRenderTargets, renderTargs, m_pDevice->GetDepthBuffer());
 }
@@ -361,18 +380,33 @@ void Renderer::SetupTargetsDeferredSecondPass() const
 {
 	//Set the render target
 	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-	ID3D11RenderTargetView* renderTarg = m_pDevice->GetRenderTarget(0)->pRenderTargetView; //Index 0 is guaranted to exists by design, but is the final render target (swapchain buffer)
+	ID3D11RenderTargetView* renderTarg = m_pDevice->GetRenderTarget(0)->pRenderTargetView; //TO-DO : Fix this , Index 0 is guaranteed to exists by design, but is the final render target (swapchain buffer)
 	pContext->OMSetRenderTargets(1, &renderTarg, m_pDevice->GetDepthBuffer());
 }
 void Renderer::SetupTargetsForwardsPass() const
 {
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	//Index 0 is guaranted to exists by design, but is the final render target (swapchain buffer)
-	m_pDevice->GetDeviceContext()->OMSetRenderTargets(1, &m_pDevice->GetRenderTarget(0)->pRenderTargetView, m_pDevice->GetDepthBuffer());
+	pContext->OMSetRenderTargets(1, &m_pDevice->GetRenderTarget(0)->pRenderTargetView, m_pDevice->GetDepthBuffer());
+}
+void Renderer::ExplicitlyUnbindingRenderTargets() const
+{
+	//DX11 is lazy by design, once needed it will implicitly unbind
+	//Good practice is to unbind yourself once you are done so the device doesn't have to
+	//Data might change from input to output or opposite then you need to act
+	//https://stackoverflow.com/questions/52966262/id3dx11effectshaderresourcevariablesetresourcenull-cant-unbind-resources
+	//https://www.gamedev.net/forums/topic/601013-directx11-multiple-render-target/
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+	ID3D11ShaderResourceView* srvs = nullptr;
+	pContext->PSSetShaderResources(0, 1, &srvs);
+	ID3D11RenderTargetView* nullRTV = nullptr; 
+	pContext->OMSetRenderTargets(1, &nullRTV, nullptr);
+	m_pDeferredLightingMaterial->ExplicitlyUnbindingResources(m_pDevice);
 }
 
 void Renderer::CreateNDCQuad()
 {
-	ID3D11Device* pDevice = EngineManager::Instance()->GetDevice()->GetDevice();;
+	ID3D11Device* pDevice = EngineManager::Instance()->GetDevice()->GetDevice();
 
 	//***********************************************************************************
 	// 	   Quad
@@ -381,7 +415,7 @@ void Renderer::CreateNDCQuad()
 	D3D11_BUFFER_DESC vertexBD, indexBD;
 	HRESULT result;
 
-	std::vector<VertexPU> vertices{};
+	std::vector<QuadVertex> vertices{};
 	std::vector<unsigned int> indices{};
 
 	//Create screen quad for deferred
@@ -406,11 +440,11 @@ void Renderer::CreateNDCQuad()
 
 	//Vertex
 	vertexBD.Usage = D3D11_USAGE_DEFAULT;
-	vertexBD.ByteWidth = sizeof(VertexPU) * m_ScreenQuadNrVerticies;
+	vertexBD.ByteWidth = sizeof(QuadVertex) * m_ScreenQuadNrVerticies;
 	vertexBD.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBD.CPUAccessFlags = 0;
 	vertexBD.MiscFlags = 0;
-	vertexBD.StructureByteStride = 0;
+	vertexBD.StructureByteStride = sizeof(QuadVertex);
 
 	//Give the subresource structure a pointer to the index data.
 	vertexMS.pSysMem = &vertices[0];
@@ -429,7 +463,7 @@ void Renderer::CreateNDCQuad()
 	indexBD.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBD.CPUAccessFlags = 0;
 	indexBD.MiscFlags = 0;
-	indexBD.StructureByteStride = 0;
+	indexBD.StructureByteStride = sizeof(unsigned int);
 
 	//Give the subresource structure a pointer to the index data.
 	indexMS.pSysMem = &indices[0];

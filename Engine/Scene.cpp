@@ -19,21 +19,21 @@ Scene::~Scene()
 
 void Scene::Update(const float deltaTime)
 {
-	for (int i = 0; i < m_Objects.size(); i++) 
+	for (int i = 0; i < m_Objects.size(); ++i) 
 	{
 		m_Objects[i]->Update(deltaTime);
 	}
 }
 void Scene::FixedUpdate() 
 {
-	for (int i = 0; i < m_Objects.size(); i++)
+	for (int i = 0; i < m_Objects.size(); ++i)
 	{
 		m_Objects[i]->FixedUpdate();
 	}
 }
 void Scene::LateUpdate(const float deltaTime)
 {
-	for (int i = 0; i < m_Objects.size(); i++)
+	for (int i = 0; i < m_Objects.size(); ++i)
 	{
 		m_Objects[i]->LateUpdate(deltaTime);
 	}

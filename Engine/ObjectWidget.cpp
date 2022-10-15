@@ -33,7 +33,7 @@ void ObjectWidget::RenderUIElement(int idx)
     }
 
     std::vector<Component*> components = m_pOwningObject->GetAllComponents();
-    for (int idx = 0; idx < components.size(); idx++)
+    for (int idx = 0; idx < components.size(); ++idx)
     {
         Widget* pWidget = components[idx]->GetWidget();
         if (pWidget) 

@@ -1,9 +1,4 @@
-//--------------------------------------------------------------------------------------
-// Defines
-//--------------------------------------------------------------------------------------
-#define MAX_LIGHTS 10
-#define LIGHT_DIRECTIONAL 0
-#define LIGHT_POINT 1
+#include "CommonGlobals.fx"
 
 //--------------------------------------------------------------------------------------
 // Structs
@@ -49,10 +44,10 @@ float4x4 gWorldViewProj : WORLDVIEWPROJECTION;
 Texture2D gPositionMap;
 Texture2D gNormalMap;
 Texture2D gTangentMap;
+Texture2D gBinormalMap;
 
 Texture2D gAlbedoMap;
-Texture2D gMetalnessMap;
-Texture2D gRoughnessMap;
+Texture2D gMetalRoughnessMap;
 
 //Global math vars
 float3 gBackGroundColor = float3(0.0f, 0.2f, 0.4f);
@@ -60,7 +55,6 @@ float gPhongExponent = 60.0f;
 float gAlbedoMultiply = 1.0f;
 float gMetalnessMultiply = 1.0f;
 float gRoughnessMultiply = 1.0f;
-float gPI = 3.14159265359f;
 
 //--------------------------------------------------------------------------------------
 // States
@@ -118,7 +112,7 @@ float Schlick(float3 dir, float3 normal, float rougness) //Geometry Schlick-GGX
 	//float kIndirect = rougness * rougness / 2.0f;
 	return dotNV / (dotNV * (1.0f - kDirect) + kDirect);
 }
-float3 BRDF(float3 pixelPos, float3 normal, float3 tangent, float3 lightDirection, float3 albedo, float metal, float rougness)
+float3 BRDF(float3 pixelPos, float3 normal, float3 lightDirection, float3 albedo, float metal, float rougness)
 {
 	//Metalness influence
 	float3 metalnessColor = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metal);
@@ -178,20 +172,22 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 	float3 pixelPos = gPositionMap.Sample(samLinear, input.uv).xyz;
 	float3 normal = gNormalMap.Sample(samLinear, input.uv);
 	float3 tangent = gTangentMap.Sample(samLinear, input.uv);
+    float3 binormal = gBinormalMap.Sample(samLinear, input.uv);
 	float4 albedo = gAlbedoMap.Sample(samLinear, input.uv);
-	albedo = float4(min(1.0f, gAlbedoMultiply * albedo.xyz), albedo.w);
-	float metal = min(1.0f, gMetalnessMultiply * gMetalnessMap.Sample(samLinear, input.uv));
-	float rougness = min(1.0f, gRoughnessMultiply * gRoughnessMap.Sample(samLinear, input.uv));
+	albedo = float4(min(1.0f, gAlbedoMultiply * albedo.rgb), albedo.a);
+    float2 metalRoughness = gMetalRoughnessMap.Sample(samLinear, input.uv).rg;
+    float metal = min(1.0f, gMetalnessMultiply * metalRoughness.x);
+    float rougness = min(1.0f, gRoughnessMultiply * metalRoughness.y);
 
-	//Clearbuffer .w is set to 0, in the first pass pixelshader it is set to 1.0f
-	if(!all(albedo.w))
+	//Clearbuffer .a is set to 0, in the first pass pixelshader it is set to 1.0f
+    if (!all(albedo.a))
 	{
 		return float4(gBackGroundColor, 1.0f);
 	}
 	float3 color = float3(0.0f, 0.0f, 0.0f);
 
 	//For each light do the lighting calculation
-	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; lightIdx++)
+	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; ++lightIdx)
 	{
 		Light light = lights[lightIdx];
 		if(!light.enabled)
@@ -208,22 +204,22 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 		{
 		case LIGHT_DIRECTIONAL:
 			lightColor = DirectionalLightBiradiance(light.color, light.intensity);
-			brdf = BRDF(pixelPos, normal, tangent, light.direction.xyz, albedo.xyz, metal, rougness);
+			brdf = BRDF(pixelPos, normal, light.direction.xyz, albedo.rgb, metal, rougness);
 			cosineLaw = dot(normal, light.direction.xyz);
 			break;
 		case LIGHT_POINT:
 			float3 lightDir = normalize(light.position.xyz - pixelPos);
 			lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos, light.position.xyz);
-			brdf = BRDF(pixelPos, normal, tangent, lightDir, albedo.xyz, metal, rougness);
+            brdf = BRDF(pixelPos, normal, lightDir, albedo.rgb, metal, rougness);
 			cosineLaw = dot(normal, lightDir);
 			break;
 		}
-		color += lightColor * brdf * cosineLaw;
-	}
-
-	return float4(saturate(color), 1.0f);
+        color += max(lightColor * brdf * cosineLaw, 0.0f);
+    }
+	
+    return float4(saturate(color), 1.0f);
 }
-
+										
 //--------------------------------------------------------------------------------------
 // Technique
 //--------------------------------------------------------------------------------------

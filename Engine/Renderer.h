@@ -8,6 +8,8 @@ class Material;
 class Light;
 class RendererWidget;
 
+//TO-DO: Make multiple renderers for maintanability
+//This includes splitting forwards and deferred
 class Renderer final
 {
 public:
@@ -25,7 +27,7 @@ public:
 	void AddRenderable(Component* pRenderable);
 	void RemoveRenderable(Component* pRenderable);
 
-	inline void SetRenderType(RenderType renderType) 
+	inline void SetRendertype(RenderType renderType)
 	{ 
 		m_RenderType = renderType;
 		//Make sure the other render type has up to date lighting info
@@ -74,6 +76,8 @@ protected:
 	void SetupTargetsDeferredFirstPass() const;
 	void SetupTargetsDeferredSecondPass() const;
 	void SetupTargetsForwardsPass() const;
+
+	void ExplicitlyUnbindingRenderTargets() const;
 #pragma endregion
 
 private:

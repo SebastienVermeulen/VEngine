@@ -5,9 +5,12 @@
 #include "EngineManager.h"
 #include "FileManager.h"
 #include "MeshWidget.h"
+#include "MeshAsset.h"
+#include "MeshFactory.h"
 
 MeshComponent::MeshComponent(const std::wstring& fileName)
 	:Component()
+	, m_pAsset{}
 	, m_FileName{ fileName }
 	, m_pVertexBuffer{}
 	, m_pIndexBuffer{}
@@ -29,60 +32,24 @@ bool MeshComponent::Init()
 	//***********************************************************************************
 	// 	   Mesh
 	//***********************************************************************************
-	std::vector<VertexPNTU> vertices;
-	std::vector<unsigned int> indices;
-	FileManager::LoadFBX(vertices, indices, m_FileName);
-	VertexPNTU* verticesArray = &vertices[0];
-	m_NrVerticies = (UINT)vertices.size();
-	unsigned int* indicesArray = &indices[0];
-	m_NrIndicies = (UINT)indices.size();
+	m_pAsset = MeshFactory::Instance()->CreateAsset(m_FileName);
 
-	D3D11_SUBRESOURCE_DATA vertexMS, indexMS;
-	D3D11_BUFFER_DESC vertexBD, indexBD;
-	HRESULT result;
+	std::vector<Vertex> verticies = m_pAsset->GetVerticies();
+	std::vector<unsigned int> indicies = m_pAsset->GetIndicies();
 
-	//Vertex
-	vertexBD.Usage = D3D11_USAGE_DEFAULT;							
-	vertexBD.ByteWidth = sizeof(VertexPNTU) * m_NrVerticies;			
-	vertexBD.BindFlags = D3D11_BIND_VERTEX_BUFFER;					
-	vertexBD.CPUAccessFlags = 0;
-	vertexBD.MiscFlags = 0;
-	vertexBD.StructureByteStride = 0;
-
-	//Give the subresource structure a pointer to the vertex data.
-	vertexMS.pSysMem = verticesArray;
-	vertexMS.SysMemPitch = 0;
-	vertexMS.SysMemSlicePitch = 0;
-
-	//Now create the vertex buffer.
 	EngineDevice* pEngineDiv = EngineManager::Instance()->GetDevice();
-	result = pEngineDiv->GetDevice()->CreateBuffer(&vertexBD, &vertexMS, &m_pVertexBuffer);
-	if (FAILED(result))
+	if (FAILED(pEngineDiv->CreateVertexBuffer(verticies, &m_pVertexBuffer)))
 	{
 		//TO-DO: make logger
 		return false;
 	}
-
-	//Index
-	indexBD.Usage = D3D11_USAGE_DEFAULT;							
-	indexBD.ByteWidth = sizeof(unsigned int) * m_NrIndicies;		
-	indexBD.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	indexBD.CPUAccessFlags = 0;
-	indexBD.MiscFlags = 0;
-	indexBD.StructureByteStride = 0;
-	
-	//Give the subresource structure a pointer to the index data.
-	indexMS.pSysMem = indicesArray;
-	indexMS.SysMemPitch = 0;
-	indexMS.SysMemSlicePitch = 0;
-	
-	//Now create the index buffer.
-	result = pEngineDiv->GetDevice()->CreateBuffer(&indexBD, &indexMS, &m_pIndexBuffer);
-	if (FAILED(result))
+	if (FAILED(pEngineDiv->CreateIndexBuffer(indicies, &m_pIndexBuffer)))
 	{
 		//TO-DO: make logger
 		return false;
 	}
+	m_NrVerticies = (UINT)verticies.size();
+	m_NrIndicies = (UINT)indicies.size();
 
 	//Success
 	return true;
@@ -96,7 +63,7 @@ void MeshComponent::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	}
 
 	//Select which vertex buffer to display
-	const UINT stride = sizeof(VertexPNTU);
+	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0;
 	pContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 

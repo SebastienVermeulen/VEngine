@@ -52,6 +52,18 @@
     <Filter Include="Engine Files\Rendering\Materials">
       <UniqueIdentifier>{db3ce08a-5c98-4555-9091-eef1f2f6b3bc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\Assets">
+      <UniqueIdentifier>{f4d936dc-da6d-432e-8634-ea10291ee394}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Assets\Factories">
+      <UniqueIdentifier>{f45133b3-3562-416e-8e62-e04af1722e6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Assets\Files">
+      <UniqueIdentifier>{d07adfd4-1bbc-45f2-933f-b3a0e402cffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{1f292d4d-82d2-4c54-95f6-8a234eafd9e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -158,6 +170,21 @@
     </ClCompile>
     <ClCompile Include="CameraWidget.cpp">
       <Filter>Engine Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Asset.cpp">
+      <Filter>Engine Files\Assets\Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetFactory.cpp">
+      <Filter>Engine Files\Assets\Factories</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshAsset.cpp">
+      <Filter>Engine Files\Assets\Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshFactory.cpp">
+      <Filter>Engine Files\Assets\Factories</Filter>
+    </ClCompile>
+    <ClCompile Include="VAssetWriterReader.cpp">
+      <Filter>Engine Files\Assets\Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -290,5 +317,34 @@
     <ClInclude Include="CameraWidget.h">
       <Filter>Engine Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Asset.h">
+      <Filter>Engine Files\Assets\Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetFactory.h">
+      <Filter>Engine Files\Assets\Factories</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshAsset.h">
+      <Filter>Engine Files\Assets\Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshFactory.h">
+      <Filter>Engine Files\Assets\Factories</Filter>
+    </ClInclude>
+    <ClInclude Include="VAssetWriterReader.h">
+      <Filter>Engine Files\Assets\Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Resources\Shaders\ShaderForwards.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\ShaderDeferred.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\DeferredLighting.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\CommonGlobals.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

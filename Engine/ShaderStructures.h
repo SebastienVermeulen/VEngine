@@ -12,15 +12,38 @@ enum class LightType : UINT
 	directional = 0,
 	point = 1,
 };
+//Should be used as a bitmask
+enum VertexFeatures : UINT 
+{
+	None = 0,
+	P = 1,		//Position
+	C = 2,		//Color
+	U = 4,		//UV
+	N = 8,		//Normal
+	T = 16,		//Tangent
+	B = 32,		//Binormal
+};
 
-struct VertexPNTU 
+struct Vertex
 {
 	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 color;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 tangent;
+	DirectX::XMFLOAT3 binormal;
 	DirectX::XMFLOAT2 uv;
+
+	bool operator==(const Vertex& other)
+	{
+		return	this->position	== other.position	&&
+				this->color		== other.color		&&
+				this->normal	== other.normal		&&
+				this->tangent	== other.tangent	&&
+				this->binormal	== other.binormal	&&
+				this->uv		== other.uv;
+	}
 };
-struct VertexPU
+struct QuadVertex
 {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT2 uv;

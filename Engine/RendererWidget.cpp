@@ -27,7 +27,7 @@ void RendererWidget::RenderUIElement(int idx)
 
     RenderType renderType = m_pRenderer->GetRenderType();
     ImGui::Combo("RenderType", (int*)&renderType, "Forwards\0Deferred\0\0");
-    m_pRenderer->SetRenderType(renderType);
+    m_pRenderer->SetRendertype(renderType);
 
     //Separate each element with a line
     ImGui::Separator();

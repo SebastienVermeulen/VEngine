@@ -36,7 +36,7 @@ struct MaterialScalarParam
 class Material 
 {
 public:
-	Material(const std::wstring& effectFile);
+	Material(const std::wstring& effectFile, RenderType type = RenderType::deferred);
 	virtual ~Material();
 
 	Material(Material& other) = delete;
@@ -49,8 +49,9 @@ public:
 	void UpdateMatrix(MatrixRenderBuffer buffer);
 	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights);
 	HRESULT UpdateParameterValues(EngineDevice* pEngineDevice);
+	HRESULT ExplicitlyUnbindingResources(EngineDevice* pEngineDevice);
 
-	inline void SetIfDeferred(RenderType renderType) 
+	inline void SetRendertype(RenderType renderType) 
 	{
 		m_RenderType = renderType; 
 	}

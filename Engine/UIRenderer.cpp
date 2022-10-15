@@ -109,7 +109,7 @@ void UIRenderer::RenderSceneTree()
 	{
 		//Go over all objects in the scene and add them to the tree
 		std::vector<Object*> objects = EngineManager::Instance()->GetProject()->GetScene<Scene>()->GetAllObjects();
-		for (int idx = 0; idx < objects.size(); idx++)
+		for (int idx = 0; idx < objects.size(); ++idx)
 		{
 			//Separate each element with a line
 			ImGui::Separator();

@@ -89,15 +89,19 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\bin\Debug\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)\Builds\Debug\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\int\Debug\$(ProjectName)\</IntDir>
+    <ExternalIncludePath>
+    </ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\bin\Release\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)\Builds\Release\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\int\Release\$(ProjectName)\</IntDir>
+    <ExternalIncludePath>
+    </ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,13 +141,18 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <FxCompile>
+      <ShaderModel>4.1</ShaderModel>
+      <ShaderType>Effect</ShaderType>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -153,8 +162,9 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -162,6 +172,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <FxCompile>
+      <ShaderModel>4.1</ShaderModel>
+      <ShaderType>Effect</ShaderType>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui.cpp" />
@@ -171,6 +185,8 @@
     <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_tables.cpp" />
     <ClCompile Include="..\AdditionalDependencies\Includes\ImGUI\Include\imgui_widgets.cpp" />
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Asset.cpp" />
+    <ClCompile Include="AssetFactory.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraWidget.cpp" />
     <ClCompile Include="Component.cpp" />
@@ -181,7 +197,9 @@
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightWidget.cpp" />
     <ClCompile Include="MaterialWidget.cpp" />
+    <ClCompile Include="MeshAsset.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
+    <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="MeshWidget.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectWidget.cpp" />
@@ -197,6 +215,7 @@
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TransformWidget.cpp" />
     <ClCompile Include="UIRenderer.cpp" />
+    <ClCompile Include="VAssetWriterReader.cpp" />
     <ClCompile Include="Widget.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -210,6 +229,8 @@
     <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_textedit.h" />
     <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_truetype.h" />
     <ClInclude Include="App.h" />
+    <ClInclude Include="Asset.h" />
+    <ClInclude Include="AssetFactory.h" />
     <ClInclude Include="BaseUpdateStructure.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraWidget.h" />
@@ -221,7 +242,9 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightWidget.h" />
     <ClInclude Include="MaterialWidget.h" />
+    <ClInclude Include="MeshAsset.h" />
     <ClInclude Include="MeshComponent.h" />
+    <ClInclude Include="MeshFactory.h" />
     <ClInclude Include="MeshWidget.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectWidget.h" />
@@ -241,9 +264,46 @@
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TransformWidget.h" />
     <ClInclude Include="UIRenderer.h" />
+    <ClInclude Include="VAssetWriterReader.h" />
     <ClInclude Include="Widget.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WindowSettings.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Resources\Shaders\CommonGlobals.fx">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </EntryPointName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\DeferredLighting.fx">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShaderP1</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShaderP1</EntryPointName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\ShaderDeferred.fx">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShaderP0</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShaderP0</EntryPointName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\ShaderForwards.fx">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShaderP0</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShaderP0</EntryPointName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

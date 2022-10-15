@@ -86,17 +86,19 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\bin\Debug\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)\Builds\Debug\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\int\Debug\$(ProjectName)\</IntDir>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\bin\Release\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)\Builds\Release\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\int\Release\$(ProjectName)\</IntDir>
+    <ExternalIncludePath />
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,6 +113,14 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <RunPostBuildEvent>Always</RunPostBuildEvent>
+      <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+      <Command>echo --- RESOURCE COPY STARTED ---
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+echo --- RESOURCE COPY FINISHED ---</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -129,6 +139,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <RunPostBuildEvent>Always</RunPostBuildEvent>
+      <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+      <Command>echo --- RESOURCE COPY STARTED ---
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+echo --- RESOURCE COPY FINISHED ---</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -138,6 +156,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,9 +165,23 @@
       <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11d.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e /y /i /r
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug\libfbxsdk.dll" "$(TargetDir)" /y /r</Command>
+      <RunPostBuildEvent>Always</RunPostBuildEvent>
+      <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+      <Command>echo --- RESOURCE COPY STARTED ---
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -160,6 +193,7 @@ xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug\li
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -170,9 +204,12 @@ xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug\li
       <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e /y /i /r
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y /r
-</Command>
+      <RunPostBuildEvent>Always</RunPostBuildEvent>
+      <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+      <Command>echo --- RESOURCE COPY STARTED ---
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

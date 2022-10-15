@@ -1,4 +1,4 @@
-//Written by Sebastien Vermeulen | 14/04/2021
+//Written by Sebastien Vermeulen | 14/04/2021 - Present
 //VEngine - DirectX rasterisation framework
 
 #pragma once
@@ -8,12 +8,16 @@
 #include <windowsx.h>
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
 #include <regex>
 #include <locale>
 #include <codecvt>
+#include <string>
+#include <cstddef>
+#include <concepts>
 #pragma endregion
 
 #pragma region DirectX
@@ -33,14 +37,31 @@
 #pragma warning (push, 0) //Ignore all warnings
 #include <d3dcommon.h>
 #pragma warning (pop)
+
+//https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompile
+#define D3D_COMPILE_STANDARD_FILE_INCLUDE ((ID3DInclude*)(UINT_PTR)1)
+
+//TO-DO: Make own temp types that takes care of this before storing to buffers etc.
+inline static bool operator==(const DirectX::XMFLOAT3& self, const DirectX::XMFLOAT3& other)
+{
+	return self.x == other.x && self.y == other.y && self.z == other.z;
+}
+inline static bool operator==(const DirectX::XMFLOAT2& self, const DirectX::XMFLOAT2& other)
+{
+	return self.x == other.x && self.y == other.y;
+}
+//END-TO-DO
 #pragma endregion
 
 #pragma region ThirdParty
 //Include the FBX SDK
-#pragma warning (push, 0) //Ignore all warnings
+#pragma warning (push, 0) //Ignore all warnings, be specific due to high warning level
+#pragma warning (disable : 26495)
+#pragma warning (disable : 26812)
+#pragma warning (disable : 26451)
 #include <fbxsdk.h>
-#pragma warning (pop)
 #pragma comment (lib, "libfbxsdk.lib")
+#pragma warning (pop)
 
 //Effects 11 (Helper for loading Effects (D3DX11))
 //https://fx11.codeplex.com/
@@ -82,7 +103,7 @@ inline static void SafeRelease(Instance& interfaceToRelease)
 template<class Instance>
 inline static void SafeRelease(std::vector<Instance>& interfaceToRelease)
 {
-	for (int i = 0; i < interfaceToRelease.size(); i++)
+	for (int i = 0; i < interfaceToRelease.size(); ++i)
 	{
 		if (interfaceToRelease[i] != nullptr)
 		{
@@ -104,7 +125,7 @@ inline static void SafeDelete(T& objectToDelete)
 template<class T>
 inline static void SafeDelete(std::vector<T>& objectToDelete)
 {
-	for (int i = 0; i < objectToDelete.size(); i++)
+	for (int i = 0; i < objectToDelete.size(); ++i)
 	{
 		if (objectToDelete[i] != nullptr)
 		{

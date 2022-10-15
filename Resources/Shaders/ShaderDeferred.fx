@@ -1,11 +1,4 @@
-float4x4 gWorld : WORLD;
-float4x4 gView : VIEW;
-float4x4 gProjection : PROJECTION;
-float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
-
-Texture2D gAlbedoMap;
-Texture2D gMetalnessMap;
-Texture2D gRoughnessMap;
+#include "CommonGlobals.fx"
 
 //--------------------------------------------------------------------------------------
 // Structs
@@ -13,27 +6,44 @@ Texture2D gRoughnessMap;
 struct VP0_In
 {
 	float3 position : POSITION;
+	float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
+	float3 binormal	: BINORMAL;
 	float2 uv 		: TEXCOORD;
 };
 struct PP0_In
 {
 	float4 position : SV_POSITION;
 	float4 wPos 	: TEXCOORD0;
+	float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
+    float3 binormal : BINORMAL;
 	float2 uv 		: TEXCOORD1;
 };
 struct PP0_Out
 {
-	float4 position 	: SV_Target0;
-	float4 normal 		: SV_Target1;
-	float4 tangent 		: SV_Target2;
-	float4 albedo 		: SV_Target3;
-	float4 metal 		: SV_Target4;
-	float4 roughness 	: SV_Target5;
+	float4 position 		: SV_Target0;
+	float4 normal 			: SV_Target1;
+	float4 tangent 			: SV_Target2;
+    float4 binormal			: SV_Target3;
+	float4 albedo 			: SV_Target4;
+    float2 metalRoughness	: SV_Target5;
 };
+
+//--------------------------------------------------------------------------------------
+// Globals
+//--------------------------------------------------------------------------------------
+float4x4 gWorld : WORLD;
+float4x4 gView : VIEW;
+float4x4 gInverseView : INVERSEVIEW;
+float4x4 gProjection : PROJECTION;
+float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
+
+Texture2D gAlbedoMap;
+Texture2D gMetalnessMap;
+Texture2D gRoughnessMap;
 
 //--------------------------------------------------------------------------------------
 // States
@@ -85,6 +95,9 @@ PP0_In VShaderP0(VP0_In input)
 	//Calculate the normal and tangent of the vertex against the world rotation and scale.
 	output.normal = mul(input.normal, (float3x3)gWorld);
 	output.tangent = mul(input.tangent, (float3x3)gWorld);
+    output.binormal = mul(input.binormal, (float3x3) gWorld);
+	
+    output.color = input.color;
 	output.uv = input.uv;
 
 	return output;
@@ -99,9 +112,9 @@ PP0_Out PShaderP0(PP0_In input)
 	output.position = input.wPos;
 	output.normal = float4(input.normal, 1.0f);
 	output.tangent = float4(input.tangent, 1.0f);
-	output.albedo = gAlbedoMap.Sample(samLinear, input.uv);
-	output.metal = gMetalnessMap.Sample(samLinear, input.uv);
-	output.roughness = gRoughnessMap.Sample(samLinear, input.uv);
+    output.binormal = float4(input.binormal, 1.0f);
+    output.albedo = gAlbedoMap.Sample(samLinear, input.uv);
+    output.metalRoughness = float2(gMetalnessMap.Sample(samLinear, input.uv).x, gRoughnessMap.Sample(samLinear, input.uv).x);
 
 	return output;
 }

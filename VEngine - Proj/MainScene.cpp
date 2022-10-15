@@ -22,30 +22,32 @@ bool MainScene::Init()
 {
 	//Settings
 	Renderer* pRenderer = EngineManager::Instance()->GetRenderer();
-	pRenderer->SetRenderType(RenderType::deferred);
+	pRenderer->SetRendertype(RenderType::deferred);
 	
 	std::string objectName = "Camera";
 	Object* pObject = CreateObject(objectName);
 	pObject->AddComponent(new Camera(CameraSettings::Default()));
-	DirectX::XMFLOAT3 newCamPos = { 0.0f, 0.0f, -30.0f };
+	DirectX::XMFLOAT3 newCamPos = { 0.0f, 0.0f, -5.0f };
 	pObject->GetTransform()->Translate(newCamPos);
 	 
 	//Objects
 	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
-	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\ShaderBall.fbx")));
+	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
-	pObject->GetTransform()->Translate(0.0f, -8.0f, 0.0f);
-	pMeshComp->SetMaterial(new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx"));
-	pMeshComp->GetMaterial()->SetIfDeferred(RenderType::deferred);
+	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
+	Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
+	pMaterial->SetRendertype(RenderType::deferred);
+	pMeshComp->SetMaterial(pMaterial);
 	
 	objectName = "ForwardsObject";
 	pObject = CreateObject(objectName);
-	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\ShaderBall.fbx")));
+	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
-	pObject->GetTransform()->Translate(0.0f, -8.0f, 0.0f);
-	pMeshComp->SetMaterial(new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx"));
-	pMeshComp->GetMaterial()->SetIfDeferred(RenderType::forwards);
+	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
+	pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx");
+	pMaterial->SetRendertype(RenderType::forwards);
+	pMeshComp->SetMaterial(pMaterial);
 	
 	//Lights
 	objectName = "DirectionalLight";

@@ -1,9 +1,4 @@
-//--------------------------------------------------------------------------------------
-// Defines
-//--------------------------------------------------------------------------------------
-#define MAX_LIGHTS 10
-#define LIGHT_DIRECTIONAL 0
-#define LIGHT_POINT 1
+#include "CommonGlobals.fx"
 
 //--------------------------------------------------------------------------------------
 // Structs
@@ -11,16 +6,20 @@
 struct VP0_In
 {
 	float3 position : POSITION;
+    float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
+    float3 binormal : BINORMAL;
 	float2 uv 		: TEXCOORD;
 };
 struct PP0_In
 {
 	float4 position : SV_POSITION;
 	float4 positionf : POSITION0;
+    float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
+    float3 binormal : BINORMAL;
 	float2 uv 		: TEXCOORD;
 };
 struct Light
@@ -60,7 +59,6 @@ float gPhongExponent = 60.0f;
 float gAlbedoMultiply = 1.0f;
 float gMetalnessMultiply = 1.0f;
 float gRoughnessMultiply = 1.0f;
-float gPI = 3.14159265359f;
 
 //--------------------------------------------------------------------------------------
 // States
@@ -173,6 +171,9 @@ PP0_In VShaderP0(VP0_In input)
 	output.normal = mul(input.normal, (float3x3)gWorld);
 	output.normal = float3(output.normal.xy, output.normal.z);
 	output.tangent = mul(input.tangent, (float3x3)gWorld);
+    output.binormal = mul(input.binormal, (float3x3) gWorld);
+	
+    output.color = input.color;
 	output.uv = input.uv;
 
 	return output;
@@ -186,6 +187,7 @@ float4 PShaderP0(PP0_In input) : SV_TARGET
 	float3 pixelPos = input.positionf.xyz;
 	float3 normal = input.normal;
 	float3 tangent = input.tangent;
+    float3 binormal = input.binormal;
 	float3 albedo = min(1.0f, gAlbedoMultiply * gAlbedoMap.Sample(samLinear, input.uv));
 	float metal = min(1.0f, gMetalnessMultiply * gMetalnessMap.Sample(samLinear, input.uv));
 	float rougness = min(1.0f, gRoughnessMultiply * gRoughnessMap.Sample(samLinear, input.uv));
@@ -193,7 +195,7 @@ float4 PShaderP0(PP0_In input) : SV_TARGET
 	float3 color = float3(0.0f, 0.0f, 0.0f);
 
 	//For each light do the lighting calculation
-	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; lightIdx++)
+	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; ++lightIdx)
 	{
 		Light light = lights[lightIdx];
 		if(!light.enabled)
@@ -220,10 +222,10 @@ float4 PShaderP0(PP0_In input) : SV_TARGET
 			cosineLaw = dot(normal, lightDir);
 			break;
 		}
-		color += lightColor * brdf * cosineLaw;
-	}
+        color += max(lightColor * brdf * cosineLaw, 0.0f);
+    } 
 
-	return float4(saturate(color), 1.0f);
+    return float4(saturate(color), 1.0f);
 }
 
 //--------------------------------------------------------------------------------------
