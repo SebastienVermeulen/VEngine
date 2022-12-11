@@ -32,4 +32,8 @@ x64
 Debug
 Release
 int
+int
 bin
+
+# Ingore folder
+Ignore/
