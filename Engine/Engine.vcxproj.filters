@@ -64,6 +64,9 @@
     <Filter Include="Resource Files\Shaders">
       <UniqueIdentifier>{1f292d4d-82d2-4c54-95f6-8a234eafd9e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\Logging">
+      <UniqueIdentifier>{798e9b02-48a4-4d72-9c34-eebfbd0ef3d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -185,6 +188,9 @@
     </ClCompile>
     <ClCompile Include="VAssetWriterReader.cpp">
       <Filter>Engine Files\Assets\Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Engine Files\Logging</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -331,6 +337,9 @@
     </ClInclude>
     <ClInclude Include="VAssetWriterReader.h">
       <Filter>Engine Files\Assets\Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Engine Files\Logging</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

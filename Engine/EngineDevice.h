@@ -56,16 +56,17 @@ public:
 
 private:
 #pragma region DirectX
-	IDXGISwapChain* m_pSwapChain; //The pointer to the swap chain interface
-	ID3D11Device* m_pDevice; //The pointer to our Direct3D device interface
-	ID3D11DeviceContext* m_pDeviceContext; //The pointer to our Direct3D device context
+	IDXGISwapChain* m_pSwapChain;			// The pointer to the swap chain interface
+	ID3D11Device* m_pDevice;				// The pointer to our Direct3D device interface
+	ID3D11DeviceContext* m_pDeviceContext;	// The pointer to our Direct3D device context
 #pragma endregion
 
 #pragma region RenderTargets/DepthBuffers
-	std::vector<RenderTarget*> m_RenderTargets; //The pointer to our backbuffer, now as the render target
-	//TO-DO: make it possible to have more than one stencil and buffer
-	ID3D11DepthStencilView* m_pDepthStencilView; //The pointer to our depthbuffer
-	ID3D11Texture2D* m_pDepthStencilBuffer; //Buffer that holds the depth stencil data
+	std::vector<RenderTarget*> m_RenderTargets;		// The pointer to our backbuffer, now as the render target
+	//TO-DO: Make it possible to have more than one stencil and buffer
+	//TO-DO: Remove stensil from these names, since they are just buffers
+	ID3D11DepthStencilView* m_pDepthStencilView;	// The pointer to our depthbuffer
+	ID3D11Texture2D* m_pDepthStencilBuffer;			// Buffer that holds the depth stencil data
 #pragma endregion
 
 	UINT m_DefaultWidth, m_DefaultHeight;

@@ -76,21 +76,21 @@ void Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	hr = InitEffect(pDevice);
 	if (hr != S_OK)
 	{
-		//TO-DO: Add logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitEffect for %s.", FileManager::GetFileName(m_EffectFile)));
 		return;
 	}
 
 	hr = InitInputLayout(pDevice);
 	if (hr != S_OK)
 	{
-		//TO-DO: Add logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitInputLayout for %s.", FileManager::GetFileName(m_EffectFile)));
 		return;
 	}
 
 	hr = InitShaderVariables(pDevice);
 	if (hr != S_OK)
 	{
-		//TO-DO: Add logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitShaderVariables for %s.", FileManager::GetFileName(m_EffectFile)));
 		return;
 	}
 }
@@ -201,7 +201,7 @@ HRESULT Material::InitInputLayout(ID3D11Device* pDevice)
 		hr = pDevice->CreateInputLayout(static_cast<D3D11_INPUT_ELEMENT_DESC*>(&layoutDesc[0]), (UINT)layoutDesc.size(), PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &m_pLayouts[0]);
 		if (!SUCCEEDED(hr))
 		{
-			//TO-DO: make logger
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to CreateInputLayout for %s.", FileManager::GetFileName(m_EffectFile)));
 			return hr;
 		}
 	}
@@ -239,7 +239,7 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 			}
 			else
 			{
-				//TO-DO: Add logger
+				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to SetResource for %s, since the texture was not created.", FileManager::GetFileName(m_EffectFile)));
 				return E_FAIL;
 			}
 		}
@@ -268,7 +268,7 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 		hr = pDevice->CreateBuffer(&cbDesc, NULL, &m_LightsBuffer);
 		if (FAILED(hr))
 		{
-			//TO-DO: Add logger
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a constant lightbuffer for %s.", FileManager::GetFileName(m_EffectFile)));
 			return hr;
 		}
 	}
@@ -281,7 +281,7 @@ void Material::Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr)
 	//Safety check
 	if (m_pLayouts.size() <= passNr)
 	{
-		//TO-DO: make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: The requested pass index is out of bounds for %s.", FileManager::GetFileName(m_EffectFile)));
 		return;
 	}
 

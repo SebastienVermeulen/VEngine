@@ -25,6 +25,10 @@ public:
 	{
 		m_WasSelected = wasSelected;
 	}
+	inline std::string GetTitle() const 
+	{
+		return m_Title;
+	}
 
 private:
 	Object* m_pOwningObject;

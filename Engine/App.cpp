@@ -12,8 +12,19 @@ App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 	:m_pWindow{}
     , m_pProject{}
     , m_pRenderer{}
+    , m_MaxMessagesPerTick{ 10 }
+    , m_Shutdown{ false }
 {
-	Init(hInstance, nCmdShow, settings);
+    V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Initializations. ---"));
+
+    if (Init(hInstance, nCmdShow, settings) != S_OK) 
+    {
+        V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Failed Initializations. ---\nForcing shutdown."));
+        m_Shutdown = true;
+        return;
+    }
+
+    V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Completed Initializations. ---"));
 }
 App::~App() 
 {
@@ -22,6 +33,8 @@ App::~App()
     AppTime::ReleaseInstance();
 
     SafeDelete(m_pProject);
+
+    V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Finished cleanup. ---"));
 }
 
 #pragma region InitAndClean
@@ -32,7 +45,7 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
     m_pWindow = pEngineManager->GetWindow(hInstance, settings, nCmdShow);
 	if (m_pWindow == nullptr) 
 	{
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Fatal, V_WTEXT("App: Failed to get window."));
 		return E_FAIL;
 	}
     
@@ -51,45 +64,59 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
 int App::Run()
 {
     //This struct holds Windows event messages
-    MSG msg;
+    MSG msg{};
 
     //Wait for the next message in the queue, store the result in 'msg'
-    while (true)
+    while (!m_Shutdown)
     {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        float deltaTime = AppTime::Instance()->Update();
+
+        m_pProject->Update(deltaTime);
+
+        if (AppTime::Instance()->FixedUpdate())
         {
-            //Translate keystroke messages into the right format
-            TranslateMessage(&msg);
-
-            //Send the message to the WindowProc function
-            DispatchMessage(&msg);
-
-            //Check to see if it's time to quit
-            if (msg.message == WM_QUIT)
-            {
-                break;
-            }
+            m_pProject->FixedUpdate();
         }
-        else
-        {
-            float deltaTime = AppTime::Instance()->Update();
 
-            m_pProject->Update(deltaTime);
+        m_pProject->LateUpdate(deltaTime);
 
-            if (AppTime::Instance()->FixedUpdate())
-            {
-                m_pProject->FixedUpdate();
-            }
+        //Run game code
+        m_pRenderer->Render();
 
-            m_pProject->LateUpdate(deltaTime);
-
-            //Run game code
-            m_pRenderer->Render();
-        }
+        //Resolve after update, to make the quit event instant
+        ResolveMessages(msg);
     }
 
     //Return this part of the WM_QUIT message to Windows
     return int(msg.wParam);
+}
+void App::ResolveMessages(MSG& msg)
+{
+    size_t nrMessagesThisTick{};
+
+    //Might be overkill to have a while here, just wanted to be sure
+    //There could be multiple but they aren't queued, also QUIT will always run first
+    while ((nrMessagesThisTick < m_MaxMessagesPerTick) && PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        //Translate keystroke messages into the right format
+        TranslateMessage(&msg);
+
+        //Send the message to the WindowProc function
+        DispatchMessage(&msg);
+
+        //Check to see if it's time to quit
+        if (msg.message == WM_QUIT)
+        {
+            m_Shutdown = true;
+
+            V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: User requested closing. ---"));
+            //Skip all other code as the main running loop should end, per request of the user
+            //Additional code for cleanup should be in destructors or post run
+            return;
+        }
+
+        ++nrMessagesThisTick;
+    }
 }
 
 void App::OpenProject(Project* project)

@@ -46,7 +46,7 @@ DirectX::XMFLOAT4X4& Camera::GetProjectionMatrix()
 }
 DirectX::XMFLOAT4X4& Camera::GetViewMatrix()
 {
-	Transform* pTransform = Getobject()->GetTransform();
+	Transform* pTransform = GetObject()->GetTransform();
 
 	const DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&pTransform->GetWorldPosition());
 	const DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&pTransform->GetForward());

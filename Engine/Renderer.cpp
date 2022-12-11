@@ -276,7 +276,7 @@ void Renderer::UpdateMatrices(Component* pRenderable) const
 {
 	MatrixRenderBuffer buffer;
 
-	buffer.world = pRenderable->Getobject()->GetTransform()->GetWorld();
+	buffer.world = pRenderable->GetObject()->GetTransform()->GetWorld();
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
 	buffer.inverseView = m_pRenderingCamera->GetViewInverseMatrix();
 	buffer.projection = m_pRenderingCamera->GetProjectionMatrix();
@@ -311,7 +311,7 @@ void Renderer::UpdateLights(Material* pMaterial)
 		if (m_Lights.size() > i && m_Lights[i]->ShouldRender())
 		{
 			//Add the light to structure for easy use
-			Transform* pTransform = m_Lights[i]->Getobject()->GetTransform();
+			Transform* pTransform = m_Lights[i]->GetObject()->GetTransform();
 			DirectX::XMFLOAT3 pos = pTransform->GetPosition();
 			DirectX::XMFLOAT3 dir = pTransform->GetForward();
 			ShaderLight light{ 
@@ -453,7 +453,7 @@ void Renderer::CreateNDCQuad()
 	result = pDevice->CreateBuffer(&vertexBD, &vertexMS, &m_pScreenQuadVertexBuffer);
 	if (FAILED(result))
 	{
-		//TO-DO: make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Renderer: Failed to create vertexbuffer for defered render quad."));
 		return;
 	}
 
@@ -472,7 +472,7 @@ void Renderer::CreateNDCQuad()
 	result = pDevice->CreateBuffer(&indexBD, &indexMS, &m_pScreenQuadIndexBuffer);
 	if (FAILED(result))
 	{
-		//TO-DO: make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Renderer: Failed to create indexbuffer for defered render quad."));
 		return;
 	}
 }

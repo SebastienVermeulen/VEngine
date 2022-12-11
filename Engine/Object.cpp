@@ -43,3 +43,8 @@ void Object::LateUpdate(const float deltaTime)
 		m_Components[i]->LateUpdate(deltaTime);
 	}
 }
+
+std::string Object::GetName() const
+{
+	return m_pObjectWidget->GetTitle();
+}

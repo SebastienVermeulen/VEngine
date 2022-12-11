@@ -40,12 +40,12 @@ bool MeshComponent::Init()
 	EngineDevice* pEngineDiv = EngineManager::Instance()->GetDevice();
 	if (FAILED(pEngineDiv->CreateVertexBuffer(verticies, &m_pVertexBuffer)))
 	{
-		//TO-DO: make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create vertexbuffer for %s."), FileManager::GetFileName(m_FileName));
 		return false;
 	}
 	if (FAILED(pEngineDiv->CreateIndexBuffer(indicies, &m_pIndexBuffer)))
 	{
-		//TO-DO: make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create indexbuffer for %s."), FileManager::GetFileName(m_FileName));
 		return false;
 	}
 	m_NrVerticies = (UINT)verticies.size();

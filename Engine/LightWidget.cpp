@@ -24,7 +24,7 @@ bool LightWidget::RenderUITitle(int idx)
         return ImGui::TreeNode("Point Light:");
         break;
     default:
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light type, on %s.", m_pLight->GetObject()->GetName()));
         return false;
         break;
     }
@@ -61,7 +61,7 @@ void LightWidget::RenderUIElement(int idx)
         ImGui::SliderFloat("Intensity", &intensity, 0.0f, 300.0f);
         break;
     default:
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light intensity, on %s.", m_pLight->GetObject()->GetName()));
         break;
     }
     ImGui::InputFloat("Exact", &intensity);       

@@ -16,7 +16,7 @@ public:
 	Component operator=(Component& other) = delete;
 	Component& operator=(Component&& other) = delete;
 
-	inline Object* Getobject() const 
+	inline Object* GetObject() const 
 	{ 
 		return m_pObject; 
 	}

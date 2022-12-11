@@ -2,6 +2,22 @@
 //VEngine - DirectX rasterisation framework
 
 #pragma once
+#pragma region PrecompilerStatements
+#if !defined(DEBUG_APP) && (defined(DEBUG) || defined(_DEBUG))
+		#define DEBUG_APP
+#endif
+
+#ifndef BUILD_APP
+	//In the future make a clean and proper way to change this
+	#define BUILD_APP 0
+	
+	#ifndef DEBUG_APP
+		#undef BUILD_APP
+		#define BUILD_APP 0
+	#endif
+#endif
+#pragma endregion
+
 #pragma region Windows
 //Include the basic windows header file  and the Direct3D header files
 #include <windows.h>
@@ -68,17 +84,17 @@ inline static bool operator==(const DirectX::XMFLOAT2& self, const DirectX::XMFL
 #pragma warning (push, 0) //Ignore all warnings
 #include "d3dx11effect.h"
 #pragma warning (pop)
-#if defined(DEBUG) || defined(_DEBUG)
-#pragma comment(lib, "Effects11d.lib")
+#ifdef DEBUG_APP
+	#pragma comment(lib, "Effects11d.lib")
 #else 
-#pragma comment(lib, "Effects11.lib")
+	#pragma comment(lib, "Effects11.lib")
 #endif
 
 //Commented as it caused issues on other systems, uncomment might cause errors
-//#ifdef _DEBUG
-//#pragma warning (push, 0) //Ignore all warnings
-//#include <vld.h>
-//#pragma warning (pop)
+//#ifdef DEBUG_APP
+//	#pragma warning (push, 0) //Ignore all warnings
+//	#include <vld.h>
+//	#pragma warning (pop)
 //#endif
 
 #pragma warning (push, 0) //Ignore all warnings
@@ -146,9 +162,21 @@ inline static std::string UTF8Encode(const std::wstring& wstr)
 	{
 		return std::string();
 	}
-	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+	size_t sizeNeeded = (size_t)WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
 	std::string newString(sizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &newString[0], sizeNeeded, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &newString[0], (int)sizeNeeded, NULL, NULL);
+	return newString;
+}
+inline static std::string UTF8Encode(const wchar_t wstr[])
+{
+	size_t wcsChars = wcslen(wstr);
+	if (wcsChars == 0)
+	{
+		return std::string();
+	}
+	size_t sizeNeeded = (size_t)WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
+	std::string newString(sizeNeeded, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wcsChars, &newString[0], (int)sizeNeeded, NULL, NULL);
 	return newString;
 }
 //Convert an UTF8 string to a wide Unicode String
@@ -158,9 +186,35 @@ inline static std::wstring UTF8Decode(const std::string& str)
 	{
 		return std::wstring();
 	}
-	int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	size_t sizeNeeded = (size_t)MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
 	std::wstring newWstring(sizeNeeded, 0);
-	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &newWstring[0], sizeNeeded);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &newWstring[0], (int)sizeNeeded);
 	return newWstring;
 }
+inline static std::wstring UTF8Decode(const char str[])
+{
+	size_t strChars = strlen(str);
+	if (strChars == 0)
+	{
+		return std::wstring();
+	}
+	size_t sizeNeeded = (size_t)MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+	std::wstring newString(sizeNeeded, 0);
+	MultiByteToWideChar(CP_UTF8, 0, str, (int)strChars, &newString[0], (int)sizeNeeded);
+	return newString;
+}
+#pragma endregion
+
+#pragma region WCharConversions
+#include "Logger.h"
+
+//String concat unspecified number of params
+#define V_TEXT(wideText, ...) UTF8Encode(wideText)
+#define V_WTEXT(text, ...) UTF8Decode(text)
+
+#if defined(BUILD_APP) && BUILD_APP 
+	#define V_LOG(verbosity, log, ...) ;
+#else
+	#define V_LOG(verbosity, log, ...) Logger::Log(verbosity, log);
+#endif
 #pragma endregion

@@ -18,7 +18,7 @@ std::wstring FileManager::GetLocalFolderPathofFile(const std::wstring& localFile
 	}
 	else 
 	{
-		// TO-DO: Make logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed getting LocalFolderPathofFile."));
 		return L"";
 	}
 }
@@ -36,6 +36,36 @@ std::wstring FileManager::GetAbsoluteExePath()
 	std::wregex reg(L"(.+\\\\).+\\.exe$");
 	std::wsmatch matches;
 	std::regex_match(str, matches, reg);
+
+	if (!matches.size())
+	{
+		return L"";
+	}
+
+	return matches[1].str();
+}
+std::wstring FileManager::GetFileName(const std::wstring& filePath)
+{
+	std::wstring fullFileName = GetFullFileName(filePath);
+
+	//Regex search
+	std::wregex reg(L"(.+)[.].+$");
+	std::wsmatch matches;
+	std::regex_match(fullFileName, matches, reg);
+
+	if (!matches.size())
+	{
+		return L"";
+	}
+
+	return matches[1].str();
+}
+std::wstring FileManager::GetFullFileName(const std::wstring& filePath)
+{
+	//Regex search for the full path withouth the .exe
+	std::wregex reg(L"(.+\\\\).+[.].+$");
+	std::wsmatch matches;
+	std::regex_match(filePath, matches, reg);
 
 	if (!matches.size())
 	{
@@ -366,7 +396,7 @@ Texture* FileManager::LoadDDS(ID3D11Device* pDevice, std::wstring localFileDir)
 	hr = DirectX::CreateDDSTextureFromFile(pDevice, absoluteFilePath.c_str(), &pResource, &pResourceView);
 	if (hr != S_OK)
 	{
-		//TO-DO: Add logger
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed creating a texture from a DDS."));
 		return nullptr;
 	}
 

@@ -70,7 +70,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
 
     if (hr != S_OK) 
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Fatal, V_WTEXT("EngineDevice: Failed making the Device and swapchain."));
     }
 #pragma endregion
 
@@ -80,14 +80,14 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&m_RenderTargets[0]->pTexture);
     if (hr != S_OK)
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the texture for the main rendertarget."));
     }
     
     // Use the back buffer address to create the render target
     hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[0]->pTexture, nullptr, &m_RenderTargets[0]->pRenderTargetView);
     if (hr != S_OK)
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the main rendertarget."));
     }
 
     // We ignore the shader resource view as this is the backbuffer and thus should not be used as a shader resource.
@@ -95,7 +95,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     // hr = m_pDevice->CreateShaderResourceView(m_pRenderTargets[0]->pTexture, nullptr, &m_pRenderTargets[0]->pShaderResourceView);
     // if (hr != S_OK)
     // {
-    //     //TO-DO: make logger
+    //     V_LOG(V_Fatal, V_WTEXT("EngineDevice: Failed making the main rendertarget ShaderResourceView."));
     // }
 #pragma endregion
 
@@ -135,7 +135,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
 
     if (hr != S_OK)
     {
-        // TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the texture for the DepthStencilView."));
     }
 
     if (m_pDepthStencilBuffer != nullptr)
@@ -145,7 +145,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
 
     if (hr != S_OK)
     {
-        // TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the DepthStencilView."));
     }
 #pragma endregion 
 
@@ -221,7 +221,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     HRESULT hr = m_pDevice->CreateTexture2D(&desc, nullptr, &m_RenderTargets[index]->pTexture);
     if (hr != S_OK)
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a texture for a RenderTarget."));
     }
 
     D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
@@ -233,7 +233,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[index]->pTexture, &renderTargetViewDesc, &m_RenderTargets[index]->pRenderTargetView);
     if (hr != S_OK)
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a RenderTarget."));
     }
 
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
@@ -246,7 +246,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     hr = m_pDevice->CreateShaderResourceView(m_RenderTargets[index]->pTexture, &shaderResourceViewDesc, &m_RenderTargets[index]->pShaderResourceView);
     if (hr != S_OK)
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a resourceview for a RenderTarget."));
     }
 
     return m_RenderTargets[index];
@@ -290,7 +290,7 @@ HRESULT EngineDevice::CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Bu
     result = m_pDevice->CreateBuffer(&vertexBD, &vertexMS, ppVertexBuffer);
     if (FAILED(result))
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Warning, V_WTEXT("EngineDevice: Failed making a vertexbuffer."));
     }
     return result;
 }
@@ -320,7 +320,7 @@ HRESULT EngineDevice::CreateIndexBuffer(std::vector<unsigned int>& indices, ID3D
     result = m_pDevice->CreateBuffer(&indexBD, &indexMS, ppIndexBuffer);
     if (FAILED(result))
     {
-        //TO-DO: make logger
+        V_LOG(LogVerbosity::Warning, V_WTEXT("EngineDevice: Failed making a indexbuffer."));
     }
     return result;
 }

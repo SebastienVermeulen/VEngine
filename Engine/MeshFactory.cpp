@@ -21,7 +21,7 @@ MeshAsset* MeshFactory::CreateAsset(const std::wstring& localFilePath)
 	
 	if (FAILED(FileManager::LoadFBX(localFilePath, pAsset)))
 	{
-		//TO-DO: Make logger, preloading the FBX failed
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to load FBX file for %s.", FileManager::GetFileName(localFilePath)));
 	}
 	return pAsset;
 }

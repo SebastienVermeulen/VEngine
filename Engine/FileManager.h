@@ -23,6 +23,8 @@ public:
 	/// </summary>
 	/// <returns>Absolute path of the currently running executable. (Without the 'name.exe')</returns>
 	static std::wstring GetAbsoluteExePath();
+	static std::wstring GetFileName(const std::wstring& localFilePath);
+	static std::wstring GetFullFileName(const std::wstring& localFilePath);
 
 #pragma region Meshes
 public:

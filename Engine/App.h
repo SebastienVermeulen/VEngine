@@ -18,6 +18,7 @@ public:
 	App& operator=(App&& other) = delete;
 
 	int Run();
+	void ResolveMessages(MSG& msg);
 
 	void OpenProject(Project* project);
 
@@ -27,4 +28,7 @@ private:
 	Project* m_pProject;
 	Window* m_pWindow;
 	Renderer* m_pRenderer;
+
+	size_t m_MaxMessagesPerTick;
+	bool m_Shutdown;
 };

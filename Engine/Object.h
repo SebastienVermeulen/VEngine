@@ -31,6 +31,7 @@ public:
 	{
 		return m_pObjectWidget; 
 	}
+	std::string GetName() const;
 
 private:
 	ObjectWidget* m_pObjectWidget;
