@@ -10,7 +10,7 @@ class RendererWidget;
 
 //TO-DO: Make multiple renderers for maintanability
 //This includes splitting forwards and deferred
-class Renderer final
+class Renderer abstract
 {
 public:
 	Renderer(EngineDevice* device);
@@ -21,36 +21,24 @@ public:
 	Renderer operator=(Renderer& other) = delete;
 	Renderer& operator=(Renderer&& other) = delete;
 
-	void Render();
-	void ClearBuffers();
+	virtual void Render() = 0;
+	virtual void ClearBuffers() = 0;
 
 	void AddRenderable(Component* pRenderable);
 	void RemoveRenderable(Component* pRenderable);
 
-	inline void SetRendertype(RenderType renderType)
-	{ 
-		m_RenderType = renderType;
-		//Make sure the other render type has up to date lighting info
-		m_UpdateLighting = true;
-	}
 	inline RenderType GetRenderType() const
 	{
 		return m_RenderType;
-	}	
-	inline void SetFPSLimit(bool FPSLimit)
-	{ 
-		m_VSync = FPSLimit;
-	}
-	inline bool GetFPSLimit() const
-	{
-		return m_VSync;
 	}
 	inline RendererWidget* GetWidget() const
 	{
 		return m_pRendererWidget;
 	}
-	Material* GetDeferredLightingPassMaterial() const;
-	Camera* GetRenderingCamera() const;
+	inline Camera* GetRenderingCamera() const
+	{
+		return m_pRenderingCamera;
+	}
 	inline bool GetShouldUpdateLighting() const
 	{
 		return	m_UpdateLighting;
@@ -73,17 +61,10 @@ protected:
 	void UpdateMatrices(Material* pMaterial) const;
 	void UpdateLights(Material* pMaterial);
 
-	void SetupTargetsDeferredFirstPass() const;
-	void SetupTargetsDeferredSecondPass() const;
-	void SetupTargetsForwardsPass() const;
-
 	void ExplicitlyUnbindingRenderTargets() const;
 #pragma endregion
 
-private:
-	void RenderDeferred();
-	void CreateNDCQuad();
-
+protected:
 	static EngineDevice* m_pDevice;
 
 	RendererWidget* m_pRendererWidget;
@@ -93,15 +74,9 @@ private:
 	std::vector<Camera*> m_pCameraList;
 	Camera* m_pRenderingCamera;
 
-	Material* m_pDeferredLightingMaterial;
-	ID3D11Buffer* m_pScreenQuadVertexBuffer, * m_pScreenQuadIndexBuffer;
-	UINT m_ScreenQuadNrVerticies, m_ScreenQuadNrIndicies;
-
 	DirectX::XMFLOAT4 m_DefaultClearColor;
 
 	RenderType m_RenderType;
 	int m_NrBasisRenderTargets;
-	//TO-DO: make Vsync not scummy
-	bool m_VSync;
 	bool m_UpdateLighting;
 };

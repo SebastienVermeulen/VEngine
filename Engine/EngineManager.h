@@ -5,6 +5,8 @@
 #include "Window.h"
 #include "WindowSettings.h"
 #include "Project.h"
+#include "DeferredDX11.h"
+#include "ForwardsDX11.h"
 
 class EngineManager final : public Singleton<EngineManager>
 {
@@ -30,17 +32,25 @@ public:
 	{
 		return m_pDevice;
 	}
-	inline Renderer* GetRenderer(EngineDevice* device)
+	inline Renderer* GetRenderer(RenderType type)
 	{
-		if (!m_pRenderer)
+		if (m_pRenderers.empty())
 		{
-			m_pRenderer = new Renderer(device);
+			CreateRenderers();
 		}
-		return m_pRenderer;
+
+		for (Renderer* pRenderer : m_pRenderers)
+		{
+			if (pRenderer->GetRenderType() == type)
+			{
+				return pRenderer;
+			}
+		}
+		return nullptr;
 	}
-	inline Renderer* GetRenderer() const
+	inline std::vector<Renderer*> GetAllRenderer() const
 	{
-		return m_pRenderer;
+		return m_pRenderers;
 	}
 	inline Window* GetWindow(HINSTANCE hInstance, WindowSettings windowSettings, const int nCmdShow)
 	{
@@ -64,8 +74,16 @@ public:
 	}
 
 private:
+	//TO-DO: Make this create renderers based on users wishes
+	inline void CreateRenderers() 
+	{
+		m_pRenderers.push_back(new DeferredDX11(m_pDevice));
+		m_pRenderers.push_back(new ForwardsDX11(m_pDevice));
+	}
+
+private:
 	static EngineDevice* m_pDevice;
-	static Renderer* m_pRenderer;
+	std::vector<Renderer*> m_pRenderers;
 	static Window* m_pWindow;
 	static Project* m_pOpenProject;
 };

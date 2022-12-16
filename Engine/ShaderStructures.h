@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-enum RenderType : UINT
+enum class RenderType : UINT
 {
 	forwards = 0,
 	deferred = 1,
@@ -13,7 +13,7 @@ enum class LightType : UINT
 	point = 1,
 };
 //Should be used as a bitmask
-enum VertexFeatures : UINT 
+enum class VertexFeatures : UINT
 {
 	None = 0,
 	P = 1,		//Position

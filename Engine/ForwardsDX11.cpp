@@ -1,0 +1,73 @@
+#include "pch.h"
+#include "ForwardsDX11.h"
+#include "Material.h"
+#include "EngineManager.h"
+#include "EngineDevice.h"
+
+ForwardsDX11::ForwardsDX11(EngineDevice* device)
+	:Renderer(device)
+{
+}
+ForwardsDX11::~ForwardsDX11()
+{
+}
+
+void ForwardsDX11::Render()
+{
+	//No camera == no rendering
+	if (!m_pRenderingCamera)
+	{
+		return;
+	}
+
+	ClearBuffers();
+
+	//**********************************************************************
+	// 	   Main render loop
+	//**********************************************************************
+	for (int i = 0; i < m_Renderables.size(); ++i)
+	{
+		Material* pMaterial = m_Renderables[i]->GetMaterial();
+		if (pMaterial->GetIfDeferred() == RenderType::forwards)
+		{
+			//Set the parameters
+			pMaterial->UpdateParameterValues(m_pDevice);
+			if (m_UpdateLighting)
+			{
+				//Update the lights
+				UpdateLights(m_Renderables[i]->GetMaterial());
+			}
+			//Update matrices
+			UpdateMatrices(m_Renderables[i]);
+			//Set the render target
+			SetupTargetsForwardsPass();
+			//Forwards pass
+			m_Renderables[i]->Render(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), 0);
+		}
+	}
+
+	//**********************************************************************
+	// 	   Final present + UI (ImGui)
+	//**********************************************************************
+	//Reset bool here as it can be flipped by UI interactions
+	m_UpdateLighting = false;
+	UIRenderer::Instance()->RenderUI();
+
+	//Switch the back buffer and the front buffer
+	m_pDevice->GetSwapChain()->Present(m_VSync, 0);
+
+	if (m_RenderType == RenderType::deferred)
+	{
+		//Unhook render targets from material
+		ExplicitlyUnbindingRenderTargets();
+	}
+}
+
+#pragma region RenderHelpers
+void ForwardsDX11::SetupTargetsForwardsPass() const
+{
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+	//Index 0 is guaranted to exists by design, but is the final render target (swapchain buffer)
+	pContext->OMSetRenderTargets(1, &m_pDevice->GetRenderTarget(0)->pRenderTargetView, m_pDevice->GetDepthBuffer());
+}
+#pragma region

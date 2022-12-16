@@ -11,8 +11,10 @@
 App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 	:m_pWindow{}
     , m_pProject{}
-    , m_pRenderer{}
+    , m_pRenderers{}
+    , m_RenderType{RenderType::deferred}
     , m_MaxMessagesPerTick{ 10 }
+    , m_VSync{ true } // Set to true atm. as the engine can get "crazy" fps and I don't want to create fire 
     , m_Shutdown{ false }
 {
     V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Initializations. ---"));
@@ -42,16 +44,15 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
 {
     EngineManager* pEngineManager = EngineManager::Instance();
 
-    m_pWindow = pEngineManager->GetWindow(hInstance, settings, nCmdShow);
-	if (m_pWindow == nullptr) 
+    Window* pWindow = pEngineManager->GetWindow(hInstance, settings, nCmdShow);
+	if (pWindow == nullptr)
 	{
         V_LOG(LogVerbosity::Fatal, V_WTEXT("App: Failed to get window."));
 		return E_FAIL;
 	}
     
 	//Init the device through the locator
-	EngineDevice* pDevice = pEngineManager->GetDevice(m_pWindow->GetHWND(), &settings);
-	m_pRenderer = pEngineManager->GetRenderer(pDevice);
+	EngineDevice* pDevice = pEngineManager->GetDevice(pWindow->GetHWND(), &settings);
     if (m_pProject)
     {
         m_pProject->Init();
