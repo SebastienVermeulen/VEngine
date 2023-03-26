@@ -21,12 +21,14 @@ MainScene::~MainScene()
 bool MainScene::Init()
 {
 	//Settings
-	Renderer* pRenderer = EngineManager::Instance()->GetRenderer();
-	pRenderer->SetRendertype(RenderType::deferred);
+	EngineSettings::Instance()->SetRendertype(RenderType::deferred);
 	
 	std::string objectName = "Camera";
 	Object* pObject = CreateObject(objectName);
-	pObject->AddComponent(new Camera(CameraSettings::Default()));
+	Camera* pCamera = new Camera(CameraSettings::Default());
+	pCamera->AddRenderType(RenderType::deferred);
+	pCamera->AddRenderType(RenderType::forwards);
+	pObject->AddComponent(pCamera);
 	DirectX::XMFLOAT3 newCamPos = { 0.0f, 0.0f, -5.0f };
 	pObject->GetTransform()->Translate(newCamPos);
 	 
@@ -34,6 +36,7 @@ bool MainScene::Init()
 	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
 	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
+	pObject->SetRenderType(pMeshComp, RenderType::deferred);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
 	Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
@@ -43,6 +46,7 @@ bool MainScene::Init()
 	objectName = "ForwardsObject";
 	pObject = CreateObject(objectName);
 	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
+	pObject->SetRenderType(pMeshComp, RenderType::forwards);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
 	pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx");
@@ -53,12 +57,16 @@ bool MainScene::Init()
 	objectName = "DirectionalLight";
 	pObject = CreateObject(objectName);
 	m_pDirectionalLight = dynamic_cast<DirectionalLight*>(pObject->AddComponent(new DirectionalLight()));
+	pObject->AddRenderType(m_pDirectionalLight, RenderType::deferred);
+	pObject->AddRenderType(m_pDirectionalLight, RenderType::forwards);
 	m_pDirectionalLight->SetIntensity(5.0f); 
 	pObject->GetTransform()->Rotate(-45,180,0);
 	objectName = "PointLight";
 	pObject = CreateObject(objectName);
 	pObject->GetTransform()->Translate(-7.0f,0.0f,-7.0f);
 	m_pPointLight = dynamic_cast<PointLight*>(pObject->AddComponent(new PointLight()));
+	pObject->AddRenderType(m_pPointLight, RenderType::deferred);
+	pObject->AddRenderType(m_pPointLight, RenderType::forwards);
 	m_pPointLight->SetIntensity(100.0f);
 	m_pPointLight->SetColor(DirectX::XMFLOAT3(0.1f,0.6f,0.95f));
 

@@ -3,6 +3,7 @@
 #include "Singleton.h"
 #include "UIRenderer.h"
 #include "EngineManager.h"
+#include "EngineSettings.h"
 #include "EngineDevice.h"
 #include "ShaderStructures.h"
 #include "Object.h"
@@ -14,9 +15,10 @@
 #include "RendererWidget.h"
 
 EngineDevice* Renderer::m_pDevice = nullptr;
+EngineSettings* Renderer::m_pEngineSettings = nullptr;
 
 Renderer::Renderer(EngineDevice* pDevice)
-	:m_pRendererWidget{new RendererWidget(this)}
+	:m_pRendererWidget{new RendererWidget()}
 	, m_Renderables {}
 	, m_Lights{}
 	, m_pCameraList{}
@@ -26,6 +28,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_UpdateLighting{false}
 {
     m_pDevice = pDevice;
+	m_pEngineSettings = EngineSettings::Instance();
 
 	m_Lights.reserve(Light::GetMaxNrLights());
 }
@@ -47,24 +50,35 @@ Renderer::~Renderer()
 #pragma region RenderablesStorage
 void Renderer::AddRenderable(Component* pRenderable)
 {
+	EngineManager* pEngineManager = EngineManager::Instance();
+
 	//Try to cast to a camera
 	//If it is a camera add to camera list and skip rest
 	if (dynamic_cast<Camera*>(pRenderable))
 	{
-		NewCameraAddedToScene((Camera*)pRenderable);
+		for (RenderType type : pRenderable->GetRenderTypes()) 
+		{
+			pEngineManager->GetRenderer(type)->NewCameraAddedToScene((Camera*)pRenderable);
+		}
 		return;
 	}
 	//Try to cast to a light
 	//If it is a light add to light list and skip rest
 	if (dynamic_cast<Light*>(pRenderable))
 	{
-		NewLightAddedToScene((Light*)pRenderable);
+		for (RenderType type : pRenderable->GetRenderTypes())
+		{
+			pEngineManager->GetRenderer(type)->NewLightAddedToScene((Light*)pRenderable);
+		}
 		return;
 	}
 
 	if (std::find(m_Renderables.begin(), m_Renderables.end(), pRenderable) == m_Renderables.end())
 	{
-		m_Renderables.push_back(pRenderable);
+		for (RenderType type : pRenderable->GetRenderTypes())
+		{
+			pEngineManager->GetRenderer(type)->GetRenderables().push_back(pRenderable);
+		}
 	}
 }
 void Renderer::RemoveRenderable(Component* pRenderable)
@@ -195,16 +209,10 @@ void Renderer::UpdateLights(Material* pMaterial)
 
 void Renderer::ExplicitlyUnbindingRenderTargets() const
 {
-	//DX11 is lazy by design, once needed it will implicitly unbind
-	//Good practice is to unbind yourself once you are done so the device doesn't have to
-	//Data might change from input to output or opposite then you need to act
-	//https://stackoverflow.com/questions/52966262/id3dx11effectshaderresourcevariablesetresourcenull-cant-unbind-resources
-	//https://www.gamedev.net/forums/topic/601013-directx11-multiple-render-target/
 	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	ID3D11ShaderResourceView* srvs = nullptr;
 	pContext->PSSetShaderResources(0, 1, &srvs);
 	ID3D11RenderTargetView* nullRTV = nullptr; 
 	pContext->OMSetRenderTargets(1, &nullRTV, nullptr);
-	m_pDeferredLightingMaterial->ExplicitlyUnbindingResources(m_pDevice);
 }
 #pragma endregion

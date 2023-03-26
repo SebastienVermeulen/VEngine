@@ -2,14 +2,13 @@
 #include "ShaderStructures.h"
 
 class EngineDevice;
+class EngineSettings;
 class Camera;
 class Component;
 class Material;
 class Light;
 class RendererWidget;
 
-//TO-DO: Make multiple renderers for maintanability
-//This includes splitting forwards and deferred
 class Renderer abstract
 {
 public:
@@ -26,6 +25,10 @@ public:
 
 	void AddRenderable(Component* pRenderable);
 	void RemoveRenderable(Component* pRenderable);
+	inline std::vector<Component*>& GetRenderables() 
+	{
+		return m_Renderables;
+	}
 
 	inline RenderType GetRenderType() const
 	{
@@ -61,11 +64,17 @@ protected:
 	void UpdateMatrices(Material* pMaterial) const;
 	void UpdateLights(Material* pMaterial);
 
-	void ExplicitlyUnbindingRenderTargets() const;
+	// DX11 is lazy by design, once needed it will implicitly unbind
+	// Good practice is to unbind yourself once you are done so the device doesn't have to
+	// Data might change from input to output or opposite then you need to act
+	// https://stackoverflow.com/questions/52966262/id3dx11effectshaderresourcevariablesetresourcenull-cant-unbind-resources
+	// https://www.gamedev.net/forums/topic/601013-directx11-multiple-render-target/
+	virtual void ExplicitlyUnbindingRenderTargets() const;
 #pragma endregion
 
 protected:
 	static EngineDevice* m_pDevice;
+	static EngineSettings* m_pEngineSettings;
 
 	RendererWidget* m_pRendererWidget;
 

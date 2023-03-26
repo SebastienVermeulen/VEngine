@@ -3,7 +3,9 @@
 #include "MeshComponent.h"
 #include "MaterialWidget.h"
 #include "EngineManager.h"
+#include "EngineSettings.h"
 #include "Renderer.h"
+#include "RenderUtils.h"
 
 MeshWidget::MeshWidget(MeshComponent* pMeshComponent)
     :Widget()
@@ -20,6 +22,12 @@ bool MeshWidget::RenderUITitle(int idx)
 }
 void MeshWidget::RenderUIElement(int idx)
 {
+    EngineManager* pEngineManager = EngineManager::Instance();
+    if (!IsRenderTypeInVector(EngineSettings::Instance()->GetRenderType(), m_pMeshComponent->GetRenderTypes()))
+    {
+        return;
+    }
+
     MaterialWidget* pMaterialWidget = m_pMeshComponent->GetMaterial()->GetWidget();
     if (pMaterialWidget)
     {
@@ -38,11 +46,11 @@ void MeshWidget::RenderUIElement(int idx)
     //Should Renderable Render
     if (shouldRender)
     {
-        EngineManager::Instance()->GetRenderer()->AddRenderable(m_pMeshComponent);
+        pEngineManager->GetActiveRenderer()->AddRenderable(m_pMeshComponent);
     }
     else 
     {
-        EngineManager::Instance()->GetRenderer()->RemoveRenderable(m_pMeshComponent);
+        pEngineManager->GetActiveRenderer()->RemoveRenderable(m_pMeshComponent);
     }
 
     ImGui::TreePop();

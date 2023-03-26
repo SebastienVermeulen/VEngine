@@ -2,8 +2,6 @@
 #include "Renderer.h"
 
 class EngineDevice;
-class Material;
-class RendererWidget;
 
 class ForwardsDX11 final : public Renderer
 {
@@ -18,4 +16,7 @@ public:
 
 	virtual void Render() override;
 	virtual void ClearBuffers() override;
+
+private:
+	void SetupTargetsForwardsPass() const;
 };

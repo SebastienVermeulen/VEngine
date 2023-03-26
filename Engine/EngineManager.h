@@ -1,10 +1,13 @@
 #pragma once
 #include "Singleton.h"
 #include "EngineDevice.h"
+#include "EngineSettings.h"
 #include "Renderer.h"
 #include "Window.h"
 #include "WindowSettings.h"
 #include "Project.h"
+
+//TO-DO: Remove these dependencies, or at least move them to the cpp
 #include "DeferredDX11.h"
 #include "ForwardsDX11.h"
 
@@ -19,6 +22,8 @@ public:
 	EngineManager operator=(EngineManager& other) = delete;
 	EngineManager& operator=(EngineManager&& other) = delete;
 
+	void Render();
+
 	inline EngineDevice* GetDevice(HWND windowHandle, const WindowSettings* settings)
 	{
 		if (!m_pDevice)
@@ -31,6 +36,23 @@ public:
 	inline EngineDevice* GetDevice() const
 	{
 		return m_pDevice;
+	}
+	inline Renderer* GetActiveRenderer()
+	{
+		if (m_pRenderers.empty())
+		{
+			CreateRenderers();
+		}
+
+		RenderType type = EngineSettings::Instance()->GetRenderType();
+		for (Renderer* pRenderer : m_pRenderers)
+		{
+			if (pRenderer->GetRenderType() == type)
+			{
+				return pRenderer;
+			}
+		}
+		return nullptr;
 	}
 	inline Renderer* GetRenderer(RenderType type)
 	{
@@ -48,7 +70,7 @@ public:
 		}
 		return nullptr;
 	}
-	inline std::vector<Renderer*> GetAllRenderer() const
+	inline std::vector<Renderer*> GetAllRenderers() const
 	{
 		return m_pRenderers;
 	}
@@ -72,18 +94,28 @@ public:
 	{
 		return m_pOpenProject;
 	}
+	inline std::vector<RenderType>& GetAvailableRenderTypes() 
+	{
+		return m_pRenderTypes;
+	}
 
 private:
-	//TO-DO: Make this create renderers based on users wishes
+	//TO-DO: Make this create renderers based on users wishes, lets say the main uberlevel is deferredDX11 then only that renderer needs to be allocated
 	inline void CreateRenderers() 
 	{
-		m_pRenderers.push_back(new DeferredDX11(m_pDevice));
-		m_pRenderers.push_back(new ForwardsDX11(m_pDevice));
+		AddRenderer(new DeferredDX11(m_pDevice));
+		AddRenderer(new ForwardsDX11(m_pDevice));
+	}
+	inline void AddRenderer(Renderer* pRenderer) 
+	{
+		m_pRenderers.push_back(pRenderer);
+		m_pRenderTypes.push_back(pRenderer->GetRenderType());
 	}
 
 private:
 	static EngineDevice* m_pDevice;
 	std::vector<Renderer*> m_pRenderers;
+	std::vector<RenderType> m_pRenderTypes;
 	static Window* m_pWindow;
 	static Project* m_pOpenProject;
 };

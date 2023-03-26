@@ -6,7 +6,7 @@ class Renderer;
 class RendererWidget : public Widget
 {
 public:
-	RendererWidget(Renderer* pRenderer);
+	RendererWidget();
 	virtual ~RendererWidget();
 
 	RendererWidget(RendererWidget& other) = delete;
@@ -16,7 +16,4 @@ public:
 
 	virtual bool RenderUITitle(int idx) override;
 	virtual void RenderUIElement(int idx) override;
-
-private:
-	Renderer* m_pRenderer;
 };

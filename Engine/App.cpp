@@ -1,20 +1,16 @@
 #include "pch.h"
 #include "App.h"
 #include "Window.h"
-#include "WindowSettings.h"
 #include "Renderer.h"
 #include "EngineManager.h"
 #include "Project.h"
 #include "AppTime.h"
 #include "UIRenderer.h"
+#include "EngineSettings.h"
 
 App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
-	:m_pWindow{}
-    , m_pProject{}
-    , m_pRenderers{}
-    , m_RenderType{RenderType::deferred}
+	:m_pProject{}
     , m_MaxMessagesPerTick{ 10 }
-    , m_VSync{ true } // Set to true atm. as the engine can get "crazy" fps and I don't want to create fire 
     , m_Shutdown{ false }
 {
     V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Initializations. ---"));
@@ -30,11 +26,10 @@ App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 }
 App::~App() 
 {
-    EngineManager::ReleaseInstance();
-    UIRenderer::ReleaseInstance();
-    AppTime::ReleaseInstance();
-
-    SafeDelete(m_pProject);
+    if (Cleanup() != S_OK) 
+    {
+        V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Cleanup remains unfinished. ---"));
+    }
 
     V_LOG(LogVerbosity::Core, V_WTEXT("--- VEngine: Finished cleanup. ---"));
 }
@@ -43,6 +38,12 @@ App::~App()
 HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 {
     EngineManager* pEngineManager = EngineManager::Instance();
+
+    //TO-DO: Engine settigns should be adjustable from some sort of ini file
+    //Apply basic settings
+    EngineSettings* pEngineSettings = EngineSettings::Instance();
+    pEngineSettings->SetVSync(true);
+    pEngineSettings->SetRendertypeClean(RenderType::deferred);
 
     Window* pWindow = pEngineManager->GetWindow(hInstance, settings, nCmdShow);
 	if (pWindow == nullptr)
@@ -58,12 +59,27 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
         m_pProject->Init();
     }
 
+    //TO-DO: Engine settings should not hold lighting states, only settings, this needs to be moved to a more temporary structure
+    //Force lighting to be recalculated
+    pEngineSettings->MarkAllLightingDirty(pEngineManager);
+
 	return S_OK;
+}
+HRESULT App::Cleanup()
+{
+    EngineSettings::ReleaseInstance();
+    EngineManager::ReleaseInstance();
+    UIRenderer::ReleaseInstance();
+    AppTime::ReleaseInstance();
+
+    return S_OK;
 }
 #pragma endregion
 
 int App::Run()
 {
+    EngineManager* pEngineManager = EngineManager::Instance();
+
     //This struct holds Windows event messages
     MSG msg{};
 
@@ -82,7 +98,7 @@ int App::Run()
         m_pProject->LateUpdate(deltaTime);
 
         //Run game code
-        m_pRenderer->Render();
+        pEngineManager->Render();
 
         //Resolve after update, to make the quit event instant
         ResolveMessages(msg);

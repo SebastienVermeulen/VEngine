@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "ComponentStructure.h"
 #include "Object.h"
+#include "RenderUtils.h"
 
 ComponentStructure::ComponentStructure()
 	:m_Components{}
@@ -19,14 +20,32 @@ Component* ComponentStructure::AddComponent(Component* pComponent)
 	{
 		m_Components.push_back(pComponent);
 
+		// Initialization
 		if (!pComponent->HasInit())
 		{
 			pComponent->Init();
 			pComponent->MarkAsInit();
 		}
+		// Render backend
 		if (pComponent->ShouldRender())
 		{
-			EngineManager::Instance()->GetRenderer()->AddRenderable(pComponent);
+			EngineManager* pEngineManager = EngineManager::Instance();
+
+			// Has overlapping renderer
+			std::vector<RenderType> types = FilterRenderTypesFromVectors(pEngineManager->GetAvailableRenderTypes(), pComponent->GetRenderTypes());
+			if (types.size())
+			{
+				for (RenderType type : types)
+				{
+					AddRenderType(pComponent, type);
+				}
+			}
+			// Default to current renderer
+			else 
+			{
+				RenderType type = EngineSettings::Instance()->GetRenderType();
+				SetRenderType(pComponent, type);
+			}
 		}
 
 		pComponent->SetObject(static_cast<Object*>(this));
@@ -45,10 +64,52 @@ void ComponentStructure::RemoveComponent(Component* pComponent)
 
 			if (pComponent->ShouldRender())
 			{
-				EngineManager::Instance()->GetRenderer()->RemoveRenderable(pComponent);
+				EngineManager* pEngineManager = EngineManager::Instance();
+
+				std::vector<RenderType> types = FilterRenderTypesFromVectors(pEngineManager->GetAvailableRenderTypes(), pComponent->GetRenderTypes());
+				for (RenderType type : types)
+				{
+					RemoveRenderType(pComponent, type);
+				}
 			}
 
 			pComponent->SetObject(nullptr);
 		}
 	}
+}
+
+void ComponentStructure::SetRenderType(Component* pObject, RenderType type)
+{
+	// A bit lazy
+	ClearRenderTypes(pObject);
+	AddRenderType(pObject, type);
+}
+void ComponentStructure::ClearRenderTypes(Component* pObject)
+{
+	for (RenderType type : pObject->GetRenderTypes())
+	{
+		RemoveRenderType(pObject, type);
+	}
+	pObject->ClearRenderTypes();
+}
+void ComponentStructure::AddRenderType(Component* pObject, RenderType type)
+{
+	EngineManager* pEngineManager = EngineManager::Instance();
+	AddRenderType(pEngineManager, pObject, type);
+}
+void ComponentStructure::RemoveRenderType(Component* pObject, RenderType type)
+{
+	EngineManager* pEngineManager = EngineManager::Instance();
+	RemoveRenderType(pEngineManager, pObject, type);
+}
+
+void ComponentStructure::AddRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type) 
+{
+	pObject->AddRenderType(type);
+	pEngineManager->GetRenderer(type)->AddRenderable(pObject);
+}
+void ComponentStructure::RemoveRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type) 
+{
+	pObject->RemoveRenderType(type);
+	pEngineManager->GetRenderer(type)->RemoveRenderable(pObject);
 }

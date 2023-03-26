@@ -62,7 +62,7 @@ void UIRenderer::RenderUI()
 
 	if (CollapsingHeader("Engine Settings:"))
 	{
-		RendererWidget* pRendererWidget = EngineManager::Instance()->GetRenderer()->GetWidget();
+		RendererWidget* pRendererWidget = EngineManager::Instance()->GetActiveRenderer()->GetWidget();
 		if (pRendererWidget->RenderUITitle(0))
 		{
 			pRendererWidget->RenderUIElement(0);

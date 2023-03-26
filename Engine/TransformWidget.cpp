@@ -2,6 +2,7 @@
 #include "TransformWidget.h"
 #include "EngineManager.h"
 #include "Transform.h"
+#include "RenderUtils.h"
 
 TransformWidget::TransformWidget(Transform* pTransform)
     :Widget()
@@ -18,6 +19,9 @@ bool TransformWidget::RenderUITitle(int idx)
 }
 void TransformWidget::RenderUIElement(int idx)
 {
+    EngineManager* pEngineManager = EngineManager::Instance();
+    RenderType renderType = EngineSettings::Instance()->GetRenderType();
+    
     ImGui::Unindent();
 
     //Separate each element with a line
@@ -31,7 +35,7 @@ void TransformWidget::RenderUIElement(int idx)
     //(perhaps marking as dirty? to be picked up by lightingwidgets?)
     if (std::fabs(pos.x - positionArr[0]) > DBL_EPSILON || std::fabs(pos.y - positionArr[1]) > DBL_EPSILON || std::fabs(pos.z - positionArr[2]) > DBL_EPSILON)
     {
-        EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetRenderer(renderType)->SetShouldUpdateLighting(true);
     }
 
     m_pTransform->Translate(positionArr[0], positionArr[1], positionArr[2]);
@@ -45,7 +49,7 @@ void TransformWidget::RenderUIElement(int idx)
     
     if (std::fabs(rot.x - rotationArr[0]) > DBL_EPSILON || std::fabs(rot.y - rotationArr[1]) > DBL_EPSILON || std::fabs(rot.z - rotationArr[2]) > DBL_EPSILON)
     {
-        EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetRenderer(renderType)->SetShouldUpdateLighting(true);
     }
 
     m_pTransform->Rotate(rotationArr[0], rotationArr[1], rotationArr[2]);
@@ -59,7 +63,7 @@ void TransformWidget::RenderUIElement(int idx)
 
     if (std::fabs(scale.x - scaleArray[0]) > DBL_EPSILON || std::fabs(scale.y - scaleArray[1]) > DBL_EPSILON || std::fabs(scale.z - scaleArray[2]) > DBL_EPSILON)
     {
-        EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetRenderer(renderType)->SetShouldUpdateLighting(true);
     }
 
     m_pTransform->Scale(scaleArray[0], scaleArray[1], scaleArray[2]);

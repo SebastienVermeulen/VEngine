@@ -3,10 +3,14 @@
 #include "Material.h"
 #include "EngineManager.h"
 #include "EngineDevice.h"
+#include "Component.h"
+#include "UIRenderer.h"
+#include "EngineSettings.h"
 
 ForwardsDX11::ForwardsDX11(EngineDevice* device)
 	:Renderer(device)
 {
+	m_RenderType = RenderType::forwards;
 }
 ForwardsDX11::~ForwardsDX11()
 {
@@ -54,13 +58,37 @@ void ForwardsDX11::Render()
 	UIRenderer::Instance()->RenderUI();
 
 	//Switch the back buffer and the front buffer
-	m_pDevice->GetSwapChain()->Present(m_VSync, 0);
+	m_pDevice->GetSwapChain()->Present(m_pEngineSettings->GetIfVSync(), 0);
 
 	if (m_RenderType == RenderType::deferred)
 	{
 		//Unhook render targets from material
 		ExplicitlyUnbindingRenderTargets();
 	}
+}
+void ForwardsDX11::ClearBuffers()
+{
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+	//Clear the main target buffer to a deep blue
+	pContext->ClearRenderTargetView(m_pDevice->GetRenderTarget(0)->pRenderTargetView, &m_DefaultClearColor.x);
+	//Clear the other buffers as well with black
+	RenderTarget* pRenderTarget;
+	ID3D11RenderTargetView* pViewToClear;
+	int index = 1;
+	do
+	{
+		pRenderTarget = m_pDevice->GetRenderTarget(index);
+		if (pRenderTarget)
+		{
+			pViewToClear = pRenderTarget->pRenderTargetView;
+			const DirectX::XMFLOAT4 black = { 0,0,0,0 };
+			pContext->ClearRenderTargetView(pViewToClear, &black.x);
+			//Get the next render target
+			++index;
+		}
+	} while (pRenderTarget && pViewToClear);
+	//Clear the depth buffer to the max value
+	pContext->ClearDepthStencilView(m_pDevice->GetDepthBuffer(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 #pragma region RenderHelpers

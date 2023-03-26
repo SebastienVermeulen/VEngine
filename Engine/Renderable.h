@@ -1,7 +1,8 @@
 #pragma once
 #include "Material.h"
-#include "EngineDevice.h"
 #include "EngineManager.h"
+#include "EngineDevice.h"
+#include "ShaderStructures.h"
 
 class Renderable abstract
 {
@@ -19,9 +20,37 @@ public:
 		}
 	}
 	inline Material* GetMaterial() const { return m_pMaterial; }
+	inline std::vector<RenderType>& GetRenderTypes() { return m_RenderTypes; }
 
-	inline bool ShouldRender() { return m_ShouldRender; }
+	inline bool ShouldRender() const { return m_ShouldRender; }
 	inline void ShouldRender(bool shouldRender) { m_ShouldRender = shouldRender; }
+
+	// The following 4 functions should only update internal types
+	inline void SetRenderType(RenderType type)
+	{
+		// A bit lazy
+		ClearRenderTypes();
+		AddRenderType(type);
+	}
+	inline void ClearRenderTypes()
+	{
+		for (RenderType type : m_RenderTypes)
+		{
+			RemoveRenderType(type);
+		}
+		m_RenderTypes.clear();
+	}
+	inline void AddRenderType(RenderType type)
+	{
+		if (std::find(m_RenderTypes.begin(), m_RenderTypes.end(), type) == m_RenderTypes.end())
+		{
+			m_RenderTypes.push_back(type);
+		}
+	}
+	inline void RemoveRenderType(RenderType type)
+	{
+		m_RenderTypes.erase(std::find(m_RenderTypes.begin(), m_RenderTypes.end(), type));
+	}
 
 protected:
 	inline Renderable() 
@@ -40,5 +69,6 @@ protected:
 	Renderable& operator=(Renderable&& other) = delete;
 
 	Material* m_pMaterial;
+	std::vector<RenderType> m_RenderTypes;
 	bool m_ShouldRender;
 };

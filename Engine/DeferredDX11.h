@@ -21,6 +21,9 @@ public:
 
 	Material* GetDeferredLightingPassMaterial() const;
 
+protected:
+	virtual void ExplicitlyUnbindingRenderTargets() const override;
+
 private:
 	void SetupTargetsDeferredFirstPass() const;
 	void SetupTargetsDeferredSecondPass() const;

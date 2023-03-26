@@ -4,10 +4,11 @@
 #include "MaterialWidget.h"
 #include "Material.h"
 #include "MaterialWidget.h"
+#include "EngineManager.h"
+#include "EngineSettings.h"
 
-RendererWidget::RendererWidget(Renderer* pRenderer)
+RendererWidget::RendererWidget()
     :Widget()
-    , m_pRenderer{ pRenderer }
 {
 }
 RendererWidget::~RendererWidget()
@@ -20,32 +21,39 @@ bool RendererWidget::RenderUITitle(int idx)
 }
 void RendererWidget::RenderUIElement(int idx)
 {
+    EngineManager* pEngineManager = EngineManager::Instance();
+    EngineSettings* pEngineSettings = EngineSettings::Instance();
+
     ImGui::Unindent();
 
     //Separate each element with a line
     ImGui::Separator();
 
-    RenderType renderType = m_pRenderer->GetRenderType();
+    RenderType renderType = pEngineSettings->GetRenderType();
     ImGui::Combo("RenderType", (int*)&renderType, "Forwards\0Deferred\0\0");
-    m_pRenderer->SetRendertype(renderType);
+    pEngineSettings->SetRendertype(renderType);
 
     //Separate each element with a line
     ImGui::Separator();
 
-    bool vsync = m_pRenderer->GetFPSLimit();
+    bool vsync = pEngineSettings->GetIfVSync();
     std::string label{};
     ImGui::Checkbox("Vsync", &vsync);
-    m_pRenderer->SetFPSLimit(vsync);
+    pEngineSettings->SetVSync(vsync);
 
     //Separate each element with a line
     ImGui::Separator();
 
-    ImGui::Text("Deferred Lighting: ");
-    ImGui::SameLine();
-    Widget* pMaterialWidget = m_pRenderer->GetDeferredLightingPassMaterial()->GetWidget();
-    if (pMaterialWidget->RenderUITitle(0))
+    // Only show this for Deferred rendering
+    if (renderType == RenderType::deferred)
     {
-        pMaterialWidget->RenderUIElement(0);
+        ImGui::Text("Deferred Lighting: ");
+        ImGui::SameLine();
+        Widget* pMaterialWidget = ((DeferredDX11*)pEngineManager->GetRenderer(renderType))->GetDeferredLightingPassMaterial()->GetWidget();
+        if (pMaterialWidget->RenderUITitle(0))
+        {
+            pMaterialWidget->RenderUIElement(0);
+        }
     }
 
     ImGui::Indent();

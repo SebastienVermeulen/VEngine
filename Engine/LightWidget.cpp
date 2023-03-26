@@ -2,7 +2,9 @@
 #include "LightWidget.h"
 #include "Light.h"
 #include "EngineManager.h"
+#include "EngineSettings.h"
 #include "Renderer.h"
+#include "RenderUtils.h"
 
 LightWidget::LightWidget(Light* pLight)
     :Widget()
@@ -31,6 +33,12 @@ bool LightWidget::RenderUITitle(int idx)
 }
 void LightWidget::RenderUIElement(int idx)
 {
+    EngineManager* pEngineManager = EngineManager::Instance();
+    if (!IsRenderTypeInVector(EngineSettings::Instance()->GetRenderType(), m_pLight->GetRenderTypes()))
+    {
+        return;
+    }
+
     //Separate each element with a line
     ImGui::Separator();
 
@@ -44,7 +52,7 @@ void LightWidget::RenderUIElement(int idx)
     
     if (std::fabs(oldColor[0] - lightColor[0]) > DBL_EPSILON || std::fabs(oldColor[1] - lightColor[1]) > DBL_EPSILON || std::fabs(oldColor[2] - lightColor[2]) > DBL_EPSILON)
     {
-         EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetActiveRenderer()->SetShouldUpdateLighting(true);
     }
 
     //Separate each element with a line
@@ -69,7 +77,7 @@ void LightWidget::RenderUIElement(int idx)
 
     if (std::fabs(intensity - oldIntensity) > DBL_EPSILON)
     {
-        EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetActiveRenderer()->SetShouldUpdateLighting(true);
     }
 
     //Separate each element with a line
@@ -82,7 +90,7 @@ void LightWidget::RenderUIElement(int idx)
 
     if (shouldRender != oldShouldRender)
     {
-        EngineManager::Instance()->GetRenderer()->SetShouldUpdateLighting(true);
+        pEngineManager->GetActiveRenderer()->SetShouldUpdateLighting(true);
     }
 
     ImGui::Indent();

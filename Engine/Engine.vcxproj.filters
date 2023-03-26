@@ -67,6 +67,18 @@
     <Filter Include="Engine Files\Logging">
       <UniqueIdentifier>{798e9b02-48a4-4d72-9c34-eebfbd0ef3d4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\Rendering\RenderTypes">
+      <UniqueIdentifier>{be27186c-ab94-4c99-994c-c6d4ab9e8bfa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Rendering\Core">
+      <UniqueIdentifier>{92864ccf-d37a-4835-88d1-86268c683e56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Rendering\Camera">
+      <UniqueIdentifier>{0978f168-bed0-44a6-896d-43d2adc88c1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Rendering\Texture">
+      <UniqueIdentifier>{cfcbe2da-b222-44a3-92ae-9a509dcdd8b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -83,9 +95,6 @@
     </ClCompile>
     <ClCompile Include="EngineDevice.cpp">
       <Filter>Engine Files\App</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Engine Files\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Engine Files\Scene</Filter>
@@ -108,14 +117,8 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Engine Files\Scene\Objects</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="FileManager.cpp">
       <Filter>Engine Files\App</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Engine Files\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="PointLight.cpp">
       <Filter>Engine Files\Component\Derived\Lights</Filter>
@@ -192,6 +195,24 @@
     <ClCompile Include="Logger.cpp">
       <Filter>Engine Files\Logging</Filter>
     </ClCompile>
+    <ClCompile Include="DeferredDX11.cpp">
+      <Filter>Engine Files\Rendering\RenderTypes</Filter>
+    </ClCompile>
+    <ClCompile Include="ForwardsDX11.cpp">
+      <Filter>Engine Files\Rendering\RenderTypes</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineSettings.cpp">
+      <Filter>Engine Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Engine Files\Rendering\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Engine Files\Rendering\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Engine Files\Rendering\Texture</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -215,9 +236,6 @@
     <ClInclude Include="WindowSettings.h">
       <Filter>Engine Files\App</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Engine Files\Scene</Filter>
     </ClInclude>
@@ -233,12 +251,6 @@
     <ClInclude Include="Component.h">
       <Filter>Engine Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderStructures.h">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderable.h">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="FileManager.h">
       <Filter>Engine Files\App</Filter>
     </ClInclude>
@@ -253,12 +265,6 @@
     </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>Engine Files\Scene\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Engine Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Engine Files\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="PointLight.h">
       <Filter>Engine Files\Component\Derived\Lights</Filter>
@@ -340,6 +346,33 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Engine Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredDX11.h">
+      <Filter>Engine Files\Rendering\RenderTypes</Filter>
+    </ClInclude>
+    <ClInclude Include="ForwardsDX11.h">
+      <Filter>Engine Files\Rendering\RenderTypes</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineSettings.h">
+      <Filter>Engine Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderable.h">
+      <Filter>Engine Files\Rendering\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Engine Files\Rendering\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderStructures.h">
+      <Filter>Engine Files\Rendering\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Engine Files\Rendering\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Engine Files\Rendering\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderUtils.h">
+      <Filter>Engine Files\Rendering\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

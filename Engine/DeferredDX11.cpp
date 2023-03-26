@@ -4,6 +4,9 @@
 #include "EngineManager.h"
 #include "EngineDevice.h"
 #include "ShaderStructures.h"
+#include "Component.h"
+#include "UIRenderer.h"
+#include "EngineSettings.h"
 
 DeferredDX11::DeferredDX11(EngineDevice* device) 
 	:Renderer(device)
@@ -93,7 +96,7 @@ void DeferredDX11::Render()
 	UIRenderer::Instance()->RenderUI();
 
 	//Switch the back buffer and the front buffer
-	m_pDevice->GetSwapChain()->Present(m_VSync, 0);
+	m_pDevice->GetSwapChain()->Present(EngineSettings::Instance()->GetIfVSync(), 0);
 
 	if (m_RenderType == RenderType::deferred)
 	{
@@ -250,6 +253,16 @@ void DeferredDX11::CreateNDCQuad()
 		V_LOG(LogVerbosity::Warning, V_WTEXT("Renderer: Failed to create indexbuffer for defered render quad."));
 		return;
 	}
+}
+
+void DeferredDX11::ExplicitlyUnbindingRenderTargets() const
+{
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+	ID3D11ShaderResourceView* srvs = nullptr;
+	pContext->PSSetShaderResources(0, 1, &srvs);
+	ID3D11RenderTargetView* nullRTV = nullptr;
+	pContext->OMSetRenderTargets(1, &nullRTV, nullptr);
+	m_pDeferredLightingMaterial->ExplicitlyUnbindingResources(m_pDevice);
 }
 #pragma endregion
 

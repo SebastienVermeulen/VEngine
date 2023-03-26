@@ -193,9 +193,12 @@
     <ClCompile Include="CameraWidget.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ComponentStructure.cpp" />
+    <ClCompile Include="DeferredDX11.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EngineDevice.cpp" />
+    <ClCompile Include="EngineSettings.cpp" />
     <ClCompile Include="FileManager.cpp" />
+    <ClCompile Include="ForwardsDX11.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightWidget.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -239,9 +242,12 @@
     <ClInclude Include="CameraWidget.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentStructure.h" />
+    <ClInclude Include="DeferredDX11.h" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="EngineDevice.h" />
+    <ClInclude Include="EngineSettings.h" />
     <ClInclude Include="FileManager.h" />
+    <ClInclude Include="ForwardsDX11.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightWidget.h" />
     <ClInclude Include="Logger.h" />
@@ -258,6 +264,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="RendererWidget.h" />
+    <ClInclude Include="RenderUtils.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="EngineManager.h" />
     <ClInclude Include="Material.h" />
