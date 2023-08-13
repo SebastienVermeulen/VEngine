@@ -15,9 +15,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     //Create app
     WindowSettings windowSettings = WindowSettings::Windowed();
+    // TO-DO: Make this cleaner, specifically for editor
     windowSettings.windowWidth += 200; //Add 200 for details panel
     App pApp = App(hInstance, nCmdShow, windowSettings);
-
+    
     //Create a project and scene
     Project* pProject = new Project();
     MainScene* pScene = pProject->CreateScene<MainScene>(true);

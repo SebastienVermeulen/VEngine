@@ -8,9 +8,7 @@
 #endif
 
 #ifndef BUILD_APP
-	//In the future make a clean and proper way to change this
-	#define BUILD_APP 0
-	
+	// TODO: In the future make a clean and proper way to change this
 	#ifndef DEBUG_APP
 		#undef BUILD_APP
 		#define BUILD_APP 0
@@ -26,6 +24,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
+#include <functional>
 #include <algorithm>
 #include <chrono>
 #include <regex>
@@ -129,6 +129,20 @@ inline static void SafeRelease(std::vector<Instance>& interfaceToRelease)
 	}
 	interfaceToRelease.clear();
 }
+template<typename Key, class Instance>
+inline static void SafeRelease(std::unordered_map<Key, Instance>& interfaceToRelease)
+{
+	if (interfaceToRelease.empty())
+	{
+		return;
+	}
+
+	for (Instance* pToRelease : interfaceToRelease)
+	{
+		SafeRelease(pToRelease);
+	}
+	interfaceToRelease.clear();
+}
 template<class T>
 inline static void SafeDelete(T& objectToDelete)
 {
@@ -148,6 +162,21 @@ inline static void SafeDelete(std::vector<T>& objectToDelete)
 			delete(objectToDelete[i]);
 			objectToDelete[i] = nullptr;
 		}
+	}
+	objectToDelete.clear();
+}
+template<typename Key, class T>
+inline static void SafeDelete(std::unordered_map<Key, T>& objectToDelete)
+{
+	if (objectToDelete.empty())
+	{
+		return;
+	}
+
+	for (T* pToRelease : objectToDelete)
+	{
+		delete(pToRelease);
+		pToRelease = nullptr;
 	}
 	objectToDelete.clear();
 }
@@ -205,7 +234,7 @@ inline static std::wstring UTF8Decode(const char str[])
 }
 #pragma endregion
 
-#pragma region WCharConversions
+#pragma region WCharConversionMacros
 #include "Logger.h"
 
 //String concat unspecified number of params

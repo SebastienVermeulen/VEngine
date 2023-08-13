@@ -177,13 +177,12 @@ void Renderer::UpdateMatrices(Material* pMaterial) const
 }
 void Renderer::UpdateLights(Material* pMaterial)
 {
-	//TO-DO: don't include inactive ones
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};
 	lightsStructure.reserve(maxNrLights);
 	for (int i{}; i < maxNrLights; ++i)
 	{
-		if (m_Lights.size() > i && m_Lights[i]->ShouldRender())
+		if (m_Lights.size() > i && m_Lights[i]->IsVisible())
 		{
 			//Add the light to structure for easy use
 			Transform* pTransform = m_Lights[i]->GetObject()->GetTransform();

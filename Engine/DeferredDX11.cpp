@@ -45,9 +45,9 @@ void DeferredDX11::Render()
 	//**********************************************************************
 	for (int i = 0; i < m_Renderables.size(); ++i)
 	{
-		Material* pMaterial = m_Renderables[i]->GetMaterial();
-		if (pMaterial->GetIfDeferred() == RenderType::deferred)
+		if (m_Renderables[i]->IsVisible())
 		{
+			Material* pMaterial = m_Renderables[i]->GetMaterial();
 			//Set the parameters
 			pMaterial->UpdateParameterValues(m_pDevice);
 			//Update matrices
@@ -62,31 +62,33 @@ void DeferredDX11::Render()
 	//**********************************************************************
 	// 	   Final Render for deferred
 	//**********************************************************************
-	//Set the material buffers
-	m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
-	if (m_UpdateLighting)
 	{
-		//Update the lights
-		UpdateLights(m_pDeferredLightingMaterial);
+		//Set the material buffers
+		m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
+		if (m_UpdateLighting)
+		{
+			//Update the lights
+			UpdateLights(m_pDeferredLightingMaterial);
+		}
+		//Update view matrix
+		UpdateMatrices(m_pDeferredLightingMaterial);
+		//Set the render target
+		SetupTargetsDeferredSecondPass();
+		//Second/Deferred pass
+		//Select which vertex buffer to display
+		const UINT stride = sizeof(QuadVertex);
+		const UINT offset = 0;
+		ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+		pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
+
+		//Set the index buffer to active in the input assembler so it can be rendered.
+		pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		//Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+		pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		m_pDeferredLightingMaterial->Render(pContext, m_ScreenQuadNrIndicies, 0);
 	}
-	//Update view matrix
-	UpdateMatrices(m_pDeferredLightingMaterial);
-	//Set the render target
-	SetupTargetsDeferredSecondPass();
-	//Second/Deferred pass
-	//Select which vertex buffer to display
-	const UINT stride = sizeof(QuadVertex);
-	const UINT offset = 0;
-	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-	pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
-
-	//Set the index buffer to active in the input assembler so it can be rendered.
-	pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	//Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	m_pDeferredLightingMaterial->Render(pContext, m_ScreenQuadNrIndicies, 0);
 
 	//**********************************************************************
 	// 	   Final present + UI (ImGui)
@@ -98,11 +100,8 @@ void DeferredDX11::Render()
 	//Switch the back buffer and the front buffer
 	m_pDevice->GetSwapChain()->Present(EngineSettings::Instance()->GetIfVSync(), 0);
 
-	if (m_RenderType == RenderType::deferred)
-	{
-		//Unhook render targets from material
-		ExplicitlyUnbindingRenderTargets();
-	}
+	//Unhook render targets from material
+	ExplicitlyUnbindingRenderTargets();
 }
 void DeferredDX11::ClearBuffers()
 {

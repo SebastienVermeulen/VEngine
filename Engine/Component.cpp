@@ -8,7 +8,7 @@ Component::Component()
 	, Renderable()
 	, m_pWidget{}
 {
-	m_ShouldRender = false;
+	m_CanRender = false;
 }
 Component::~Component() 
 {

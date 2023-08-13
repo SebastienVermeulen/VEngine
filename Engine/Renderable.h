@@ -22,8 +22,10 @@ public:
 	inline Material* GetMaterial() const { return m_pMaterial; }
 	inline std::vector<RenderType>& GetRenderTypes() { return m_RenderTypes; }
 
-	inline bool ShouldRender() const { return m_ShouldRender; }
-	inline void ShouldRender(bool shouldRender) { m_ShouldRender = shouldRender; }
+	inline bool CanRender() const { return m_CanRender; }
+	inline void SetCanRender(bool canRender) { m_CanRender = canRender; }	
+	inline bool IsVisible() const { return m_Visible; }
+	inline void SetVisible(bool visible) { m_Visible = visible; }
 
 	// The following 4 functions should only update internal types
 	inline void SetRenderType(RenderType type)
@@ -55,7 +57,8 @@ public:
 protected:
 	inline Renderable() 
 		:m_pMaterial{}
-		, m_ShouldRender{false}
+		, m_CanRender{false}
+		, m_Visible{true}
 	{
 	}
 	inline virtual ~Renderable()
@@ -70,5 +73,6 @@ protected:
 
 	Material* m_pMaterial;
 	std::vector<RenderType> m_RenderTypes;
-	bool m_ShouldRender;
+	bool m_CanRender;
+	bool m_Visible;
 };

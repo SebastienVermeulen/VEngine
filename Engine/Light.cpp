@@ -9,7 +9,7 @@ Light::Light()
 	, m_Intensity{ 1.0f }
 	, m_Enabled{ true }
 {
-	m_ShouldRender = true;
+	m_CanRender = true;
 }
 Light::~Light()
 {

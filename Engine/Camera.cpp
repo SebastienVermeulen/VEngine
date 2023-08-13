@@ -11,7 +11,7 @@ Camera::Camera(CameraSettings settings)
 	, m_Settings {settings}
 	, m_PerspectiveProjection{true}
 {
-	m_ShouldRender = true;
+	m_CanRender = true;
 
 	m_pWidget = new CameraWidget(this);
 }
@@ -22,7 +22,7 @@ Camera::~Camera()
 
 bool Camera::Init() 
 {
-	m_ShouldRender = true;
+	m_CanRender = true;
 	return true;
 }
 

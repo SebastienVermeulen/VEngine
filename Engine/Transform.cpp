@@ -29,7 +29,8 @@ void Transform::UpdateTransforms()
 {
 	//Calculate World Matrix
 	DirectX::XMVECTOR rot = DirectX::XMLoadFloat4(&m_Rotation);
-	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z) *
+	DirectX::XMMATRIX world =
+		DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z) *
 		DirectX::XMMatrixRotationQuaternion(rot) *
 		DirectX::XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
 	DirectX::XMStoreFloat4x4(&m_World, world);

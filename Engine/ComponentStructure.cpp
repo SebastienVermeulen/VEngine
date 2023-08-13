@@ -27,7 +27,7 @@ Component* ComponentStructure::AddComponent(Component* pComponent)
 			pComponent->MarkAsInit();
 		}
 		// Render backend
-		if (pComponent->ShouldRender())
+		if (pComponent->CanRender())
 		{
 			EngineManager* pEngineManager = EngineManager::Instance();
 
@@ -62,7 +62,7 @@ void ComponentStructure::RemoveComponent(Component* pComponent)
 		{
 			m_Components.erase(it);
 
-			if (pComponent->ShouldRender())
+			if (pComponent->CanRender())
 			{
 				EngineManager* pEngineManager = EngineManager::Instance();
 

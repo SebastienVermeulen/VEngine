@@ -31,10 +31,10 @@ void ForwardsDX11::Render()
 	//**********************************************************************
 	for (int i = 0; i < m_Renderables.size(); ++i)
 	{
-		Material* pMaterial = m_Renderables[i]->GetMaterial();
-		if (pMaterial->GetIfDeferred() == RenderType::forwards)
+		if (m_Renderables[i]->IsVisible())
 		{
 			//Set the parameters
+			Material* pMaterial = m_Renderables[i]->GetMaterial();
 			pMaterial->UpdateParameterValues(m_pDevice);
 			if (m_UpdateLighting)
 			{
@@ -59,12 +59,6 @@ void ForwardsDX11::Render()
 
 	//Switch the back buffer and the front buffer
 	m_pDevice->GetSwapChain()->Present(m_pEngineSettings->GetIfVSync(), 0);
-
-	if (m_RenderType == RenderType::deferred)
-	{
-		//Unhook render targets from material
-		ExplicitlyUnbindingRenderTargets();
-	}
 }
 void ForwardsDX11::ClearBuffers()
 {

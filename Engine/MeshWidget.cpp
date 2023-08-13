@@ -40,18 +40,11 @@ void MeshWidget::RenderUIElement(int idx)
     //Separate each element with a line
     ImGui::Separator();
 
-    bool shouldRender = m_pMeshComponent->ShouldRender();
-    ImGui::Checkbox("Should Render", &shouldRender);
-    m_pMeshComponent->ShouldRender(shouldRender);
+    bool isVisible = m_pMeshComponent->IsVisible();
+    ImGui::Checkbox("Visible", &isVisible);
+    m_pMeshComponent->SetCanRender(isVisible);
     //Should Renderable Render
-    if (shouldRender)
-    {
-        pEngineManager->GetActiveRenderer()->AddRenderable(m_pMeshComponent);
-    }
-    else 
-    {
-        pEngineManager->GetActiveRenderer()->RemoveRenderable(m_pMeshComponent);
-    }
+    m_pMeshComponent->SetVisible(isVisible);
 
     ImGui::TreePop();
 }

@@ -5,6 +5,7 @@ class Texture;
 class MeshAsset;
 
 //TO-DO: save loaded files in managers so they only have to be loaded once
+// Use only as an interface to extract data from files
 class FileManager abstract final
 {
 public:

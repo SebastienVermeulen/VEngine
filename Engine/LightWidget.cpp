@@ -83,12 +83,12 @@ void LightWidget::RenderUIElement(int idx)
     //Separate each element with a line
     ImGui::Separator();
 
-    bool shouldRender = m_pLight->ShouldRender();
-    bool oldShouldRender = shouldRender;
-    ImGui::Checkbox("Should Render", &shouldRender);
-    m_pLight->ShouldRender(shouldRender);
+    bool isVisible = m_pLight->IsVisible();
+    bool oldIsVisible = isVisible;
+    ImGui::Checkbox("Visible", &isVisible);
+    m_pLight->SetVisible(isVisible);
 
-    if (shouldRender != oldShouldRender)
+    if (isVisible != oldIsVisible)
     {
         pEngineManager->GetActiveRenderer()->SetShouldUpdateLighting(true);
     }

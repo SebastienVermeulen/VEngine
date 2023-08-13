@@ -5,7 +5,7 @@
 PointLight::PointLight()
 	:Light()
 {
-	m_ShouldRender = true;
+	m_CanRender = true;
 
 	m_LightType = LightType::point;
 

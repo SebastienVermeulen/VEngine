@@ -27,7 +27,7 @@ MeshComponent::~MeshComponent()
 
 bool MeshComponent::Init()
 {
-	m_ShouldRender = true;
+	m_CanRender = true;
 
 	//***********************************************************************************
 	// 	   Mesh
