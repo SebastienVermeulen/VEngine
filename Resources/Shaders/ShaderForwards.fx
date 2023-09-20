@@ -6,21 +6,21 @@
 struct VP0_In
 {
 	float3 position : POSITION;
-    float3 color	: COLOR;
+    	float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
-    float3 binormal : BINORMAL;
-	float2 uv 		: TEXCOORD;
+    	float3 binormal : BINORMAL;
+	float2 uv 	: TEXCOORD;
 };
 struct PP0_In
 {
 	float4 position : SV_POSITION;
-	float4 positionf : POSITION0;
-    float3 color	: COLOR;
+	float4 positionf: POSITION0;
+    	float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
-    float3 binormal : BINORMAL;
-	float2 uv 		: TEXCOORD;
+    	float3 binormal : BINORMAL;
+	float2 uv 	: TEXCOORD;
 };
 struct Light
 {
@@ -70,18 +70,9 @@ SamplerState samLinear
     AddressV = Wrap;// or Mirror or Clamp or Border
 };
 
-RasterizerState Culling
-{
-	CullMode = BACK;
-};
 DepthStencilState DepthTest
 {
 	DepthEnable = TRUE;
-	DepthWriteMask = ALL;
-};
-DepthStencilState DepthTestDeferred
-{
-	DepthEnable = FALSE;
 	DepthWriteMask = ALL;
 };
 
@@ -235,7 +226,7 @@ technique11 Default
 {
 	pass P0
 	{
-		SetRasterizerState(Culling);
+		SetRasterizerState(Culling_Common);
 		SetDepthStencilState(DepthTest, 0);
 
 		SetVertexShader( CompileShader( vs_4_0, VShaderP0() ) );

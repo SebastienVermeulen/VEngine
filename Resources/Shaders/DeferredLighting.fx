@@ -20,6 +20,7 @@ struct Light
 	float3 color;
 	float intensity;
 	int type;
+	// TO-DO: Remove this useless variable...
 	bool enabled;
 	float2 padding;
 };
@@ -66,15 +67,6 @@ SamplerState samLinear
     AddressV = Wrap;// or Mirror or Clamp or Border
 };
 
-RasterizerState Culling
-{
-	CullMode = BACK;
-};
-DepthStencilState DepthTest
-{
-	DepthEnable = TRUE;
-	DepthWriteMask = ALL;
-};
 DepthStencilState DepthTestDeferred
 {
 	DepthEnable = FALSE;
@@ -153,16 +145,7 @@ float3 DirectionalLightBiradiance(float3 dirLightColor, float dirLightIntensity)
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PP1_In VShaderP1(VP1_In input)
-{
-	PP1_In output;
-
-	// Change the position vector to be 4 units for proper matrix calculations.
-    output.position = float4(input.position, 1.0f);
-	output.uv = input.uv;
-
-	return output;
-}
+// Common alternative
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
@@ -178,7 +161,7 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
     float2 metalRoughness = gMetalRoughnessMap.Sample(samLinear, input.uv).rg;
     float metal = min(1.0f, gMetalnessMultiply * metalRoughness.x);
     float rougness = min(1.0f, gRoughnessMultiply * metalRoughness.y);
-
+	
 	//Clearbuffer .a is set to 0, in the first pass pixelshader it is set to 1.0f
     if (!all(albedo.a))
 	{
@@ -209,6 +192,7 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 			break;
 		case LIGHT_POINT:
 			float3 lightDir = normalize(light.position.xyz - pixelPos);
+
 			lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos, light.position.xyz);
             brdf = BRDF(pixelPos, normal, lightDir, albedo.rgb, metal, rougness);
 			cosineLaw = dot(normal, lightDir);
@@ -227,7 +211,10 @@ technique11 Default
 {
 	pass P0
 	{
-		SetVertexShader( CompileShader( vs_4_0, VShaderP1() ) );
+		SetRasterizerState(Culling_Common);
+		SetDepthStencilState(DepthTestDeferred, 0);
+
+		SetVertexShader( CompileShader( vs_4_0, VShader_Common() ) );
 		SetGeometryShader( NULL );
 		SetPixelShader( CompileShader( ps_4_0, PShaderP1() ) );
 	}

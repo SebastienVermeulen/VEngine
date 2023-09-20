@@ -8,6 +8,13 @@ class Component;
 class Material;
 class Light;
 class RendererWidget;
+class PostProcessPipeline;
+
+struct RenderTargets
+{
+	RenderTarget* m_FinalTarget;
+	RenderTarget* m_FinalSceneTarget;
+};
 
 class Renderer abstract
 {
@@ -42,6 +49,10 @@ public:
 	{
 		return m_pRenderingCamera;
 	}
+	inline PostProcessPipeline* GetPostProcessPipeline()
+	{
+		return m_pPostProcessingPipeline;
+	}	
 	inline bool GetShouldUpdateLighting() const
 	{
 		return	m_UpdateLighting;
@@ -50,6 +61,29 @@ public:
 	{
 		m_UpdateLighting = updateLighting;
 	}
+
+	inline RenderTargets& GetRenderTargets()
+	{
+		return m_RenderTargets;
+	}
+	inline RenderTarget* GetFinalTarget()
+	{
+		return m_RenderTargets.m_FinalTarget;
+	}
+	inline RenderTarget* GetFinalSceneTarget()
+	{
+		return m_RenderTargets.m_FinalSceneTarget;
+	}
+
+#pragma region RenderHelpers
+	// TO-DO: Make a generic render-independant function
+	// DX11 is lazy by design, once needed it will implicitly unbind
+	// Good practice is to unbind yourself once you are done so the device doesn't have to
+	// Data might change from input to output or opposite then you need to act
+	// https://stackoverflow.com/questions/52966262/id3dx11effectshaderresourcevariablesetresourcenull-cant-unbind-resources
+	// https://www.gamedev.net/forums/topic/601013-directx11-multiple-render-target/
+	virtual void ExplicitlyUnbindingRenderTargets(Material* pMaterial = nullptr);
+#pragma endregion
 
 protected:
 #pragma region RenderablesStorage
@@ -63,13 +97,6 @@ protected:
 	void UpdateMatrices(Component* pRenderable) const;
 	void UpdateMatrices(Material* pMaterial) const;
 	void UpdateLights(Material* pMaterial);
-
-	// DX11 is lazy by design, once needed it will implicitly unbind
-	// Good practice is to unbind yourself once you are done so the device doesn't have to
-	// Data might change from input to output or opposite then you need to act
-	// https://stackoverflow.com/questions/52966262/id3dx11effectshaderresourcevariablesetresourcenull-cant-unbind-resources
-	// https://www.gamedev.net/forums/topic/601013-directx11-multiple-render-target/
-	virtual void ExplicitlyUnbindingRenderTargets() const;
 #pragma endregion
 
 protected:
@@ -78,10 +105,13 @@ protected:
 
 	RendererWidget* m_pRendererWidget;
 
+	RenderTargets m_RenderTargets;
+
 	std::vector<Component*> m_Renderables;
 	std::vector<Light*> m_Lights;
 	std::vector<Camera*> m_pCameraList;
 	Camera* m_pRenderingCamera;
+	PostProcessPipeline* m_pPostProcessingPipeline;
 
 	DirectX::XMFLOAT4 m_DefaultClearColor;
 

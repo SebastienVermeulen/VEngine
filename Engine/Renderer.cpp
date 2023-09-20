@@ -13,6 +13,7 @@
 #include "Light.h"
 #include "Camera.h"
 #include "RendererWidget.h"
+#include "PostProcesses.h"
 
 EngineDevice* Renderer::m_pDevice = nullptr;
 EngineSettings* Renderer::m_pEngineSettings = nullptr;
@@ -23,12 +24,48 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_Lights{}
 	, m_pCameraList{}
 	, m_pRenderingCamera{}
+	, m_pPostProcessingPipeline{new PostProcessPipeline()}
 	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
-	, m_NrBasisRenderTargets{6}
+	, m_NrBasisRenderTargets{6} // TO-DO: Uh oh, what was I thinking
 	, m_UpdateLighting{false}
 {
     m_pDevice = pDevice;
 	m_pEngineSettings = EngineSettings::Instance();
+
+	// TO-DO: Init function desparately needed
+	// TO-DO: Pack this data better
+	//Setup
+	D3D11_TEXTURE2D_DESC desc1;
+	ZeroMemory(&desc1, sizeof(desc1));
+	desc1.Width = m_pDevice->GetDefaultWidth();
+	desc1.Height = m_pDevice->GetDefaultHeight();
+	desc1.MipLevels = 1;
+	desc1.ArraySize = 1;
+	desc1.Format = DXGI_FORMAT::DXGI_FORMAT_R11G11B10_FLOAT;
+	desc1.SampleDesc.Count = 1;
+	desc1.SampleDesc.Quality = 0;
+	desc1.Usage = D3D11_USAGE_DEFAULT;
+	desc1.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc1.CPUAccessFlags = 0;
+	desc1.MiscFlags = 0;
+	D3D11_TEXTURE2D_DESC desc2;
+	ZeroMemory(&desc2, sizeof(desc2));
+	desc2.Width = m_pDevice->GetDefaultWidth();
+	desc2.Height = m_pDevice->GetDefaultHeight();
+	desc2.MipLevels = 1;
+	desc2.ArraySize = 1;
+	desc2.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
+	desc2.SampleDesc.Count = 1;
+	desc2.SampleDesc.Quality = 0;
+	desc2.Usage = D3D11_USAGE_DEFAULT;
+	desc2.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc2.CPUAccessFlags = 0;
+	desc2.MiscFlags = 0;
+
+	m_RenderTargets.m_FinalTarget = m_pDevice->GetRenderTarget(0); // TO-DO : Fix this , Index 0 is guaranteed to exists by design, but is the final render target (swapchain buffer)
+	m_RenderTargets.m_FinalSceneTarget = m_pDevice->TryGetRenderTarget(1, true, desc1);
+
+	m_pPostProcessingPipeline->Init(pDevice);
 
 	m_Lights.reserve(Light::GetMaxNrLights());
 }
@@ -206,12 +243,16 @@ void Renderer::UpdateLights(Material* pMaterial)
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
 }
 
-void Renderer::ExplicitlyUnbindingRenderTargets() const
+void Renderer::ExplicitlyUnbindingRenderTargets(Material* pMaterial)
 {
 	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	ID3D11ShaderResourceView* srvs = nullptr;
 	pContext->PSSetShaderResources(0, 1, &srvs);
 	ID3D11RenderTargetView* nullRTV = nullptr; 
 	pContext->OMSetRenderTargets(1, &nullRTV, nullptr);
+	if (pMaterial != nullptr)
+	{
+		pMaterial->ExplicitlyUnbindingResources(m_pDevice);
+	}
 }
 #pragma endregion

@@ -44,7 +44,7 @@ public:
 	Material operator=(Material& other) = delete;
 	Material& operator=(Material&& other) = delete;
 
-	void InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+	HRESULT InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	void Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr);
 	void UpdateMatrix(MatrixRenderBuffer buffer);
 	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights);

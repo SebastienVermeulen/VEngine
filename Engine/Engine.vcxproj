@@ -199,6 +199,7 @@
     <ClCompile Include="EngineSettings.cpp" />
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="ForwardsDX11.cpp" />
+    <ClCompile Include="GreyScale.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightWidget.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -211,12 +212,15 @@
     <ClCompile Include="ObjectWidget.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="PostProcesses.cpp" />
+    <ClCompile Include="PostProcessWidget.cpp" />
     <ClCompile Include="Project.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RendererWidget.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="EngineManager.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="ScreenSpaceCopy.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TransformWidget.cpp" />
@@ -248,6 +252,7 @@
     <ClInclude Include="EngineSettings.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="ForwardsDX11.h" />
+    <ClInclude Include="GreyScale.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightWidget.h" />
     <ClInclude Include="Logger.h" />
@@ -260,6 +265,8 @@
     <ClInclude Include="ObjectWidget.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="PostProcesses.h" />
+    <ClInclude Include="PostProcessWidget.h" />
     <ClInclude Include="Project.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Renderable.h" />
@@ -268,6 +275,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="EngineManager.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="ScreenSpaceCopy.h" />
     <ClInclude Include="ShaderStructures.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="AppTime.h" />
@@ -299,6 +307,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostProcessing\GreyScale.fx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostProcessing\ScreenSpaceCopy.fx" />
     <FxCompile Include="..\Resources\Shaders\ShaderDeferred.fx">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>

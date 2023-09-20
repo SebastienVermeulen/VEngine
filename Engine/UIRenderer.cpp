@@ -6,6 +6,7 @@
 #include "Object.h"
 #include "ObjectWidget.h"
 #include "RendererWidget.h"
+#include "PostProcesses.h"
 
  using namespace ImGui;
 
@@ -30,8 +31,8 @@ void UIRenderer::RenderUI()
 	NewFrame();
 
 	ImGuiWindowFlags window_flags = 0;
-	 window_flags |= ImGuiWindowFlags_NoMove;
-	 window_flags |= ImGuiWindowFlags_NoResize;
+	window_flags |= ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoResize;
 
 	//We specify a default position/size in case there's no data in the .ini file.
 	//We only do it to make the demo applications a little more welcoming, but typically this isn't required.
@@ -71,6 +72,7 @@ void UIRenderer::RenderUI()
 
 	RenderSceneTree();
 	RenderObjectDetails();
+	RenderPostProcessDetails();
 
 	if (CollapsingHeader("Info:"))
 	{
@@ -151,5 +153,24 @@ void UIRenderer::RenderObjectDetails()
 		}
 
 		ImGui::TreePop();
+	}
+}
+void UIRenderer::RenderPostProcessDetails()
+{
+	if (!ImGui::CollapsingHeader("PostProcesses:"))
+	{
+		return;
+	}
+
+	// Some basic info
+	TextWrapped("The following post processes apply to the entire scene.");
+	Separator();
+
+	// TO-DO: Make this loop over the PostProcesses
+	// Go over the techniques individually
+	PostProcesses* pPostProcess = EngineManager::Instance()->GetActiveRenderer()->GetPostProcessPipeline()->GetPostProcesses();
+	if (pPostProcess->greyScalePostProcess.GetGreyScalePostProcessWidget()->RenderUITitle(0))
+	{
+		pPostProcess->greyScalePostProcess.GetGreyScalePostProcessWidget()->RenderUIElement(0);
 	}
 }

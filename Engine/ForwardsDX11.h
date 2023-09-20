@@ -18,5 +18,5 @@ public:
 	virtual void ClearBuffers() override;
 
 private:
-	void SetupTargetsForwardsPass() const;
+	void SetupTargetsForwardsPass();
 };

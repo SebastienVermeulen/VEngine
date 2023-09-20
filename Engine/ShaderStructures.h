@@ -5,7 +5,8 @@ enum class RenderType : UINT
 {
 	forwards = 0,
 	deferred = 1,
-	lightingPass = 2
+	lightingPass = 2,
+	postprocessPass = 3
 };
 enum class LightType : UINT
 {

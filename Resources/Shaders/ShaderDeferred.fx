@@ -10,7 +10,7 @@ struct VP0_In
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
 	float3 binormal	: BINORMAL;
-	float2 uv 		: TEXCOORD;
+	float2 uv 	: TEXCOORD;
 };
 struct PP0_In
 {
@@ -19,26 +19,26 @@ struct PP0_In
 	float3 color	: COLOR;
 	float3 normal 	: NORMAL;
 	float3 tangent 	: TANGENT;
-    float3 binormal : BINORMAL;
-	float2 uv 		: TEXCOORD1;
+	float3 binormal : BINORMAL;
+	float2 uv 	: TEXCOORD1;
 };
 struct PP0_Out
 {
 	float4 position 		: SV_Target0;
 	float4 normal 			: SV_Target1;
 	float4 tangent 			: SV_Target2;
-    float4 binormal			: SV_Target3;
+	float4 binormal			: SV_Target3;
 	float4 albedo 			: SV_Target4;
-    float2 metalRoughness	: SV_Target5;
+	float2 metalRoughness		: SV_Target5;
 };
 
 //--------------------------------------------------------------------------------------
 // Globals
 //--------------------------------------------------------------------------------------
-float4x4 gWorld : WORLD;
-float4x4 gView : VIEW;
-float4x4 gInverseView : INVERSEVIEW;
-float4x4 gProjection : PROJECTION;
+float4x4 gWorld 	: WORLD;
+float4x4 gView 		: VIEW;
+float4x4 gInverseView 	: INVERSEVIEW;
+float4x4 gProjection 	: PROJECTION;
 float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
 
 Texture2D gAlbedoMap;
@@ -55,18 +55,9 @@ SamplerState samLinear
     AddressV = Wrap;// or Mirror or Clamp or Border
 };
 
-RasterizerState Culling
-{
-	CullMode = BACK;
-};
 DepthStencilState DepthTest
 {
 	DepthEnable = TRUE;
-	DepthWriteMask = ALL;
-};
-DepthStencilState DepthTestDeferred
-{
-	DepthEnable = FALSE;
 	DepthWriteMask = ALL;
 };
 BlendState AlphaBlendingOn
@@ -87,17 +78,18 @@ PP0_In VShaderP0(VP0_In input)
 	PP0_In output;
 
 	//Change the position vector to be 4 units for proper matrix calculations.
-    output.wPos = float4(input.position, 1.0f);
+	output.wPos = float4(input.position, 1.0f);
 
 	//Calculate the position of the vertex against the world, view, and projection matrices.
 	output.position = mul(output.wPos, gWorldViewProj);
 	output.wPos = mul(output.wPos, gWorld);
-	//Calculate the normal and tangent of the vertex against the world rotation and scale.
-	output.normal = mul(input.normal, (float3x3)gWorld);
-	output.tangent = mul(input.tangent, (float3x3)gWorld);
-    output.binormal = mul(input.binormal, (float3x3) gWorld);
 	
-    output.color = input.color;
+	//Calculate the normal and tangent of the vertex against the world rotation and scale.
+	output.normal = input.normal;//mul(input.normal, (float3x3)gWorld);
+	output.tangent = mul(input.tangent, (float3x3)gWorld);
+	output.binormal = mul(input.binormal, (float3x3) gWorld);
+	
+	output.color = input.color;
 	output.uv = input.uv;
 
 	return output;
@@ -112,9 +104,9 @@ PP0_Out PShaderP0(PP0_In input)
 	output.position = input.wPos;
 	output.normal = float4(input.normal, 1.0f);
 	output.tangent = float4(input.tangent, 1.0f);
-    output.binormal = float4(input.binormal, 1.0f);
-    output.albedo = gAlbedoMap.Sample(samLinear, input.uv);
-    output.metalRoughness = float2(gMetalnessMap.Sample(samLinear, input.uv).x, gRoughnessMap.Sample(samLinear, input.uv).x);
+	output.binormal = float4(input.binormal, 1.0f);	
+	output.albedo = gAlbedoMap.Sample(samLinear, input.uv);
+	output.metalRoughness = float2(gMetalnessMap.Sample(samLinear, input.uv).x, gRoughnessMap.Sample(samLinear, input.uv).x);
 
 	return output;
 }
@@ -126,7 +118,7 @@ technique11 Default
 {
 	pass P0
 	{
-		SetRasterizerState(Culling);
+		SetRasterizerState(Culling_Common);
 		SetDepthStencilState(DepthTest, 0);
 
 		SetVertexShader( CompileShader( vs_4_0, VShaderP0() ) );

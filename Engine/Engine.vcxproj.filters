@@ -79,6 +79,15 @@
     <Filter Include="Engine Files\Rendering\Texture">
       <UniqueIdentifier>{cfcbe2da-b222-44a3-92ae-9a509dcdd8b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shaders\PostProcessing">
+      <UniqueIdentifier>{973634f1-1623-4d2f-9c16-ba2bd6dc329c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Rendering\PostProcessing">
+      <UniqueIdentifier>{5408f90d-20ac-41eb-9ec9-8fae757a6ec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\UI\Widgets">
+      <UniqueIdentifier>{9ff7966b-24d7-4c81-a376-c515db5ada6a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -153,30 +162,6 @@
     <ClCompile Include="Material.cpp">
       <Filter>Engine Files\Rendering\Materials</Filter>
     </ClCompile>
-    <ClCompile Include="Widget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="TransformWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="MaterialWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="LightWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RendererWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="CameraWidget.cpp">
-      <Filter>Engine Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Asset.cpp">
       <Filter>Engine Files\Assets\Files</Filter>
     </ClCompile>
@@ -212,6 +197,39 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Engine Files\Rendering\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcesses.cpp">
+      <Filter>Engine Files\Rendering\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="GreyScale.cpp">
+      <Filter>Engine Files\Rendering\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="LightWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="RendererWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="TransformWidget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="Widget.cpp">
+      <Filter>Engine Files\UI\Widgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -305,30 +323,6 @@
     <ClInclude Include="Material.h">
       <Filter>Engine Files\Rendering\Materials</Filter>
     </ClInclude>
-    <ClInclude Include="Widget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="LightWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RendererWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraWidget.h">
-      <Filter>Engine Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="Asset.h">
       <Filter>Engine Files\Assets\Files</Filter>
     </ClInclude>
@@ -374,6 +368,39 @@
     <ClInclude Include="RenderUtils.h">
       <Filter>Engine Files\Rendering\Core</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcesses.h">
+      <Filter>Engine Files\Rendering\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="GreyScale.h">
+      <Filter>Engine Files\Rendering\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="LightWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformWidget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="Widget.h">
+      <Filter>Engine Files\UI\Widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Resources\Shaders\ShaderForwards.fx">
@@ -387,6 +414,9 @@
     </FxCompile>
     <FxCompile Include="..\Resources\Shaders\CommonGlobals.fx">
       <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostProcessing\GreyScale.fx">
+      <Filter>Resource Files\Shaders\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -19,6 +19,7 @@ public:
 private:
 	void RenderSceneTree();
 	void RenderObjectDetails();
+	void RenderPostProcessDetails();
 
 	Object* m_SelectedObject;
 	int m_SelectedObjectIdx;

@@ -40,7 +40,12 @@ Material::Material(const std::wstring& effectFile, RenderType type)
 		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 2.0f, "gAlbedoMultiply" });
 		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 2.0f, "gMetalnessMultiply" });
 		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 1.0f, "gRoughnessMultiply" });
-	}																				   
+	}
+	else if (m_RenderType == RenderType::postprocessPass)
+	{
+		m_MaterialTextureParams.reserve(1);
+		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gFinalRender", L"" });
+	}
 	else
 	{
 		m_MaterialTextureParams.reserve(3);
@@ -69,7 +74,7 @@ Material::~Material()
 	SafeRelease(m_pEffect);
 }
 
-void Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
+HRESULT Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {	
 	HRESULT hr;
 
@@ -77,22 +82,24 @@ void Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	if (hr != S_OK)
 	{
 		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitEffect for %s.", FileManager::GetFileName(m_EffectFile)));
-		return;
+		return hr;
 	}
 
 	hr = InitInputLayout(pDevice);
 	if (hr != S_OK)
 	{
 		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitInputLayout for %s.", FileManager::GetFileName(m_EffectFile)));
-		return;
+		return hr;
 	}
 
 	hr = InitShaderVariables(pDevice);
 	if (hr != S_OK)
 	{
 		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitShaderVariables for %s.", FileManager::GetFileName(m_EffectFile)));
-		return;
+		return hr;
 	}
+
+	return S_OK;
 }
 HRESULT Material::InitEffect(ID3D11Device* pDevice)
 {
@@ -213,16 +220,20 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 	HRESULT hr = S_OK;
 
 	//Creating matrix parameters
-	ID3DX11EffectVariable* pEffectVar = m_pEffect->GetVariableBySemantic("WORLD");
-	m_pWorld = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
-	pEffectVar = m_pEffect->GetVariableBySemantic("VIEW");
-	m_pView = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
-	pEffectVar = m_pEffect->GetVariableBySemantic("INVERSEVIEW");
-	m_pInverseView = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
-	pEffectVar = m_pEffect->GetVariableBySemantic("PROJECTION");
-	m_pProjection = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
-	pEffectVar = m_pEffect->GetVariableBySemantic("WORLDVIEWPROJECTION");
-	m_pWorldViewProj = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+	// TO-DO: Make these into pairs or a dictionary or something... So we can assign which ones should be made during init
+	if (m_RenderType != RenderType::postprocessPass) // TO-DO: temporary but dirty, see above todo
+	{
+		ID3DX11EffectVariable* pEffectVar = m_pEffect->GetVariableBySemantic("WORLD");
+		m_pWorld = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+		pEffectVar = m_pEffect->GetVariableBySemantic("VIEW");
+		m_pView = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+		pEffectVar = m_pEffect->GetVariableBySemantic("INVERSEVIEW");
+		m_pInverseView = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+		pEffectVar = m_pEffect->GetVariableBySemantic("PROJECTION");
+		m_pProjection = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+		pEffectVar = m_pEffect->GetVariableBySemantic("WORLDVIEWPROJECTION");
+		m_pWorldViewProj = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+	}
 
 	//Textures
 	for (int idx = 0; idx < m_MaterialTextureParams.size(); ++idx) 
@@ -333,15 +344,29 @@ void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector
 }
 HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)
 {
+	// TO-DO: Add better texture support, none of this hardcoded garbage!
 	//Skip setting the textures if it is not a lighting pass, since those will be used by rendertargs
 	if (m_RenderType == RenderType::lightingPass)
 	{
-		for (int idx = 0; idx < m_MaterialTextureParams.size(); ++idx)
-		{
-			ID3D11ShaderResourceView* pResourceView = pEngineDevice->TryGetRenderTarget(idx + 1, false)->pShaderResourceView;
-			m_MaterialTextureParams[idx]->m_Resource->SetResource(pResourceView);
-		}
+		DeferredRenderTargets deferredRenderTargets = ((DeferredDX11*)EngineManager::Instance()->GetRenderer(RenderType::deferred))->GetDeferredRenderTargets();
+		m_MaterialTextureParams[0]->m_Resource->SetResource(deferredRenderTargets.m_PositionTarget->pShaderResourceView);
+		m_MaterialTextureParams[1]->m_Resource->SetResource(deferredRenderTargets.m_NormalTarget->pShaderResourceView);
+		m_MaterialTextureParams[2]->m_Resource->SetResource(deferredRenderTargets.m_TangentTarget->pShaderResourceView);
+		m_MaterialTextureParams[3]->m_Resource->SetResource(deferredRenderTargets.m_BinormalTarget->pShaderResourceView);
+		m_MaterialTextureParams[4]->m_Resource->SetResource(deferredRenderTargets.m_AlbedoTarget->pShaderResourceView);
+		m_MaterialTextureParams[5]->m_Resource->SetResource(deferredRenderTargets.m_MetalRoughnessTarget->pShaderResourceView);
 	}
+	if (m_RenderType == RenderType::postprocessPass)
+	{
+		m_MaterialTextureParams[0]->m_Resource->SetResource(EngineManager::Instance()->GetActiveRenderer()->GetFinalSceneTarget()->pShaderResourceView);
+	}
+	if (m_RenderType == RenderType::forwards)
+	{
+		m_MaterialTextureParams[0]->m_Resource->SetResource(m_MaterialTextureParams[0]->m_pTexture->GetTextureView());
+		m_MaterialTextureParams[1]->m_Resource->SetResource(m_MaterialTextureParams[1]->m_pTexture->GetTextureView());
+		m_MaterialTextureParams[2]->m_Resource->SetResource(m_MaterialTextureParams[2]->m_pTexture->GetTextureView());
+	}
+
 	//Scalars
 	for (int idx = 0; idx < m_MaterialScalarParams.size(); ++idx)
 	{
@@ -357,9 +382,20 @@ HRESULT Material::ExplicitlyUnbindingResources(EngineDevice* pEngineDevice)
 {
 	for (int idx = 0; idx < m_MaterialTextureParams.size(); ++idx)
 	{
-		if (FAILED(m_MaterialTextureParams[idx]->m_Resource->SetResource(nullptr)))
+		if (m_RenderType != RenderType::postprocessPass) // TO-DO: temporary but dirty
 		{
-			return E_FAIL;
+			if (FAILED(m_MaterialTextureParams[idx]->m_Resource->SetResource(nullptr)))
+			{
+				return E_FAIL;
+			}
+		}
+		else 
+		{
+			ID3D11ShaderResourceView* pResourceView = pEngineDevice->TryGetRenderTarget(1, false)->pShaderResourceView;
+			if (FAILED(m_MaterialTextureParams[0]->m_Resource->SetResource(nullptr)))
+			{
+				return E_FAIL;
+			}
 		}
 	}
 	return m_pTechnique->GetPassByIndex(0)->Apply(0, pEngineDevice->GetDeviceContext());

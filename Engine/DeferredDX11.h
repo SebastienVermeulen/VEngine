@@ -5,6 +5,18 @@ class EngineDevice;
 class Material;
 class RendererWidget;
 
+struct DeferredRenderTargets 
+{
+	RenderTargets* m_pRenderTargets;
+
+	RenderTarget* m_PositionTarget;
+	RenderTarget* m_NormalTarget;
+	RenderTarget* m_TangentTarget;
+	RenderTarget* m_BinormalTarget;
+	RenderTarget* m_AlbedoTarget;
+	RenderTarget* m_MetalRoughnessTarget;
+};
+
 class DeferredDX11 final : public Renderer 
 {
 public:
@@ -20,17 +32,17 @@ public:
 	virtual void ClearBuffers() override;
 
 	Material* GetDeferredLightingPassMaterial() const;
-
-protected:
-	virtual void ExplicitlyUnbindingRenderTargets() const override;
-
-private:
-	void SetupTargetsDeferredFirstPass() const;
-	void SetupTargetsDeferredSecondPass() const;
-
-	void CreateNDCQuad();
+	inline DeferredRenderTargets GetDeferredRenderTargets() const
+	{
+		return m_DeferredRenderTargets;
+	}
 
 private:
+	void SetupTargetsDeferredFirstPass();
+	void SetupTargetsDeferredSecondPass();
+
+private:
+	DeferredRenderTargets m_DeferredRenderTargets;
 	Material* m_pDeferredLightingMaterial;
 
 	ID3D11Buffer* m_pScreenQuadVertexBuffer, * m_pScreenQuadIndexBuffer;
