@@ -3,22 +3,30 @@
 #include "FileManager.h"
 
 Texture::Texture(ID3D11Resource* pTexture, ID3D11ShaderResourceView* pTextureView)
-	:m_pTexture{ pTexture }
-	, m_pTextureView{ pTextureView }
+	:m_pResource{ pTexture }
+	, m_pResourceView{ pTextureView }
 	, m_LocalFileDir{}
 {
 }
 Texture::~Texture() 
 {
-	SafeRelease(m_pTextureView);
-	SafeRelease(m_pTexture);
+	SafeRelease(m_pResourceView);
+	SafeRelease(m_pResource);
 }
 
-ID3D11Resource* Texture::GetTexture() const
+ID3D11Resource** Texture::GetResourceLocation() const
 {
-	return m_pTexture;
+	return (ID3D11Resource**)&m_pResource;
 }
-ID3D11ShaderResourceView* Texture::GetTextureView() const
+ID3D11Resource* Texture::GetResource() const
 {
-	return m_pTextureView;
+	return m_pResource;
+}
+ID3D11ShaderResourceView** Texture::GetResourceViewLocation() const
+{
+	return (ID3D11ShaderResourceView**)&m_pResourceView;
+}
+ID3D11ShaderResourceView* Texture::GetResourceView() const
+{
+	return m_pResourceView;
 }

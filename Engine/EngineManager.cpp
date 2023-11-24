@@ -12,12 +12,17 @@ EngineManager::EngineManager()
 }
 EngineManager::~EngineManager()
 {
-	SafeDelete(m_pDevice);
 	SafeDelete(m_pOpenProject);
+	SafeDelete(m_pDevice);
 	SafeDelete(m_pWindow);
 }
 
 void EngineManager::Render()
 {
 	GetActiveRenderer()->Render();
+}
+
+void EngineManager::UpdateTargetLifeTimes(const float deltaTime)
+{
+	m_pDevice->UpdateTargetLifeTimes(deltaTime);
 }

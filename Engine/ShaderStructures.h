@@ -1,5 +1,7 @@
 #pragma once
 #include "pch.h"
+// TO-DO: I don't like this inlude
+#include "Texture.h"
 
 enum class RenderType : UINT
 {
@@ -18,30 +20,24 @@ enum class VertexFeatures : UINT
 {
 	None = 0,
 	P = 1,		//Position
-	C = 2,		//Color
 	U = 4,		//UV
 	N = 8,		//Normal
 	T = 16,		//Tangent
-	B = 32,		//Binormal
 };
 
 struct Vertex
 {
+	DirectX::XMFLOAT4 tangent;
 	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 color;
 	DirectX::XMFLOAT3 normal;
-	DirectX::XMFLOAT3 tangent;
-	DirectX::XMFLOAT3 binormal;
 	DirectX::XMFLOAT2 uv;
 
-	bool operator==(const Vertex& other)
+	bool Compare(const Vertex& other)
 	{
-		return	this->position	== other.position	&&
-				this->color		== other.color		&&
-				this->normal	== other.normal		&&
-				this->tangent	== other.tangent	&&
-				this->binormal	== other.binormal	&&
-				this->uv		== other.uv;
+		return VMath::Compare(this->position, other.position) &&
+			VMath::Compare(this->normal, other.normal) &&
+			VMath::Compare(this->tangent, other.tangent) &&
+			VMath::Compare(this->uv, other.uv);
 	}
 };
 struct QuadVertex
@@ -59,18 +55,80 @@ struct MatrixRenderBuffer final
 	DirectX::XMFLOAT4X4 worldViewProj;
 };
 
-struct RenderTarget final 
+class RenderTarget final : public Texture
 {
-	~RenderTarget() 
+public:
+	RenderTarget()
+		:Texture{ nullptr, nullptr }
+		, m_pRenderTargetView{}
+		, m_pTexture{}
 	{
-		SafeRelease(pTexture);
-		SafeRelease(pRenderTargetView);
-		SafeRelease(pShaderResourceView);
+	}
+	~RenderTarget()
+	{
+		SafeRelease(m_pTexture);
+		SafeRelease(m_pRenderTargetView);
 	}
 
-	ID3D11Texture2D* pTexture;
-	ID3D11RenderTargetView* pRenderTargetView;
-	ID3D11ShaderResourceView* pShaderResourceView;
+	inline ID3D11RenderTargetView** GetRenderTargetViewLocation()
+	{
+		return (ID3D11RenderTargetView**)&m_pRenderTargetView;
+	}
+	inline ID3D11RenderTargetView* GetRenderTargetView()
+	{
+		// TO-DO: This is a neat stopgap to keep targets alive, needs something neater?
+		MarkAsUsed();
+		return m_pRenderTargetView;
+	}	
+	inline ID3D11Texture2D** GetTextureLocation()
+	{
+		return (ID3D11Texture2D**)&m_pTexture;
+	}
+	inline ID3D11Texture2D* GetTexture()
+	{
+		// TO-DO: This is a neat stopgap to keep targets alive, needs something neater?
+		MarkAsUsed();
+		return m_pTexture; 
+	}
+
+	// TO-DO: This should have a non-member function as well
+	inline bool CompareDesc(const D3D11_TEXTURE2D_DESC& otherDesc) const
+	{
+		D3D11_TEXTURE2D_DESC targetDesc{};
+		m_pTexture->GetDesc(&targetDesc);
+
+		return targetDesc.Width == otherDesc.Width &&
+			targetDesc.Height == otherDesc.Height &&
+			targetDesc.Format == otherDesc.Format &&
+			targetDesc.CPUAccessFlags == otherDesc.CPUAccessFlags &&
+			targetDesc.MiscFlags == otherDesc.MiscFlags;
+	}
+
+	inline void MarkAsUsed() 
+	{
+		m_Used = true;
+		m_UnusedTimer = 0.0f;
+	}
+	// TO-DO: Perhaps this would benifit from being automated somehow? (For shaders and such)
+	inline void MarkAsUnused() 
+	{
+		m_Used = false;
+	}
+	inline bool IsUsed() 
+	{
+		return m_Used;
+	}
+	inline float UpdateTimeSpentUnused(float deltaTime) 
+	{
+		return m_UnusedTimer += deltaTime;
+	}
+
+private:
+	ID3D11RenderTargetView* m_pRenderTargetView;
+	ID3D11Texture2D* m_pTexture;
+
+	float m_UnusedTimer = 0.0f;
+	bool m_Used = false;
 };
 
 struct ShaderLight final

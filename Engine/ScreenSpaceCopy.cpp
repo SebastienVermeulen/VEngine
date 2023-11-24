@@ -1,31 +1,28 @@
 #include "pch.h"
-#include "GreyScale.h"
-#include "PostProcesses.h"
+#include "ScreenSpaceCopy.h"
 #include "EngineManager.h"
 #include "EngineDevice.h"
 #include "RenderUtils.h"
+#include "Texture.h"
 #include "PostProcessWidget.h"
 #include "RenderAnnotation.h"
 
-GreyScalePostProcess::GreyScalePostProcess()
+ScreenSpaceCopy::ScreenSpaceCopy()
 	: m_pScreenQuadVertexBuffer{ nullptr }
 	, m_pScreenQuadIndexBuffer{ nullptr }
 	, m_ScreenQuadNrVerticies{}
 	, m_ScreenQuadNrIndicies{}
-	, m_pMaterial{nullptr}
-	, m_bActive{false}
-	, m_pGreyScalePostProcessWidget{new GreyScalePostProcessWidget(this)}
+	, m_pMaterial{ nullptr }
 {
 }
-GreyScalePostProcess::~GreyScalePostProcess()
+ScreenSpaceCopy::~ScreenSpaceCopy()
 {
-	SafeDelete(m_pGreyScalePostProcessWidget);
 }
 
-bool GreyScalePostProcess::InitShader(const EngineDevice* pDevice)
+bool ScreenSpaceCopy::InitShader(const EngineDevice* pDevice)
 {
-	m_pMaterial = new Material(L"..\\Resources\\Shaders\\PostProcessing\\GreyScale.fx", RenderType::postprocessPass);
-	MaterialTextureParam MaterialTextureParam{ nullptr, true, "gFinalRender", L"", nullptr };
+	m_pMaterial = new Material(L"..\\Resources\\Shaders\\PostProcessing\\ScreenSpaceCopy.fx", RenderType::postprocessPass);
+	MaterialTextureParam MaterialTextureParam{ nullptr, true, "gInputTexture", L"", nullptr };
 	m_pMaterial->GetTextureParams().AddMapping(MaterialTextureParam);
 	HRESULT hr = m_pMaterial->InitShader(pDevice->GetDevice(), pDevice->GetDeviceContext());
 
@@ -33,23 +30,21 @@ bool GreyScalePostProcess::InitShader(const EngineDevice* pDevice)
 
 	return hr == S_OK;
 }
-void GreyScalePostProcess::ReleaseShader()
+void ScreenSpaceCopy::ReleaseShader()
 {
 	SafeDelete(m_pMaterial);
 }
 
-void GreyScalePostProcess::RunEffect(EngineDevice* pDevice)
+void ScreenSpaceCopy::RunEffect(EngineDevice* pDevice, Texture* pSource, Texture* pTarget)
 {
-	V_DX11_ANNOTATE(V_WTEXT("GreyScale"));
+	V_DX11_ANNOTATE(V_WTEXT("ScreenSpace Copy"));
 
 	ID3D11DeviceContext* pContext = pDevice->GetDeviceContext();
 
-	PostProcessSwapChain* pPostProcessSwapChain = PostProcessSwapChain::Instance();
-
 	//Set the material buffers
 	{
-		const std::string name = "gFinalRender";
-		m_pMaterial->GetTextureParams().GetMappingbasedOnName(name)->SetTexture(pPostProcessSwapChain->GetSource(), true);
+		const std::string name = "gInputTexture";
+		m_pMaterial->GetTextureParams().GetMappingbasedOnName(name)->SetTexture(pSource, true);
 		m_pMaterial->UpdateParameterValues(pDevice);
 	}
 
@@ -67,7 +62,7 @@ void GreyScalePostProcess::RunEffect(EngineDevice* pDevice)
 	//Set the render target
 	ID3D11RenderTargetView* renderTargs[] =
 	{
-		pPostProcessSwapChain->GetTarget()->GetRenderTargetView()
+		((RenderTarget*)pTarget)->GetRenderTargetView()
 	};
 	pContext->OMSetRenderTargets(1, renderTargs, nullptr);
 
@@ -75,6 +70,4 @@ void GreyScalePostProcess::RunEffect(EngineDevice* pDevice)
 
 	//Unhook render targets from material
 	EngineManager::Instance()->GetActiveRenderer()->ExplicitlyUnbindingRenderTargets(m_pMaterial);
-
-	pPostProcessSwapChain->Swap();
 }

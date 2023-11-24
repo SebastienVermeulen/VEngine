@@ -32,10 +32,13 @@ bool MeshComponent::Init()
 	//***********************************************************************************
 	// 	   Mesh
 	//***********************************************************************************
-	m_pAsset = MeshFactory::Instance()->CreateAsset(m_FileName);
+	if (FAILED(MeshFactory::Instance()->CreateAsset(m_FileName, &m_pAsset))) 
+	{
+		return false;
+	}
 
 	std::vector<Vertex> verticies = m_pAsset->GetVerticies();
-	std::vector<unsigned int> indicies = m_pAsset->GetIndicies();
+	std::vector<int> indicies = m_pAsset->GetIndicies();
 
 	EngineDevice* pEngineDiv = EngineManager::Instance()->GetDevice();
 	if (FAILED(pEngineDiv->CreateVertexBuffer(verticies, &m_pVertexBuffer)))

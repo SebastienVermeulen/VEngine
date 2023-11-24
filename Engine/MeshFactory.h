@@ -15,5 +15,5 @@ public:
 	MeshFactory operator=(MeshFactory& other) = delete;
 	MeshFactory& operator=(MeshFactory&& other) = delete;
 
-	virtual MeshAsset* CreateAsset(const std::wstring& localFilePath);
+	virtual HRESULT CreateAsset(const std::wstring& localFilePath, MeshAsset** pMeshAsset);
 };

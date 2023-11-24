@@ -1,7 +1,7 @@
 #pragma once
 
 struct WindowSettings;
-struct RenderTarget;
+class RenderTarget;
 struct Vertex;
 
 class EngineDevice final
@@ -24,37 +24,49 @@ public:
 	inline ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
 #pragma endregion
 
-#pragma region RenderTargets/DepthBuffers
+#pragma region RenderTargets
 	/// <summary>
-	/// Function if you are certain the target exists. If not nullptr is returned.
-	/// Index 0 is guaranted to exists by design, but is the final render target (swapchain buffer).
+	/// The swapchain target is always at the same place in memory.
 	/// </summary>
-	RenderTarget* GetRenderTarget(int index) const;
+	inline RenderTarget* GetSwapChainTarget() { return m_RenderTargets[0]; }
 	/// <summary>
 	/// Function if you don't know if the target exists if not make a new one.
-	/// WARNING: the given index will not necessarily correspond with the given index.
 	/// </summary>
-	RenderTarget* TryGetRenderTarget(int index, bool customDesc, D3D11_TEXTURE2D_DESC desc = {});
+	RenderTarget* TryGetRenderTarget(bool customDesc, D3D11_TEXTURE2D_DESC desc = {});
 	/// <summary>
-	/// Make a new render target, the index of which is passedback via the uint reference.
+	/// Make a new render target, the index of which is passed back via the int reference.
 	/// If no parameters are given defaults will be used.
 	/// </summary>
 	RenderTarget* GetNewRenderTarget(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc = {});
-	inline ID3D11DepthStencilView* GetDepthBuffer() const { return m_pDepthStencilView; }
 
-	// TO-DO: Release targets when not used
-	HRESULT ReleaseTarget(int index);
+	bool CompareTargetFormats(RenderTarget* pTarget, D3D11_TEXTURE2D_DESC desc);
+
+	/// <summary>
+	/// This also can delete targets if not used properly
+	/// Don't call this multiple times per frame
+	/// </summary>
+	void UpdateTargetLifeTimes(float deltaTime);
+
+	void ReleaseTarget(RenderTarget*);
+#pragma endregion
+
+#pragma region DepthBuffers
+	inline ID3D11DepthStencilView* GetDepthBuffer() const { return m_pDepthStencilView; }
 #pragma endregion
 
 #pragma region VertexBuffers/IndexBuffers
 	HRESULT CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Buffer** ppVertexBuffer) const;
-	HRESULT CreateIndexBuffer(std::vector<unsigned int>& indices, ID3D11Buffer** ppIndexBuffer) const;
+	HRESULT CreateIndexBuffer(std::vector<int>& indices, ID3D11Buffer** ppIndexBuffer) const;
 #pragma endregion
 
 	inline UINT GetDefaultWidth() const { return m_DefaultWidth; }
 	inline UINT GetDefaultHeight() const { return m_DefaultHeight; }
 
 private:
+#pragma region RenderTargets
+	RenderTarget* FindAvailableTarget(bool customDesc, D3D11_TEXTURE2D_DESC desc);
+#pragma endregion
+
 #pragma region DirectX
 	IDXGISwapChain* m_pSwapChain;			// The pointer to the swap chain interface
 	ID3D11Device* m_pDevice;				// The pointer to our Direct3D device interface
@@ -62,6 +74,7 @@ private:
 #pragma endregion
 
 #pragma region RenderTargets/DepthBuffers
+	// TO-DO: Make resising possible
 	std::vector<RenderTarget*> m_RenderTargets;		// The pointer to our backbuffer, now as the render target
 	//TO-DO: Make it possible to have more than one stencil and buffer
 	//TO-DO: Remove stensil from these names, since they are just buffers
@@ -70,4 +83,7 @@ private:
 #pragma endregion
 
 	UINT m_DefaultWidth, m_DefaultHeight;
+
+	// TO-DO: Put this in a better place
+	float m_MaxUnusedTargetLifeTime = 0.1f;
 };

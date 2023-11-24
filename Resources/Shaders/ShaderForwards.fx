@@ -5,22 +5,18 @@
 //--------------------------------------------------------------------------------------
 struct VP0_In
 {
-	float3 position : POSITION;
-    	float3 color	: COLOR;
-	float3 normal 	: NORMAL;
-	float3 tangent 	: TANGENT;
-    	float3 binormal : BINORMAL;
-	float2 uv 	: TEXCOORD;
+    float4 tangent : TANGENT;
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
 };
 struct PP0_In
 {
-	float4 position : SV_POSITION;
-	float4 positionf: POSITION0;
-    	float3 color	: COLOR;
-	float3 normal 	: NORMAL;
-	float3 tangent 	: TANGENT;
-    	float3 binormal : BINORMAL;
-	float2 uv 	: TEXCOORD;
+    float4 tangent : TANGENT;
+    float4 position : SV_POSITION;
+    float4 wPos : TEXCOORD0;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD1;
 };
 struct Light
 {
@@ -153,18 +149,16 @@ PP0_In VShaderP0(VP0_In input)
 	PP0_In output;
 
 	//Change the position vector to be 4 units for proper matrix calculations.
-    output.positionf = float4(input.position, 1.0f);
+    output.wPos = float4(input.position, 1.0f);
 
 	//Calculate the position of the vertex against the world, view, and projection matrices.
-	output.position = mul(output.positionf, gWorldViewProj);
-	output.positionf = mul(output.positionf, gWorld);
-	//Calculate the normal and tangent of the vertex against the world rotation and scale.
-	output.normal = mul(input.normal, (float3x3)gWorld);
-	output.normal = float3(output.normal.xy, output.normal.z);
-	output.tangent = mul(input.tangent, (float3x3)gWorld);
-    output.binormal = mul(input.binormal, (float3x3) gWorld);
+    output.position = mul(output.wPos, gWorldViewProj);
+    output.wPos = mul(output.wPos, gWorld);
 	
-    output.color = input.color;
+	//Calculate the normal and tangent of the vertex against the world rotation and scale.
+    output.normal = mul(input.normal, (float3x3)gWorld);
+    output.tangent = input.tangent;
+	
 	output.uv = input.uv;
 
 	return output;
@@ -175,10 +169,9 @@ PP0_In VShaderP0(VP0_In input)
 float4 PShaderP0(PP0_In input) : SV_TARGET
 {
 	//Buffer variables
-	float3 pixelPos = input.positionf.xyz;
+    float3 pixelPos = input.wPos.xyz;
 	float3 normal = input.normal;
 	float3 tangent = input.tangent;
-    float3 binormal = input.binormal;
 	float3 albedo = min(1.0f, gAlbedoMultiply * gAlbedoMap.Sample(samLinear, input.uv));
 	float metal = min(1.0f, gMetalnessMultiply * gMetalnessMap.Sample(samLinear, input.uv));
 	float rougness = min(1.0f, gRoughnessMultiply * gRoughnessMap.Sample(samLinear, input.uv));

@@ -27,8 +27,29 @@ public:
 	Renderer operator=(Renderer& other) = delete;
 	Renderer& operator=(Renderer&& other) = delete;
 
+	virtual void Init();
+
 	virtual void Render() = 0;
 	virtual void ClearBuffers() = 0;
+
+	/*
+		Principly we provide targets just in time.
+		So, we don't have to worry about it's continuous memory occupation.
+		
+		This function should be called at the start of this renderers
+		frame, it request the required targets from the API. 
+	*/
+	virtual void AllocatePromisedTargets();
+	/*
+		Since we are using targets that aren't managed by these classes
+		we need to clear our pointers when we no longer use the class.
+
+		Otherwise it might be dangerous.
+	*/
+	virtual void CleanPointersToTargets();
+
+	virtual void OponActivation();
+	virtual void OponDeactivation();
 
 	void AddRenderable(Component* pRenderable);
 	void RemoveRenderable(Component* pRenderable);

@@ -24,51 +24,25 @@ Material::Material(const std::wstring& effectFile, RenderType type)
 	, m_pInputLayoutSize{}
 	, m_pNrBasisRenderTargets{3}
 	, m_RenderType{ type }
+	, m_Initialized{ false }
 {
-	// TO-DO: Make not hardcoded - Setup the texture params
-	if (m_RenderType == RenderType::lightingPass)
-	{
-		m_MaterialTextureParams.reserve(6);
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gPositionMap", L"" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gNormalMap", L"" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gTangentMap", L"" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gBinormalMap", L"" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gAlbedoMap", L"" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gMetalRoughnessMap", L"" });
-
-		m_MaterialScalarParams.reserve(3);
-		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 2.0f, "gAlbedoMultiply" });
-		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 2.0f, "gMetalnessMultiply" });
-		m_MaterialScalarParams.push_back(new MaterialScalarParam{ nullptr, 1.0f, 0.0f, 1.0f, "gRoughnessMultiply" });
-	}
-	else if (m_RenderType == RenderType::postprocessPass)
-	{
-		m_MaterialTextureParams.reserve(1);
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gFinalRender", L"" });
-	}
-	else
-	{
-		m_MaterialTextureParams.reserve(3);
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" });
-		m_MaterialTextureParams.push_back(new MaterialTextureParam{ nullptr, nullptr, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" });
-	}
+	// TO-DO: Make it a bit more obvious the params need to be setup before calling init
 }
 Material::~Material()
 {
 	SafeDelete(m_pWidget);
 
-	//Lights
+	// Lights
 	SafeRelease(m_LightsBuffer);
 	//Parameters
-	SafeDelete(m_MaterialTextureParams);
-	SafeDelete(m_MaterialScalarParams);
-	//Matrix
+	m_MaterialTextureParamsMapping.Empty();
+	m_MaterialScalarParamsMapping.Empty();
+	// Matrix
 	SafeRelease(m_pWorldViewProj);
 	SafeRelease(m_pProjection);
 	SafeRelease(m_pView);
 	SafeRelease(m_pWorld);
-	//Effect
+	// Effect
 	SafeRelease(m_pLayouts);
 	SafeRelease(m_pTechnique);
 	SafeRelease(m_pEffect);
@@ -98,6 +72,8 @@ HRESULT Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContex
 		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitShaderVariables for %s.", FileManager::GetFileName(m_EffectFile)));
 		return hr;
 	}
+
+	m_Initialized = true;
 
 	return S_OK;
 }
@@ -131,7 +107,7 @@ HRESULT Material::InitEffect(ID3D11Device* pDevice)
 			pErrorBlob->Release();
 		}
 
-		if (pErrorBlob)
+		if (m_pEffect)
 			m_pEffect->Release();
 	}
 	return hr;
@@ -235,18 +211,33 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 		m_pWorldViewProj = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
 	}
 
-	//Textures
-	for (int idx = 0; idx < m_MaterialTextureParams.size(); ++idx) 
+	// Textures
+	auto& textureParams = m_MaterialTextureParamsMapping.m_MaterialTextureParams;
+	for (int idx = 0; idx < textureParams.size(); ++idx)
 	{
-		m_MaterialTextureParams[idx]->m_Resource = m_pEffect->GetVariableByName(m_MaterialTextureParams[idx]->m_Name.c_str())->AsShaderResource();
-		if (m_MaterialTextureParams[idx]->m_Resource && m_MaterialTextureParams[idx]->m_LocalFilePath.length())
+		// Pull the variable from the shader
+		ID3DX11EffectVariable* pEffectVariable = m_pEffect->GetVariableByName(textureParams[idx].m_Name.c_str());
+		if (!pEffectVariable->IsValid()) 
 		{
-			//Load the texture
-			m_MaterialTextureParams[idx]->m_pTexture = FileManager::LoadDDS(pDevice, m_MaterialTextureParams[idx]->m_LocalFilePath);
-			//If successfully loaded, set the texture
-			if (m_MaterialTextureParams[idx]->m_pTexture)
+			return E_FAIL;
+		}
+		textureParams[idx].m_Resource = pEffectVariable->AsShaderResource();
+
+		// Don't overwrite rendertarget pointers
+		if (textureParams[idx].m_HoldsRendertarget)
+		{
+			continue;
+		}
+
+		// Load the texture
+		if (textureParams[idx].m_Resource && textureParams[idx].m_LocalFilePath.length())
+		{
+			
+			textureParams[idx].SetTexture(FileManager::LoadDDS(pDevice, textureParams[idx].m_LocalFilePath), false);
+			// If successfully loaded, set the texture
+			if (textureParams[idx].GetTexture())
 			{
-				m_MaterialTextureParams[idx]->m_Resource->SetResource(m_MaterialTextureParams[idx]->m_pTexture->GetTextureView());
+				textureParams[idx].m_Resource->SetResource(textureParams[idx].GetTexture()->GetResourceView());
 			}
 			else
 			{
@@ -255,10 +246,11 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 			}
 		}
 	}
-	//Scalars
-	for (int idx = 0; idx < m_MaterialScalarParams.size(); ++idx)
+	// Scalars
+	auto& scalarParams = m_MaterialScalarParamsMapping.m_MaterialScalarParams;
+	for (int idx = 0; idx < scalarParams.size(); ++idx)
 	{
-		m_MaterialScalarParams[idx]->m_Resource = m_pEffect->GetVariableByName(m_MaterialScalarParams[idx]->m_Name.c_str())->AsScalar();
+		scalarParams[idx].m_Resource = m_pEffect->GetVariableByName(scalarParams[idx].m_Name.c_str())->AsScalar();
 	}
 
 	if (m_RenderType == RenderType::forwards || m_RenderType == RenderType::lightingPass)
@@ -344,58 +336,58 @@ void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector
 }
 HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)
 {
-	// TO-DO: Add better texture support, none of this hardcoded garbage!
-	//Skip setting the textures if it is not a lighting pass, since those will be used by rendertargs
-	if (m_RenderType == RenderType::lightingPass)
+	if (!m_Initialized)
 	{
-		DeferredRenderTargets deferredRenderTargets = ((DeferredDX11*)EngineManager::Instance()->GetRenderer(RenderType::deferred))->GetDeferredRenderTargets();
-		m_MaterialTextureParams[0]->m_Resource->SetResource(deferredRenderTargets.m_PositionTarget->pShaderResourceView);
-		m_MaterialTextureParams[1]->m_Resource->SetResource(deferredRenderTargets.m_NormalTarget->pShaderResourceView);
-		m_MaterialTextureParams[2]->m_Resource->SetResource(deferredRenderTargets.m_TangentTarget->pShaderResourceView);
-		m_MaterialTextureParams[3]->m_Resource->SetResource(deferredRenderTargets.m_BinormalTarget->pShaderResourceView);
-		m_MaterialTextureParams[4]->m_Resource->SetResource(deferredRenderTargets.m_AlbedoTarget->pShaderResourceView);
-		m_MaterialTextureParams[5]->m_Resource->SetResource(deferredRenderTargets.m_MetalRoughnessTarget->pShaderResourceView);
-	}
-	if (m_RenderType == RenderType::postprocessPass)
-	{
-		m_MaterialTextureParams[0]->m_Resource->SetResource(EngineManager::Instance()->GetActiveRenderer()->GetFinalSceneTarget()->pShaderResourceView);
-	}
-	if (m_RenderType == RenderType::forwards)
-	{
-		m_MaterialTextureParams[0]->m_Resource->SetResource(m_MaterialTextureParams[0]->m_pTexture->GetTextureView());
-		m_MaterialTextureParams[1]->m_Resource->SetResource(m_MaterialTextureParams[1]->m_pTexture->GetTextureView());
-		m_MaterialTextureParams[2]->m_Resource->SetResource(m_MaterialTextureParams[2]->m_pTexture->GetTextureView());
+		return E_FAIL;
 	}
 
-	//Scalars
-	for (int idx = 0; idx < m_MaterialScalarParams.size(); ++idx)
+	// Textures
+	auto& textureParams = m_MaterialTextureParamsMapping.m_MaterialTextureParams;
+	for (int idx = 0; idx < textureParams.size(); ++idx)
 	{
-		if (m_MaterialScalarParams[idx]->m_Resource && m_MaterialScalarParams[idx]->m_Resource->IsValid())
+		if (!textureParams[idx].m_Resource || !textureParams[idx].m_Resource->IsValid())
 		{
-			m_MaterialScalarParams[idx]->m_Resource->SetFloat(m_MaterialScalarParams[idx]->m_Value);
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:", m_EffectFile, ", we couldn't update textureparam: ", textureParams[idx].m_Name, ", since its resource was invalid."));
+			continue;
 		}
+
+		if (!textureParams[idx].GetTexture())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: We couldn't update textureparam: ", textureParams[idx].m_Name, ", since its there was no texture assigned."));
+			continue;
+		}
+
+		textureParams[idx].m_Resource->SetResource(textureParams[idx].GetTexture()->GetResourceView());
+	}
+
+	// Scalars
+	auto& scalarParams = m_MaterialScalarParamsMapping.m_MaterialScalarParams;
+	for (int idx = 0; idx < scalarParams.size(); ++idx)
+	{
+		if (!scalarParams[idx].m_Resource || !scalarParams[idx].m_Resource->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:", m_EffectFile, ", we couldn't update scalarparam: ", scalarParams[idx].m_Name, ", since its resource was invalid."));
+			continue;
+		}
+
+		scalarParams[idx].m_Resource->SetFloat(scalarParams[idx].m_Value);
 	}
 
 	return S_OK;
 }
 HRESULT Material::ExplicitlyUnbindingResources(EngineDevice* pEngineDevice)
 {
-	for (int idx = 0; idx < m_MaterialTextureParams.size(); ++idx)
+	if (!m_Initialized)
 	{
-		if (m_RenderType != RenderType::postprocessPass) // TO-DO: temporary but dirty
+		return E_FAIL;
+	}
+
+	auto& textureParams = m_MaterialTextureParamsMapping.m_MaterialTextureParams;
+	for (int idx = 0; idx < textureParams.size(); ++idx)
+	{
+		if (FAILED(textureParams[idx].m_Resource->SetResource(nullptr)))
 		{
-			if (FAILED(m_MaterialTextureParams[idx]->m_Resource->SetResource(nullptr)))
-			{
-				return E_FAIL;
-			}
-		}
-		else 
-		{
-			ID3D11ShaderResourceView* pResourceView = pEngineDevice->TryGetRenderTarget(1, false)->pShaderResourceView;
-			if (FAILED(m_MaterialTextureParams[0]->m_Resource->SetResource(nullptr)))
-			{
-				return E_FAIL;
-			}
+			return E_FAIL;
 		}
 	}
 	return m_pTechnique->GetPassByIndex(0)->Apply(0, pEngineDevice->GetDeviceContext());

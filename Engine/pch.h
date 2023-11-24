@@ -24,6 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <stack>
 #include <unordered_map>
 #include <functional>
 #include <algorithm>
@@ -56,17 +57,6 @@
 
 //https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompile
 #define D3D_COMPILE_STANDARD_FILE_INCLUDE ((ID3DInclude*)(UINT_PTR)1)
-
-//TO-DO: Make own temp types that takes care of this before storing to buffers etc.
-inline static bool operator==(const DirectX::XMFLOAT3& self, const DirectX::XMFLOAT3& other)
-{
-	return self.x == other.x && self.y == other.y && self.z == other.z;
-}
-inline static bool operator==(const DirectX::XMFLOAT2& self, const DirectX::XMFLOAT2& other)
-{
-	return self.x == other.x && self.y == other.y;
-}
-//END-TO-DO
 #pragma endregion
 
 #pragma region ThirdParty
@@ -246,4 +236,8 @@ inline static std::wstring UTF8Decode(const char str[])
 #else
 	#define V_LOG(verbosity, log, ...) Logger::Log(verbosity, log);
 #endif
+#pragma endregion
+
+#pragma region Math/Types
+#include "VMath.h"
 #pragma endregion

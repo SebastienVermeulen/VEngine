@@ -13,46 +13,44 @@ public:
 	MeshAsset operator=(MeshAsset& other) = delete;
 	MeshAsset& operator=(MeshAsset&& other) = delete;
 
-	void FillVertexBuffer() const;
-	void FillIndexBuffer() const;
+	inline std::vector<Vertex> GetVerticies() const							{ return m_Vertices; }
+	inline std::vector<DirectX::XMINT3> GetUnpackedIndicies() const			{ return m_UnpackedIndices; }
+	inline std::vector<int> GetIndicies() const								{ return m_Indices; }
+	inline std::vector<DirectX::XMFLOAT3> GetPositions() const				{ return m_Positions; }
+	inline std::vector<std::vector<DirectX::XMFLOAT2>> GetUVs() const		{ return m_UVs; }
+	inline std::vector<DirectX::XMFLOAT3> GetNormals() const				{ return m_Normals; }
+	inline std::vector<DirectX::XMFLOAT4> GetTangents() const				{ return m_Tangents; }
 
-	inline std::vector<Vertex> GetVerticies() const				{ return m_Vertices; }
-	inline std::vector<unsigned int> GetIndicies() const		{ return m_Indices; }
-	inline std::vector<DirectX::XMFLOAT3> GetPositions() const	{ return m_Positions; }
-	inline std::vector<DirectX::XMFLOAT3> GetColors() const		{ return m_Colors; }
-	inline std::vector<DirectX::XMFLOAT2> GetUVs() const		{ return m_UVs; }
-	inline std::vector<DirectX::XMFLOAT3> GetNormals() const	{ return m_Normals; }
-	inline std::vector<DirectX::XMFLOAT3> GetTangents() const	{ return m_Tangents; }
-	inline std::vector<DirectX::XMFLOAT3> GetBinormals() const	{ return m_Binormals; }
+	inline std::vector<Vertex>& GetVerticies()								{ return m_Vertices; }
+	inline std::vector<DirectX::XMINT3>& GetUnpackedIndicies()				{ return m_UnpackedIndices; }
+	inline std::vector<int>& GetIndicies()									{ return m_Indices; }
+	inline std::vector<DirectX::XMFLOAT3>& GetPositions()					{ return m_Positions; }
+	inline std::vector<std::vector<DirectX::XMFLOAT2>>& GetUVs()			{ return m_UVs; }
+	inline std::vector<DirectX::XMFLOAT3>& GetNormals()						{ return m_Normals; }
+	inline std::vector<DirectX::XMFLOAT4>& GetTangents()					{ return m_Tangents; }
 
-	inline std::vector<Vertex>& GetVerticies()					{ return m_Vertices; }
-	inline std::vector<unsigned int>& GetIndicies()				{ return m_Indices; }
-	inline std::vector<DirectX::XMFLOAT3>& GetPositions()		{ return m_Positions; }
-	inline std::vector<DirectX::XMFLOAT3>& GetColors()			{ return m_Colors; }
-	inline std::vector<DirectX::XMFLOAT2>& GetUVs()				{ return m_UVs; }
-	inline std::vector<DirectX::XMFLOAT3>& GetNormals()			{ return m_Normals; }
-	inline std::vector<DirectX::XMFLOAT3>& GetTangents()		{ return m_Tangents; }
-	inline std::vector<DirectX::XMFLOAT3>& GetBinormals()		{ return m_Binormals; }
+	void SetUnpackedIndicies(const std::vector<DirectX::XMINT3>& indices);
+	void SetIndicies(const std::vector<int>& indices);
+	void SetPositions(const std::vector<DirectX::XMFLOAT3>& positions);
+	void SetUVs(const std::vector<std::vector<DirectX::XMFLOAT2>>& uvs);
+	void SetNormals(const std::vector<DirectX::XMFLOAT3>& normals);
+	void SetTangents(const std::vector<DirectX::XMFLOAT4>& tangents);
 
-	void SetIndicies(const std::vector<unsigned int>& indices, const bool refillVertexVector = true);
-	void SetPositions(const std::vector<DirectX::XMFLOAT3>& positions, const bool refillVertexVector = true);
-	void SetColors(const std::vector<DirectX::XMFLOAT3>& vertices, const bool refillVertexVector = true);
-	void SetUVs(const std::vector<DirectX::XMFLOAT2>& vertices, const bool refillVertexVector = true);
-	void SetNormals(const std::vector<DirectX::XMFLOAT3>& vertices, const bool refillVertexVector = true);
-	void SetTangents(const std::vector<DirectX::XMFLOAT3>& vertices, const bool refillVertexVector = true);
-	void SetBinormals(const std::vector<DirectX::XMFLOAT3>& vertices, const bool refillVertexVector = true);
-
+	/*
+	We need to run this function in order to pack the mesh data into a usable vertex array.
+	That can be uploaded to the GPU.
+	*/
 	void RefillVertexVector();
 
 private:
 	virtual void WriteToVAsset() const override;
 
 	std::vector<Vertex> m_Vertices;
+	// TO-DO: Make this temporal, since this is a lot of memory to just keep around
 	std::vector<DirectX::XMFLOAT3> m_Positions;
-	std::vector<DirectX::XMFLOAT3> m_Colors;
-	std::vector<DirectX::XMFLOAT2> m_UVs;
+	std::vector<std::vector<DirectX::XMFLOAT2>> m_UVs;
 	std::vector<DirectX::XMFLOAT3> m_Normals;
-	std::vector<DirectX::XMFLOAT3> m_Tangents;
-	std::vector<DirectX::XMFLOAT3> m_Binormals;
-	std::vector<unsigned int> m_Indices;
+	std::vector<DirectX::XMFLOAT4> m_Tangents;
+	std::vector<DirectX::XMINT3> m_UnpackedIndices;
+	std::vector<int> m_Indices;
 };

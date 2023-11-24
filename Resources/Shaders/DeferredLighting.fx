@@ -45,7 +45,6 @@ float4x4 gWorldViewProj : WORLDVIEWPROJECTION;
 Texture2D gPositionMap;
 Texture2D gNormalMap;
 Texture2D gTangentMap;
-Texture2D gBinormalMap;
 
 Texture2D gAlbedoMap;
 Texture2D gMetalRoughnessMap;
@@ -155,7 +154,6 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 	float3 pixelPos = gPositionMap.Sample(samLinear, input.uv).xyz;
 	float3 normal = gNormalMap.Sample(samLinear, input.uv);
 	float3 tangent = gTangentMap.Sample(samLinear, input.uv);
-    float3 binormal = gBinormalMap.Sample(samLinear, input.uv);
 	float4 albedo = gAlbedoMap.Sample(samLinear, input.uv);
 	albedo = float4(min(1.0f, gAlbedoMultiply * albedo.rgb), albedo.a);
     float2 metalRoughness = gMetalRoughnessMap.Sample(samLinear, input.uv).rg;

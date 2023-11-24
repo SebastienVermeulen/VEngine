@@ -30,26 +30,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -203,7 +203,10 @@
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightWidget.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MaterialParamsMapping.cpp" />
     <ClCompile Include="MaterialWidget.cpp" />
+    <ClCompile Include="RenderAnnotation.cpp" />
+    <ClCompile Include="VMath.cpp" />
     <ClCompile Include="MeshAsset.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MeshFactory.cpp" />
@@ -256,7 +259,10 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightWidget.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="MaterialParamsMapping.h" />
     <ClInclude Include="MaterialWidget.h" />
+    <ClInclude Include="RenderAnnotation.h" />
+    <ClInclude Include="VMath.h" />
     <ClInclude Include="MeshAsset.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="MeshFactory.h" />

@@ -6,11 +6,9 @@
 MeshAsset::MeshAsset()
 	:Asset()
 	, m_Vertices{}
-	, m_Colors{}
 	, m_UVs{}
 	, m_Normals{}
 	, m_Tangents{}
-	, m_Binormals{}
 	, m_Indices{}
 {
 }
@@ -18,125 +16,72 @@ MeshAsset::~MeshAsset()
 {
 }
 
-void MeshAsset::FillVertexBuffer() const
+void MeshAsset::SetUnpackedIndicies(const std::vector<DirectX::XMINT3>& indices)
 {
+	m_UnpackedIndices = indices;
 }
-void MeshAsset::FillIndexBuffer() const
-{
-}
-
-void MeshAsset::SetIndicies(const std::vector<unsigned int>& indices, const bool refillVertexVector) 
+void MeshAsset::SetIndicies(const std::vector<int>& indices)
 { 
 	m_Indices = indices; 
 }
-void MeshAsset::SetPositions(const std::vector<DirectX::XMFLOAT3>& positions, const bool refillVertexVector) 
+void MeshAsset::SetPositions(const std::vector<DirectX::XMFLOAT3>& positions) 
 { 
 	m_Positions = positions;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
 }
-void MeshAsset::SetColors(const std::vector<DirectX::XMFLOAT3>& colors, const bool refillVertexVector) 
-{ 
-	m_Colors = colors;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
-}
-void MeshAsset::SetUVs(const std::vector<DirectX::XMFLOAT2>& UVs, const bool refillVertexVector) 
+void MeshAsset::SetUVs(const std::vector<std::vector<DirectX::XMFLOAT2>>& UVs)
 { 
 	m_UVs = UVs;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
 }
-void MeshAsset::SetNormals(const std::vector<DirectX::XMFLOAT3>& normals, const bool refillVertexVector) 
+void MeshAsset::SetNormals(const std::vector<DirectX::XMFLOAT3>& normals) 
 { 
 	m_Normals = normals;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
 }
-void MeshAsset::SetTangents(const std::vector<DirectX::XMFLOAT3>& tangents, const bool refillVertexVector) 
+void MeshAsset::SetTangents(const std::vector<DirectX::XMFLOAT4>& tangents) 
 { 
 	m_Tangents = tangents;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
-}
-void MeshAsset::SetBinormals(const std::vector<DirectX::XMFLOAT3>& binormals, const bool refillVertexVector) 
-{ 
-	m_Binormals = binormals;
-
-	if (refillVertexVector)
-	{
-		RefillVertexVector();
-	}
 }
 
-void MeshAsset::RefillVertexVector() 
+void MeshAsset::RefillVertexVector()
 {
 	m_Vertices.clear();
 
-	if (m_Colors.size() == 0) 
-	{
-		m_Colors.resize(m_Positions.size());
-	}
-	if (m_Normals.size() == 0)
-	{
-		m_Normals.resize(m_Positions.size());
-	}
-	if (m_Tangents.size() == 0)
-	{
-		m_Tangents.resize(m_Positions.size());
-	}
-	if (m_Binormals.size() == 0)
-	{
-		m_Binormals.resize(m_Positions.size());
-	}
+	// TO-DO: hook this int up to a setting
+	int chosenUVMap = 0;
 
-	std::vector<Vertex> tempVerts{};
-	std::vector<unsigned int> tempInds{};
+	// Remap our indices to make sure we only map the minimum needed verts
+	std::vector<DirectX::XMINT3> individualIndices;
 
-	unsigned int index = 0;
-	int nrSkippedIdx = 0;
-	Vertex tempVertex = Vertex{};
-	for (int i = 0; i < m_Positions.size(); ++i)
+	// Continue to iterate
+	for (int i = 0; i < m_UnpackedIndices.size(); ++i)
 	{
-		tempVertex = Vertex(m_Positions[i], m_Colors[i], m_Normals[i], m_Tangents[i], m_Binormals[i], m_UVs[i]);
-
-		bool duplicateFound = false;
-		for (unsigned int j = 0; j < tempVerts.size(); ++j)
+		const int nrIndicies = (int)m_Indices.size();
+		for (int j = 0; j < individualIndices.size(); ++j)
 		{
-			if (tempVertex == tempVerts[j])
+			if (VMath::Compare(m_UnpackedIndices[i], individualIndices[j]))
 			{
-				tempInds.push_back(j);
-				duplicateFound = true;
-				++nrSkippedIdx;
+				m_Indices.push_back(j);
 				break;
 			}
 		}
-		if (duplicateFound) 
-		{
-			continue;
-		}
 
-		index = unsigned int(tempVerts.size());
-		tempInds.push_back(index);
-		tempVerts.push_back(tempVertex);
+		// None have been added
+		if (nrIndicies == m_Indices.size())
+		{
+			m_Indices.push_back((int)individualIndices.size());
+			individualIndices.push_back(m_UnpackedIndices[i]);
+		}
 	}
-	m_Vertices = tempVerts;
-	m_Indices = tempInds;
+
+	// Pack our verts
+	m_Vertices.reserve(individualIndices.size());
+	for (DirectX::XMINT3& index : individualIndices)
+	{
+		// TO-DO: Clean this up based on user settings etc.
+		// TO-DO: Make tangent generation possible
+		DirectX::XMFLOAT3 normal = index.z < 0 ? DirectX::XMFLOAT3{0.0f, 0.0f, 1.0f} : m_Normals[index.z];
+		DirectX::XMFLOAT2 uv = index.y < 0 ? DirectX::XMFLOAT2{ 0.0f, 0.0f } : m_UVs[chosenUVMap][index.y];
+		m_Vertices.emplace_back(DirectX::XMFLOAT4{}, m_Positions[index.x], normal, uv);
+	}
 }
 
 void MeshAsset::WriteToVAsset() const 

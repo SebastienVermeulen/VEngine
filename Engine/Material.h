@@ -1,37 +1,11 @@
 #pragma once
 #include "ShaderStructures.h"
 #include "Texture.h"
+#include "MaterialParamsMapping.h" 
 
 class MaterialWidget;
 class EngineDevice;
 class Light;
-
-struct MaterialTextureParam 
-{
-	~MaterialTextureParam()
-	{
-		SafeRelease(m_Resource);
-		SafeDelete(m_pTexture);
-	}
-
-	Texture* m_pTexture;
-	ID3DX11EffectShaderResourceVariable* m_Resource;
-	std::string m_Name;
-	std::wstring m_LocalFilePath;
-};
-struct MaterialScalarParam
-{
-	~MaterialScalarParam()
-	{
-		SafeRelease(m_Resource);
-	}
-
-	ID3DX11EffectScalarVariable* m_Resource;
-	float m_Value;
-	float m_Min;
-	float m_Max;
-	std::string m_Name;
-};
 
 class Material 
 {
@@ -51,23 +25,23 @@ public:
 	HRESULT UpdateParameterValues(EngineDevice* pEngineDevice);
 	HRESULT ExplicitlyUnbindingResources(EngineDevice* pEngineDevice);
 
-	inline void SetRendertype(RenderType renderType) 
+	inline void SetRendertype(RenderType renderType)
 	{
 		m_RenderType = renderType; 
 	}
-	inline RenderType GetIfDeferred() const 
+	inline RenderType GetIfDeferred() const
 	{
 		return m_RenderType; 
 	}
 
 	MaterialWidget* GetWidget() const;
-	inline std::vector<MaterialTextureParam*>& GetTextureParams() 
+	inline MaterialTextureParamsMapping& GetTextureParams()
 	{
-		return m_MaterialTextureParams;
+		return m_MaterialTextureParamsMapping;
 	}
-	inline std::vector<MaterialScalarParam*>& GetScalarParams()
+	inline MaterialScalarParamsMapping& GetScalarParams()
 	{
-		return m_MaterialScalarParams;
+		return m_MaterialScalarParamsMapping;
 	}
 
 private:
@@ -91,8 +65,8 @@ private:
 	ID3DX11EffectMatrixVariable* m_pInverseView;
 	ID3DX11EffectMatrixVariable* m_pProjection;
 	ID3DX11EffectMatrixVariable* m_pWorldViewProj;
-	std::vector<MaterialTextureParam*> m_MaterialTextureParams;
-	std::vector<MaterialScalarParam*> m_MaterialScalarParams;
+	MaterialTextureParamsMapping m_MaterialTextureParamsMapping;
+	MaterialScalarParamsMapping m_MaterialScalarParamsMapping;
 
 	ID3D11Buffer* m_LightsBuffer;
 	ID3DX11EffectConstantBuffer* m_BufferVariable;
@@ -103,4 +77,6 @@ private:
 	unsigned int m_pNrBasisRenderTargets;
 
 	RenderType m_RenderType;
+
+	bool m_Initialized;
 };

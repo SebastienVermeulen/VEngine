@@ -76,310 +76,290 @@ std::wstring FileManager::GetFullFileName(const std::wstring& filePath)
 }
 
 #pragma region Meshes
-HRESULT FileManager::LoadFBX(std::wstring localFileDir, MeshAsset* pMeshAsset)
+// TO-DO: Add safeties and such to this parsing etc.
+HRESULT FileManager::LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset)
 {
-	//Create importer settings and scene
-	FbxManager* pFbxSdkManager = nullptr;
-	pFbxSdkManager = FbxManager::Create();
+	// Read the file from disk
+	const std::string absoluteFilePath = V_TEXT(GetAbsoluteExePath() + localFileDir);
+	std::ifstream fileRead{ absoluteFilePath };
 
-	FbxIOSettings* pIOsettings = FbxIOSettings::Create(pFbxSdkManager, IOSROOT);
-	pFbxSdkManager->SetIOSettings(pIOsettings);
-
-	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager, "");
-	FbxScene* pFbxScene = FbxScene::Create(pFbxSdkManager, "");
-
-	//Init the importer based on the path
-	std::wstring fullPath = FileManager::GetAbsoluteExePath();
-	fullPath += localFileDir;
-	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &fullPath[0], (int)fullPath.size(), NULL, 0, NULL, NULL);
-	std::string strTo(sizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &fullPath[0], (int)fullPath.size(), &strTo[0], sizeNeeded, NULL, NULL);
-	bool success = pImporter->Initialize(strTo.c_str(), -1, pFbxSdkManager->GetIOSettings());
-	if (!success)
+	if (!fileRead.is_open())
 	{
-		pFbxSdkManager->Destroy();
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed opening file for LoadOBJ \"", absoluteFilePath, "\"."));
 		return E_FAIL;
 	}
 
-	//Try and load the data
-	success = pImporter->Import(pFbxScene);
-	if (!success)
+	std::string objFileContent{};
 	{
-		pFbxSdkManager->Destroy();
+		std::stringstream buffer;
+		buffer << fileRead.rdbuf();
+		objFileContent = buffer.str();
+	}
+	fileRead.close();
+
+	// Regex parse
+	// Basic data
+	int vertexCount, faceCount;
+	if (FAILED(FileManager::OBJParseBasicData(objFileContent, vertexCount, faceCount)))
+	{
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for the basic data."));
 		return E_FAIL;
 	}
-	pImporter->Destroy();
 
-	//Go over the data and extract the needed
-	int nodeCount = pFbxScene->GetNodeCount();
-	for (int i = 0; i < nodeCount; ++i)
+	// Vertex data
+	std::vector<DirectX::XMFLOAT3>& position = pMeshAsset->GetPositions();
+	std::vector<std::vector<DirectX::XMFLOAT2>>& uvs = pMeshAsset->GetUVs();
+	std::vector<DirectX::XMFLOAT3>& normals = pMeshAsset->GetNormals();
+	if (FAILED(FileManager::OBJParseVertexData(objFileContent, vertexCount, position, uvs, normals)))
 	{
-		FbxNode* pNode = pFbxScene->GetNode(i);
-		if (pNode->GetNodeAttribute() == NULL)
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for vertices."));
+		return E_FAIL;
+	}
+
+	// Index data
+	std::vector<DirectX::XMINT3>& indices = pMeshAsset->GetUnpackedIndicies();
+	if (FAILED(FileManager::OBJParseIndices(objFileContent, faceCount, indices)))
+	{
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for indices."));
+		return E_FAIL;
+	}
+
+	// Pack into the mesh
+	pMeshAsset->RefillVertexVector();
+
+	return S_OK;
+}
+HRESULT FileManager::OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount)
+{
+	std::regex reg{ "# vertex count = (\\d+)" };
+	std::smatch matches{};
+	std::regex_search(objFileContent, matches, reg);
+
+	if (!matches.size())
+	{
+		return E_FAIL;
+	}
+
+	outVertexCount = std::stoi(matches[1]);
+	objFileContent = matches.suffix().str();
+
+	reg = { "# face count = (\\d+)" };
+	matches = {};
+	std::regex_search(objFileContent, matches, reg);
+
+	if (!matches.size())
+	{
+		return E_FAIL;
+	}
+
+	outFaceCount = std::stoi(matches[1]);
+	objFileContent = matches.suffix().str();
+
+	return S_OK;
+}
+HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int vertexCount, 
+	std::vector<DirectX::XMFLOAT3>& positions,
+	std::vector<std::vector<DirectX::XMFLOAT2>>& uvs, 
+	std::vector<DirectX::XMFLOAT3>& normals)
+{
+	// Vertex data
+	// Pos
+	std::regex reg{ "v (-?\\d+.?\\d?) (-?\\d+.?\\d?) (-?\\d+.?\\d?)\\n" };
+	std::smatch matches{};
+	positions.reserve(vertexCount);
+	for (int idx = 0; idx < vertexCount; ++idx)
+	{
+		std::regex_search(objFileContent, matches, reg);
+
+		if (!matches.size())
 		{
-			continue;
+			return E_FAIL;
 		}
 
-		FbxNodeAttribute::EType AttributeType = pNode->GetNodeAttribute()->GetAttributeType();
-		if (AttributeType != FbxNodeAttribute::eMesh)
+		positions.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
+		objFileContent = matches.suffix().str();
+	}
+
+	// UVs
+	reg = { "vt (-?\\d+.?\\d?) (-?\\d+.?\\d?) \\[(\\d)\\]\\n" };
+	matches = {};
+	{
+		int nrUVMaps = 1;
+		uvs.push_back({});
+		int uvCount = 0;
+		while (true)
 		{
-			continue;
+			std::regex_search(objFileContent, matches, reg);
+
+			if (!matches.size())
+			{
+				if (uvCount == 0)
+				{
+					return E_FAIL;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			// First confirm the number of maps that need to be accounted for
+			// Idx math, every 4th match (count starting at 0) is the map idx
+			const int uvMapIdx = std::stoi(matches[3]);
+			if (nrUVMaps < uvMapIdx)
+			{
+				nrUVMaps = uvMapIdx;
+				uvs.resize(nrUVMaps);
+			}
+
+			// Collect UVs
+			uvs[uvMapIdx].emplace_back(std::stof(matches[1]), std::stof(matches[2]));
+
+			objFileContent = matches.suffix().str();
+			++uvCount;
 		}
+	}
 
-		fbxsdk::FbxMesh* pMesh = pNode->GetMesh();
-		ReadMeshFBX(pMesh, pMeshAsset);
+	// Normals
+	reg = { "vn (-?\\d+.?\\d?) (-?\\d+.?\\d?) (-?\\d+.?\\d?)\\n" };
+	matches = {};
+	{
+		int normalCount = 0;
+		while (true)
+		{
+			std::regex_search(objFileContent, matches, reg);
 
-		ReadAllChildNodesFBX(pNode, pMeshAsset);
+			if (!matches.size())
+			{
+				if (normalCount == 0)
+				{
+					return E_FAIL;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			normals.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
+
+			objFileContent = matches.suffix().str();
+			++normalCount;
+		}
 	}
 
 	return S_OK;
 }
-
-void FileManager::ReadAllChildNodesFBX(FbxNode* pNode, MeshAsset* pMeshAsset)
+HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices)
 {
-	int childCount = pNode->GetChildCount();
-	if (childCount <= 0)
+	enum IndexGroup 
 	{
-		return;
-	}
+		P,
+		PUV,
+		PUVN,
+		PN
+	};
 
-	for (int i = 0; i < childCount; ++i)
+	// Parse a face to see what type of index structure it holds
+	IndexGroup indexGroup;
 	{
-		FbxNode* pChildNode = pNode->GetChild(i);
-		if (pNode->GetNodeAttribute() == NULL)
+		// Locate an example of an indexgroup
+		unsigned int firstFacePos = (unsigned int)objFileContent.find_first_of("\n");
+		if (firstFacePos == std::string::npos)
 		{
-			continue;
+			return E_FAIL;
 		}
-
-		FbxNodeAttribute::EType AttributeType = pNode->GetNodeAttribute()->GetAttributeType();
-		if (AttributeType != FbxNodeAttribute::eMesh)
+		unsigned int indexStartPos = (unsigned int)objFileContent.find_first_of(" ", firstFacePos);
+		unsigned int indexEndPos = (unsigned int)objFileContent.find_first_of(" ", indexStartPos + 1);
+		std::string firstIndexGroup = objFileContent.substr(indexStartPos, indexEndPos - indexStartPos);
+	
+		// Check what type of group it is with some checks
+		unsigned int firstSlash = (unsigned int)firstIndexGroup.find("/");
+		unsigned int secondSlash = (unsigned int)firstIndexGroup.find("/", firstSlash + 1);
+		if (firstSlash == std::wstring::npos)
 		{
-			continue;
+			indexGroup = IndexGroup::P;
 		}
-
-		fbxsdk::FbxMesh* pMesh = pNode->GetMesh();
-		ReadMeshFBX(pMesh, pMeshAsset);
-
-		ReadAllChildNodesFBX(pChildNode, pMeshAsset);
-	}
-}
-void FileManager::ReadMeshFBX(fbxsdk::FbxMesh* pMesh, MeshAsset* pMeshAsset)
-{
-	std::vector<DirectX::XMFLOAT3> positions{};
-	std::vector<DirectX::XMFLOAT3> colors{};
-	std::vector<DirectX::XMFLOAT2> uvs{};
-	std::vector<DirectX::XMFLOAT3> normals{};
-	std::vector<DirectX::XMFLOAT3> tangents{};
-	std::vector<DirectX::XMFLOAT3> binormals{};
-
-	//Try to access the mesh's parameters
-	FbxVector4* pVertices = pMesh->GetControlPoints();
-	const fbxsdk::FbxGeometryElementNormal* pNormals = nullptr;
-	pNormals = pMesh->GetElementNormal(0);
-	const fbxsdk::FbxGeometryElementUV* pUVs = nullptr;
-	pUVs = pMesh->GetElementUV(0);
-	const fbxsdk::FbxGeometryElementVertexColor* pColor = nullptr;
-	pColor = pMesh->GetElementVertexColor(0);
-	const fbxsdk::FbxGeometryElementTangent* pTangents = nullptr;
-	pTangents = pMesh->GetElementTangent(0);
-	const fbxsdk::FbxGeometryElementBinormal* pBinormals = nullptr;
-	pBinormals = pMesh->GetElementBinormal(0);
-
-	//Mesh settings
-	bool normalUseIndex;
-	bool normalsMappingByControl;
-	if (pNormals)
-	{
-		normalUseIndex = pNormals->GetReferenceMode() == FbxGeometryElement::eDirect;
-		normalsMappingByControl = pNormals->GetMappingMode() == FbxGeometryElement::eByControlPoint;
-	}
-	fbxsdk::FbxStringList list{};
-	if (pUVs)
-	{
-		pMesh->GetUVSetNames(list);
-	}
-	bool colorUseIndex;
-	bool colorsMappingByControl;
-	if (pColor)
-	{
-		colorUseIndex = pColor->GetReferenceMode() == FbxGeometryElement::eDirect;
-		colorsMappingByControl = pColor->GetMappingMode() == FbxGeometryElement::eByControlPoint;
-	}
-	bool tangentUseIndex;
-	bool tangentsMappingByControl;
-	if (pTangents)
-	{
-		tangentUseIndex = pTangents->GetReferenceMode() == FbxGeometryElement::eDirect;
-		tangentsMappingByControl = pTangents->GetMappingMode() == FbxGeometryElement::eByControlPoint;
-	}
-	bool binormalUseIndex;
-	bool binormalsMappingByControl;
-	if (pBinormals)
-	{
-		binormalUseIndex = pBinormals->GetReferenceMode() == FbxGeometryElement::eDirect;
-		binormalsMappingByControl = pBinormals->GetMappingMode() == FbxGeometryElement::eByControlPoint;
-	}
-
-	//Get the correct amount of verticies
-	int nrVerts = pMesh->GetPolygonVertexCount();
-	//Reserve an adaquate amount of data
-	positions.reserve(nrVerts);
-	if (pUVs) 
-	{
-		uvs.reserve(nrVerts);
-	}
-	if (pColor)
-	{
-		colors.reserve(nrVerts);
-	}
-	if (pNormals)
-	{
-		normals.reserve(nrVerts);
-	}
-	if (pTangents)
-	{
-		tangents.reserve(nrVerts);
-	}
-	if (pBinormals)
-	{
-		binormals.reserve(nrVerts);
-	}
-
-	//Get all vertices
-	for (int polygonNr = 0; polygonNr < pMesh->GetPolygonCount(); ++polygonNr)
-	{
-		//Only triangulated meshes allowed
-		int numVertices = pMesh->GetPolygonSize(polygonNr);
-		assert(numVertices == 3);
-
-		//Go over all the verticies
-		for (int vertexNr = 0; vertexNr < numVertices; ++vertexNr)
+		else if (secondSlash == std::wstring::npos)
 		{
-			int vertexIndex = pMesh->GetPolygonVertex(polygonNr, vertexNr);
-
-			positions.push_back(DirectX::XMFLOAT3(
-				(float)pVertices[vertexIndex].mData[0],
-				(float)pVertices[vertexIndex].mData[1],
-				(float)pVertices[vertexIndex].mData[2]));
-			if (pNormals)
-			{
-				normals.push_back(GetNormalFBX(pNormals, polygonNr, vertexNr, vertexIndex, normalUseIndex, normalsMappingByControl));
-			}
-			if (pUVs)
-			{
-				uvs.push_back(GetUVFBX(polygonNr, vertexNr, pMesh, list));
-			}
-			if (pColor)
-			{
-				colors.push_back(GetColorFBX(pColor, polygonNr, vertexNr, vertexIndex, colorUseIndex, colorsMappingByControl));
-			}
-			if (pTangents)
-			{
-				tangents.push_back(GetTangentsFBX(pTangents, polygonNr, vertexNr, vertexIndex, tangentUseIndex, tangentsMappingByControl));
-			}
-			if (pBinormals)
-			{
-				binormals.push_back(GetBinormalFBX(pBinormals, polygonNr, vertexNr, vertexIndex, binormalUseIndex, binormalsMappingByControl));
-			}
+			indexGroup = IndexGroup::PUV;
+		}
+		else if (secondSlash - firstSlash == 1)
+		{
+			indexGroup = IndexGroup::PN;
+		}
+		else 
+		{
+			indexGroup = IndexGroup::PUVN;
 		}
 	}
 
-	pMeshAsset->SetPositions(positions, false);
-	pMeshAsset->SetColors(colors, false);
-	pMeshAsset->SetUVs(uvs, false);
-	pMeshAsset->SetNormals(normals, false);
-	pMeshAsset->SetTangents(tangents, false);
-	pMeshAsset->SetBinormals(binormals, false);
-	pMeshAsset->RefillVertexVector();
-}
+	// Match our data
+	std::regex reg{};
+	switch (indexGroup)
+	{
+	case IndexGroup::P:
+		reg = { "f (\\d + ) (\\d + ) (\\d + ))" };
+		break;
+	case IndexGroup::PUV:
+		reg = { "f (\\d+)\\/(\\d+) (\\d+)\\/(\\d+) (\\d+)\\/(\\d+)" };
+		break;
+	case IndexGroup::PUVN:
+		reg = { "f (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+)" };
+		break;
+	case IndexGroup::PN:
+		reg = { "f (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+)" };
+		break;
+	}
+	std::smatch matches{};
 
-DirectX::XMFLOAT2 FileManager::GetUVFBX(const int polygonNr, const int vertexNr, fbxsdk::FbxMesh* pMesh, fbxsdk::FbxStringList& list)
-{
-	bool unmapped{};
-	fbxsdk::FbxVector2 finalUV{};
+	indices.reserve(faceCount);
+	int indexCount = 0;
+	while (true)
+	{
+		std::regex_search(objFileContent, matches, reg);
 
-	//TO-DO: Pick correct uv's better than just 0 or split vertex up in a better way?
-	pMesh->GetPolygonVertexUV(polygonNr, vertexNr, list[0], finalUV, unmapped);
+		if (!matches.size())
+		{
+			if (indexCount == 0)
+			{
+				return E_FAIL;
+			}
+			else
+			{
+				break;
+			}
+		}
 
-	return DirectX::XMFLOAT2(
-		(float)finalUV.mData[0],
-		1.0f - (float)finalUV.mData[1]);
-}
-DirectX::XMFLOAT3 FileManager::GetColorFBX(const fbxsdk::FbxGeometryElementVertexColor* pColor, const int polygonNr, const int vertexNr, 
-	const int vertexIdx, const bool colorUseIndex, const bool colorsMappingByControl)
-{
-	FbxColor finalColor{};
-	if (colorsMappingByControl) //FbxGeometryElement::eByControlPoint
-	{
-		int colorIndex = colorUseIndex ? vertexIdx : pColor->GetIndexArray().GetAt(vertexIdx);
-		finalColor = pColor->GetDirectArray().GetAt(colorIndex);
+		switch (indexGroup)
+		{
+		case IndexGroup::P:
+			indices.emplace_back(std::stoi(matches[1]) - 1, -1, -1);
+			indices.emplace_back(std::stoi(matches[2]) - 1, -1, -1);
+			indices.emplace_back(std::stoi(matches[3]) - 1, -1, -1);
+			break;
+		case IndexGroup::PUV:
+			indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, -1);
+			indices.emplace_back(std::stoi(matches[3]) - 1, std::stoi(matches[4]) - 1, -1);
+			indices.emplace_back(std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1, -1);
+			break;
+		case IndexGroup::PUVN:
+			indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, std::stoi(matches[3]) - 1);
+			indices.emplace_back(std::stoi(matches[4]) - 1, std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1);
+			indices.emplace_back(std::stoi(matches[7]) - 1, std::stoi(matches[8]) - 1, std::stoi(matches[9]) - 1);
+			break;
+		case IndexGroup::PN:
+			indices.emplace_back(std::stoi(matches[1]) - 1, -1, std::stoi(matches[2]) - 1);
+			indices.emplace_back(std::stoi(matches[3]) - 1, -1, std::stoi(matches[4]) - 1);
+			indices.emplace_back(std::stoi(matches[5]) - 1, -1, std::stoi(matches[6]) - 1);
+			break;
+		}
+
+		objFileContent = matches.suffix().str();
+		++indexCount;
 	}
-	else //FbxGeometryElement::eByPolygonVertex
-	{
-		int colorIndex = colorUseIndex ? polygonNr * 3 + vertexNr : pColor->GetIndexArray().GetAt(vertexIdx);
-		finalColor = pColor->GetDirectArray().GetAt(colorIndex);
-	}
-	return DirectX::XMFLOAT3(
-		(float)finalColor[0],
-		(float)finalColor[1],
-		(float)finalColor[2]);
-}
-DirectX::XMFLOAT3 FileManager::GetNormalFBX(const fbxsdk::FbxGeometryElementNormal* pNormal, const int polygonNr, const int vertexNr, 
-	const int vertexIdx, const bool normalUseIndex, const bool normalsMappingByControl)
-{
-	FbxVector4 finalNormal{};
-	if (normalsMappingByControl) //FbxGeometryElement::eByControlPoint
-	{
-		int normalIndex = normalUseIndex ? vertexIdx : pNormal->GetIndexArray().GetAt(vertexIdx);
-		finalNormal = pNormal->GetDirectArray().GetAt(normalIndex);
-	}
-	else //FbxGeometryElement::eByPolygonVertex
-	{
-		int normalIndex = normalUseIndex ? polygonNr * 3 + vertexNr : pNormal->GetIndexArray().GetAt(vertexIdx);
-		finalNormal = pNormal->GetDirectArray().GetAt(normalIndex);
-	}
-	return DirectX::XMFLOAT3(
-		(float)finalNormal.mData[0],
-		(float)finalNormal.mData[1],
-		(float)finalNormal.mData[2]);
-}
-DirectX::XMFLOAT3 FileManager::GetTangentsFBX(const fbxsdk::FbxGeometryElementTangent* pTangent, const int polygonNr, const int vertexNr, 
-	const int vertexIdx, const bool tangentsUseIndex, const bool tangentsMappingByControl)
-{
-	FbxVector4 finalTangent{};
-	if (tangentsMappingByControl) //FbxGeometryElement::eByControlPoint
-	{
-		int tangentIndex = tangentsUseIndex ? vertexIdx : pTangent->GetIndexArray().GetAt(vertexIdx);
-		finalTangent = pTangent->GetDirectArray().GetAt(tangentIndex);
-	}
-	else //FbxGeometryElement::eByPolygonVertex
-	{
-		int tangentIndex = tangentsUseIndex ? polygonNr * 3 + vertexNr : pTangent->GetIndexArray().GetAt(vertexIdx);
-		finalTangent = pTangent->GetDirectArray().GetAt(tangentIndex);
-	}
-	return DirectX::XMFLOAT3(
-		(float)finalTangent.mData[0],
-		(float)finalTangent.mData[1],
-		(float)finalTangent.mData[2]);
-}
-DirectX::XMFLOAT3 FileManager::GetBinormalFBX(const fbxsdk::FbxGeometryElementBinormal* pBinormal, const int polygonNr, const int vertexNr, 
-	const int vertexIdx, const bool binormalUseIndex, const bool binormalsMappingByControl)
-{
-	FbxVector4 finalBinormal{};
-	if (binormalsMappingByControl) //FbxGeometryElement::eByControlPoint)
-	{
-		int normalIndex = binormalUseIndex ? vertexIdx : pBinormal->GetIndexArray().GetAt(vertexIdx);
-		finalBinormal = pBinormal->GetDirectArray().GetAt(normalIndex);
-	}
-	else //FbxGeometryElement::eByPolygonVertex
-	{
-		int normalIndex = binormalUseIndex ? polygonNr * 3 + vertexNr : pBinormal->GetIndexArray().GetAt(vertexIdx);
-		finalBinormal = pBinormal->GetDirectArray().GetAt(normalIndex);
-	}
-	return DirectX::XMFLOAT3(
-		(float)finalBinormal.mData[0],
-		(float)finalBinormal.mData[1],
-		(float)finalBinormal.mData[2]);
+
+	return S_OK;
 }
 #pragma endregion
 

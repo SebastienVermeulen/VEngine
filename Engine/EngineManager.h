@@ -94,10 +94,12 @@ public:
 	{
 		return m_pOpenProject;
 	}
-	inline std::vector<RenderType>& GetAvailableRenderTypes() 
+	inline std::vector<RenderType>& GetAvailableRenderTypes()
 	{
 		return m_pRenderTypes;
 	}
+
+	void UpdateTargetLifeTimes(const float deltaTime);
 
 private:
 	//TO-DO: Make this create renderers based on users wishes, lets say the main uberlevel is deferredDX11 then only that renderer needs to be allocated
@@ -105,6 +107,11 @@ private:
 	{
 		AddRenderer(new DeferredDX11(m_pDevice));
 		AddRenderer(new ForwardsDX11(m_pDevice));
+		
+		for (Renderer* pRenderer : m_pRenderers)
+		{
+			pRenderer->Init();
+		}
 	}
 	inline void AddRenderer(Renderer* pRenderer) 
 	{

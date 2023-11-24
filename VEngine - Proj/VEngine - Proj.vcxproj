@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -168,8 +168,8 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <RunPostBuildEvent>Always</RunPostBuildEvent>
       <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
       <Command>echo --- RESOURCE COPY STARTED ---
-xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y/i
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y/i
 echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
     <PreBuildEvent>

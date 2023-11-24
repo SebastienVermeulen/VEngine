@@ -12,16 +12,17 @@ MeshFactory::~MeshFactory()
 {
 }
 
-MeshAsset* MeshFactory::CreateAsset(const std::wstring& localFilePath)
+HRESULT MeshFactory::CreateAsset(const std::wstring& localFilePath, MeshAsset** pMeshAsset)
 {
-	MeshAsset* pAsset = new MeshAsset();
+	*pMeshAsset = new MeshAsset();
 
 	//TO-DO: Make an asset reference holder, to look up already parsed meshes (think UAsset)
-	pAsset->SetFilePath(localFilePath);
+	(*pMeshAsset)->SetFilePath(localFilePath);
 	
-	if (FAILED(FileManager::LoadFBX(localFilePath, pAsset)))
+	if (FAILED(FileManager::LoadOBJ(localFilePath, *pMeshAsset)))
 	{
 		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to load FBX file for %s.", FileManager::GetFileName(localFilePath)));
+		return E_FAIL;
 	}
-	return pAsset;
+	return S_OK;
 }

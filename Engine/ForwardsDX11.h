@@ -14,6 +14,10 @@ public:
 	ForwardsDX11 operator=(ForwardsDX11& other) = delete;
 	ForwardsDX11& operator=(ForwardsDX11&& other) = delete;
 
+	virtual void Init() override;
+
+	virtual void AllocatePromisedTargets() override;
+
 	virtual void Render() override;
 	virtual void ClearBuffers() override;
 

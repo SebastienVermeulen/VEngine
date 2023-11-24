@@ -12,9 +12,10 @@ struct DeferredRenderTargets
 	RenderTarget* m_PositionTarget;
 	RenderTarget* m_NormalTarget;
 	RenderTarget* m_TangentTarget;
-	RenderTarget* m_BinormalTarget;
 	RenderTarget* m_AlbedoTarget;
 	RenderTarget* m_MetalRoughnessTarget;
+
+	bool m_IsAssigned = false;
 };
 
 class DeferredDX11 final : public Renderer 
@@ -27,6 +28,12 @@ public:
 	DeferredDX11(DeferredDX11&& other) = delete;
 	DeferredDX11 operator=(DeferredDX11& other) = delete;
 	DeferredDX11& operator=(DeferredDX11&& other) = delete;
+
+	virtual void Init() override;
+
+	virtual void AllocatePromisedTargets() override;
+	virtual void CleanPointersToTargets() override;
+	virtual void MarkTargetsAsNotUsed();
 
 	virtual void Render() override;
 	virtual void ClearBuffers() override;

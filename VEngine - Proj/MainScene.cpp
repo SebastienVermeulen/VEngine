@@ -9,7 +9,7 @@
 #include "DirectionalLight.h"
 
 MainScene::MainScene() 
-	: m_CurrentRotation{ -90.0f, 90.0f, 135.0f }
+	: m_CurrentRotation{ 0.0f, 0.0f, 0.0f }//-90.0f, 90.0f, 135.0f }
 	, m_pDirectionalLight{}
 	, m_pPointLight{}
 {
@@ -35,22 +35,32 @@ bool MainScene::Init()
 	//Objects
 	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
-	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
+	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\box.obj")));
 	pObject->SetRenderType(pMeshComp, RenderType::deferred);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
 	Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
 	pMaterial->SetRendertype(RenderType::deferred);
+	std::vector<MaterialTextureParam> TextureParamsDeferredMap{
+		MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
+		MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
+		MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
+	pMaterial->GetTextureParams().AddMap(TextureParamsDeferredMap);
 	pMeshComp->SetMaterial(pMaterial);
 	
 	objectName = "ForwardsObject";
 	pObject = CreateObject(objectName);
-	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\lion.FBX")));
+	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\box.obj")));
 	pObject->SetRenderType(pMeshComp, RenderType::forwards);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
-	pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx");
+	pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx", RenderType::forwards);
 	pMaterial->SetRendertype(RenderType::forwards);
+	std::vector<MaterialTextureParam> TextureParamsForwardsMap{
+		MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
+		MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
+		MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
+	pMaterial->GetTextureParams().AddMap(TextureParamsForwardsMap);
 	pMeshComp->SetMaterial(pMaterial);
 	
 	//Lights

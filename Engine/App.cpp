@@ -7,6 +7,7 @@
 #include "AppTime.h"
 #include "UIRenderer.h"
 #include "EngineSettings.h"
+#include "RenderAnnotation.h"
 
 App::App(HINSTANCE hInstance, const int nCmdShow, WindowSettings settings)
 	:m_pProject{}
@@ -62,11 +63,21 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
     //TO-DO: Engine settings should not hold lighting states, only settings, this needs to be moved to a more temporary structure
     //Force lighting to be recalculated
     pEngineSettings->MarkAllLightingDirty(pEngineManager);
+    // TO-DO: This should live in some other function I suppose, it is only here to prevent repeated uselless calls
+    pEngineManager->GetActiveRenderer()->AllocatePromisedTargets();
+
+    //TO-DO: This should be excludable via some pragma's, since you don't want debug to run when shipping
+    //Init the annotations system for debugging our rendering states
+    if (RenderAnnotationsContainer::Instance()->Init(pDevice->GetDeviceContext())) 
+    {
+        V_LOG(LogVerbosity::Warning, V_WTEXT("App: Failed to initialize the RenderAnnotationsContainer."));
+    }
 
 	return S_OK;
 }
 HRESULT App::Cleanup()
 {
+    RenderAnnotationsContainer::ReleaseInstance();
     EngineSettings::ReleaseInstance();
     EngineManager::ReleaseInstance();
     UIRenderer::ReleaseInstance();
@@ -88,6 +99,7 @@ int App::Run()
     {
         float deltaTime = AppTime::Instance()->Update();
 
+        // Project frame update
         m_pProject->Update(deltaTime);
 
         if (AppTime::Instance()->FixedUpdate())
@@ -95,10 +107,14 @@ int App::Run()
             m_pProject->FixedUpdate();
         }
 
+        // Project Render
         m_pProject->LateUpdate(deltaTime);
 
         //Run game code
         pEngineManager->Render();
+
+        // Make sure that the unused render targets get released
+        pEngineManager->UpdateTargetLifeTimes(deltaTime);
 
         //Resolve after update, to make the quit event instant
         ResolveMessages(msg);

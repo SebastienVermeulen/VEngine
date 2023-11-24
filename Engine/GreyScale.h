@@ -18,9 +18,7 @@ public:
 	bool InitShader(const EngineDevice* pDevice);
 	void ReleaseShader();
 
-	void SetupEffectEnvironment(EngineDevice* pDevice);
 	void RunEffect(EngineDevice* pDevice);
-	void TeardownEffectEnvironment(EngineDevice* pDevice);
 
 	inline bool IsActive() const { return m_bActive; }
 	inline void SetActive(const bool bActivate) { m_bActive = bActivate; }

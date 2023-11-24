@@ -19,10 +19,10 @@ void MaterialWidget::RenderUIElement(int idx)
 {
     //Are there textures
     bool textureDetected = false;
-    std::vector<MaterialTextureParam*> textureParams = m_pMaterial->GetTextureParams();
-    for (MaterialTextureParam* pTextureParam : textureParams)
+    MaterialTextureParamsMapping& textureParams = m_pMaterial->GetTextureParams();
+    for (MaterialTextureParam& textureParam : textureParams.m_MaterialTextureParams)
     {
-        if (pTextureParam->m_Resource->IsValid())
+        if (textureParam.m_Resource->IsValid())
         {
             textureDetected = true;
             break;
@@ -31,14 +31,14 @@ void MaterialWidget::RenderUIElement(int idx)
     if (textureDetected && ImGui::TreeNode("Textures:"))
     {
         ImGui::Unindent();
-        for (MaterialTextureParam* pTextureParam : textureParams)
+        for (MaterialTextureParam& textureParam : textureParams.m_MaterialTextureParams)
         {
-            Texture* pTexture = pTextureParam->m_pTexture;
-            if (pTexture && pTextureParam->m_Resource->IsValid())
+            Texture* pTexture = textureParam.GetTexture();
+            if (pTexture && textureParam.m_Resource->IsValid())
             {
                 ImGui::Separator();
-                ImGui::Text(pTextureParam->m_Name.c_str());
-                ImGui::Image((void*)pTextureParam->m_pTexture->GetTextureView(), { 150.0f, 150.0f });
+                ImGui::Text(textureParam.m_Name.c_str());
+                ImGui::Image((void*)pTexture->GetResourceView(), { 150.0f, 150.0f });
             }
         }
         ImGui::Indent();
@@ -47,10 +47,10 @@ void MaterialWidget::RenderUIElement(int idx)
 
     //Are there scalars
     bool scalarDetected = false;
-    std::vector<MaterialScalarParam*> scalarParams = m_pMaterial->GetScalarParams();
-    for (MaterialScalarParam* pScalarsParam : scalarParams)
+    MaterialScalarParamsMapping& scalarParams = m_pMaterial->GetScalarParams();
+    for (MaterialScalarParam& scalarsParam : scalarParams.m_MaterialScalarParams)
     {
-        if (pScalarsParam->m_Resource->IsValid()) 
+        if (scalarsParam.m_Resource->IsValid())
         {
             scalarDetected = true;
             break;
@@ -60,12 +60,12 @@ void MaterialWidget::RenderUIElement(int idx)
     if (scalarDetected && ImGui::TreeNode("Scalars:"))
     {
         ImGui::Unindent();
-        for (MaterialScalarParam* pScalarsParam : scalarParams)
+        for (MaterialScalarParam& scalarsParam : scalarParams.m_MaterialScalarParams)
         {
-            if (pScalarsParam->m_Resource->IsValid())
+            if (scalarsParam.m_Resource->IsValid())
             {
                 ImGui::Separator();
-                ImGui::SliderFloat(pScalarsParam->m_Name.c_str(), &pScalarsParam->m_Value, pScalarsParam->m_Min, pScalarsParam->m_Max);
+                ImGui::SliderFloat(scalarsParam.m_Name.c_str(), &scalarsParam.m_Value, scalarsParam.m_Min, scalarsParam.m_Max);
             }
         }
         ImGui::Indent();

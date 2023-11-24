@@ -24,8 +24,10 @@ void EngineSettings::SetRendertype(RenderType renderType)
 {
 	//Make sure the other render type has up to date lighting info
 	EngineManager* pEngineManager = EngineManager::Instance();
+	pEngineManager->GetActiveRenderer()->CleanPointersToTargets();
 	MarkCurrentLightingDirty(pEngineManager);
 	m_CurrentRenderType = renderType;
+	pEngineManager->GetActiveRenderer()->AllocatePromisedTargets();
 	MarkCurrentLightingDirty(pEngineManager);
 }
 RenderType EngineSettings::GetRenderType() const
@@ -40,6 +42,7 @@ void EngineSettings::MarkAllLightingDirty(EngineManager* pEngineManager)
 		pRenderer->SetShouldUpdateLighting(true);
 	}
 }
+// TO-DO: Once static vs. dynamic vs. stationary exists this is useless, maybe
 void EngineSettings::MarkCurrentLightingDirty(EngineManager* pEngineManager)
 {
 	pEngineManager->GetActiveRenderer()->SetShouldUpdateLighting(true);

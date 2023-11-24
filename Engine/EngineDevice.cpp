@@ -34,7 +34,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
 
     // Fill the swap chain description struct
     scd.BufferCount = 2;                                                            //One back buffer
-    scd.BufferDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;                //Use 32-bit color
+    scd.BufferDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;                //Use 32-bit color (not all formats are supported by modern D3 for swapchains)
     scd.BufferDesc.Width = m_DefaultWidth;                                          //Set the back buffer width
     scd.BufferDesc.Height = m_DefaultHeight;                                        //Set the back buffer height
     scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;                              //How swap chain is to be used
@@ -42,7 +42,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     scd.SampleDesc.Count = 1;                                                       //How many multisamples
     scd.Windowed = TRUE;                                                            //Windowed/full-screen mode
     scd.Flags = settings.flags;                                                     //Windowed/full-screen mode
-    scd.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;               //Type of swapchain method in use
+    scd.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;            //Type of swapchain method in use
 
     D3D_FEATURE_LEVEL featureLevelRequested = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0;
     UINT numberOfLevels = 1;
@@ -77,14 +77,14 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
 #pragma region Rendertarget
     m_RenderTargets.push_back(new RenderTarget());
 
-    hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&m_RenderTargets[0]->pTexture);
+    hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)m_RenderTargets[0]->GetTextureLocation());
     if (hr != S_OK)
     {
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the texture for the main rendertarget."));
     }
     
     // Use the back buffer address to create the render target
-    hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[0]->pTexture, nullptr, &m_RenderTargets[0]->pRenderTargetView);
+    hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[0]->GetTexture(), nullptr, m_RenderTargets[0]->GetRenderTargetViewLocation());
     if (hr != S_OK)
     {
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the main rendertarget."));
@@ -97,6 +97,9 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     // {
     //     V_LOG(V_Fatal, V_WTEXT("EngineDevice: Failed making the main rendertarget ShaderResourceView."));
     // }
+
+    // TO-DO: It just feels wrong that the backbuffer needs to be marked as unused, perhaps we should just store this guy elsewhere...
+    m_RenderTargets[0]->MarkAsUnused();
 #pragma endregion
 
 #pragma region Viewport
@@ -177,22 +180,9 @@ void EngineDevice::CleanD3D()
     ImGui::DestroyContext();
 }
 
-RenderTarget* EngineDevice::GetRenderTarget(int index) const
+RenderTarget* EngineDevice::TryGetRenderTarget(bool customDesc, D3D11_TEXTURE2D_DESC desc)
 {
-    if (m_RenderTargets.size() > index)
-    {
-        return m_RenderTargets[index];
-    }
-    return nullptr;
-}
-RenderTarget* EngineDevice::TryGetRenderTarget(int index, bool customDesc, D3D11_TEXTURE2D_DESC desc)
-{
-    if (m_RenderTargets.size() > index)
-    {
-        return m_RenderTargets[index];
-    }
-    int temp{};
-    return GetNewRenderTarget(temp, customDesc, desc);
+    return FindAvailableTarget(customDesc, desc);
 }
 RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc)
 {
@@ -200,6 +190,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     index = (int)m_RenderTargets.size();
     m_RenderTargets.push_back(new RenderTarget());
 
+    // TO-DO: Move this to a reusable spot
     if (!customDesc) 
     {
         //Describe our Depth/Stencil Buffer
@@ -218,7 +209,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
         desc.MiscFlags = 0;
     }
 
-    HRESULT hr = m_pDevice->CreateTexture2D(&desc, nullptr, &m_RenderTargets[index]->pTexture);
+    HRESULT hr = m_pDevice->CreateTexture2D(&desc, nullptr, m_RenderTargets[index]->GetTextureLocation());
     if (hr != S_OK)
     {
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a texture for a RenderTarget."));
@@ -230,7 +221,7 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-    hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[index]->pTexture, &renderTargetViewDesc, &m_RenderTargets[index]->pRenderTargetView);
+    hr = m_pDevice->CreateRenderTargetView(m_RenderTargets[index]->GetTexture(), &renderTargetViewDesc, m_RenderTargets[index]->GetRenderTargetViewLocation());
     if (hr != S_OK)
     {
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a RenderTarget."));
@@ -243,25 +234,88 @@ RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D1
     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
     shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-    hr = m_pDevice->CreateShaderResourceView(m_RenderTargets[index]->pTexture, &shaderResourceViewDesc, &m_RenderTargets[index]->pShaderResourceView);
+    hr = m_pDevice->CreateShaderResourceView(m_RenderTargets[index]->GetTexture(), &shaderResourceViewDesc, m_RenderTargets[index]->GetResourceViewLocation());
     if (hr != S_OK)
     {
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making a resourceview for a RenderTarget."));
     }
 
+    m_RenderTargets[index]->MarkAsUsed();
     return m_RenderTargets[index];
 }
 
-HRESULT EngineDevice::ReleaseTarget(int index) 
+RenderTarget* EngineDevice::FindAvailableTarget(bool customDesc, D3D11_TEXTURE2D_DESC desc)
 {
-    if (m_RenderTargets.empty() == 0 || m_RenderTargets.size() >= index)
+    // TO-DO: Move this to a reusable spot
+    if (!customDesc)
     {
-        return E_FAIL;
-    }
-    
-    SafeDelete(m_RenderTargets[index]);
+        //Describe our Depth/Stencil Buffer
+        ZeroMemory(&desc, sizeof(desc));
 
-    return S_OK;
+        desc.Width = m_DefaultWidth;
+        desc.Height = m_DefaultHeight;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = 0;
+    }
+
+    for (RenderTarget* pTarget : m_RenderTargets)
+    {
+        if (!pTarget->IsUsed() && CompareTargetFormats(pTarget, desc))
+        {
+            pTarget->MarkAsUsed();
+            return pTarget;
+        }
+    }
+
+    int newTargetIdx = 0;
+    return GetNewRenderTarget(newTargetIdx, true, desc);
+}
+bool EngineDevice::CompareTargetFormats(RenderTarget* pTarget, D3D11_TEXTURE2D_DESC desc)
+{
+    return pTarget->CompareDesc(desc);
+}
+
+void EngineDevice::UpdateTargetLifeTimes(float deltaTime) 
+{
+    // We limit the deltatime to be just below the max, since otherwise would release our targets when there is a large hitch
+    deltaTime = m_MaxUnusedTargetLifeTime < deltaTime ? 0.9f * m_MaxUnusedTargetLifeTime : deltaTime;
+
+    // We start with iterator 1, since 0 is our swapchain backbuffer (we obviously can't randomly destroy that one)
+    for (int i = 1; i < m_RenderTargets.size(); ++i)
+    {
+        if (!m_RenderTargets[i]->IsUsed() && m_RenderTargets[i]->UpdateTimeSpentUnused(deltaTime) >= m_MaxUnusedTargetLifeTime)
+        {
+            RenderTarget* pTarget = m_RenderTargets[i];
+            m_RenderTargets.erase(m_RenderTargets.begin() + i);
+            ReleaseTarget(pTarget);
+
+            // We step one index back
+            --i;
+        }
+        else
+        {
+            m_RenderTargets[i]->MarkAsUnused();
+        }
+    }
+}
+
+void EngineDevice::ReleaseTarget(RenderTarget* pTarget)
+{
+    // TO-DO: Needs some safety to prevent the swapchain target from being deleted
+    m_RenderTargets.erase(
+        std::remove_if(m_RenderTargets.begin(), m_RenderTargets.end(), [pTarget](RenderTarget* pIteratorTarget) 
+            { 
+                return pTarget == pIteratorTarget; 
+            }), 
+        m_RenderTargets.end());
+    SafeDelete(pTarget);
 }
 
 HRESULT EngineDevice::CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Buffer** ppVertexBuffer) const
@@ -294,9 +348,9 @@ HRESULT EngineDevice::CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Bu
     }
     return result;
 }
-HRESULT EngineDevice::CreateIndexBuffer(std::vector<unsigned int>& indices, ID3D11Buffer** ppIndexBuffer) const
+HRESULT EngineDevice::CreateIndexBuffer(std::vector<int>& indices, ID3D11Buffer** ppIndexBuffer) const
 {
-    unsigned int* indicesArray = &indices[0];
+    int* indicesArray = &indices[0];
     int indicesNr = (UINT)indices.size();
 
     D3D11_SUBRESOURCE_DATA indexMS;
@@ -305,7 +359,7 @@ HRESULT EngineDevice::CreateIndexBuffer(std::vector<unsigned int>& indices, ID3D
 
     //Index
     indexBD.Usage = D3D11_USAGE_DEFAULT;
-    indexBD.ByteWidth = sizeof(unsigned int) * indicesNr;
+    indexBD.ByteWidth = sizeof(int) * indicesNr;
     indexBD.BindFlags = D3D11_BIND_INDEX_BUFFER;
     indexBD.CPUAccessFlags = 0;
     indexBD.MiscFlags = 0;

@@ -29,24 +29,21 @@ public:
 
 #pragma region Meshes
 public:
+	// TO-DO: Extend the .OBJ format: https://devtalk.blender.org/t/extended-obj-format-with-skeletal-animation-info/447
+	// Other file formats are just too cumbursome to even bother with ngl
+
 	/// <summary>
-	/// Loads an fbx and places the data into the given buffers.
+	/// Loads an obj and places the data into the given buffers.
 	/// </summary>
-	static HRESULT LoadFBX(std::wstring localFileDir, MeshAsset* pMeshAsset);
-
+	static HRESULT LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset);
+	static HRESULT OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount);
+	static HRESULT OBJParseVertexData(std::string& objFileContent, const int vertexCount,
+		std::vector<DirectX::XMFLOAT3>& positions,
+		std::vector<std::vector<DirectX::XMFLOAT2>>& uvs,
+		std::vector<DirectX::XMFLOAT3>& normals);
+	static HRESULT OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices);
 private:
-	static void ReadAllChildNodesFBX(fbxsdk::FbxNode* pNode, MeshAsset* pMeshAsset);
-	static void ReadMeshFBX(fbxsdk::FbxMesh* pMesh, MeshAsset* pMeshAsset);
 
-	static DirectX::XMFLOAT2 GetUVFBX(const int polygonNr, const int vertexNr, fbxsdk::FbxMesh* pMesh, fbxsdk::FbxStringList& list);
-	static DirectX::XMFLOAT3 GetColorFBX(const fbxsdk::FbxGeometryElementVertexColor* pColor, const int polygonNr, const int vertexNr, 
-		const int vertexIdx, const bool colorUseIndex, const bool colorsMappingByControl);
-	static DirectX::XMFLOAT3 GetNormalFBX(const fbxsdk::FbxGeometryElementNormal* pNormal, const int polygonNr, const int vertexNr, 
-		const int vertexIdx, const bool normalUseIndex, const bool normalsMappingByControl);
-	static DirectX::XMFLOAT3 GetTangentsFBX(const fbxsdk::FbxGeometryElementTangent* pTangent, const int polygonNr, const int vertexNr, 
-		const int vertexIdx, const bool tangentsUseIndex, const bool tangentsMappingByControl);
-	static DirectX::XMFLOAT3 GetBinormalFBX(const fbxsdk::FbxGeometryElementBinormal* pBinormal, const int polygonNr, const int vertexNr, 
-		const int vertexIdx, const bool binormalUseIndex, const bool binormalsMappingByControl);
 #pragma endregion
 
 #pragma region Textures

@@ -103,12 +103,12 @@ void ComponentStructure::RemoveRenderType(Component* pObject, RenderType type)
 	RemoveRenderType(pEngineManager, pObject, type);
 }
 
-void ComponentStructure::AddRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type) 
+void ComponentStructure::AddRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type)
 {
 	pObject->AddRenderType(type);
 	pEngineManager->GetRenderer(type)->AddRenderable(pObject);
 }
-void ComponentStructure::RemoveRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type) 
+void ComponentStructure::RemoveRenderType(EngineManager* pEngineManager, Component* pObject, RenderType type)
 {
 	pObject->RemoveRenderType(type);
 	pEngineManager->GetRenderer(type)->RemoveRenderable(pObject);

@@ -30,6 +30,7 @@ void RendererWidget::RenderUIElement(int idx)
     ImGui::Separator();
 
     RenderType renderType = pEngineSettings->GetRenderType();
+    // TO-DO: Don't hardcode rendertype choices
     ImGui::Combo("RenderType", (int*)&renderType, "Forwards\0Deferred\0\0");
     pEngineSettings->SetRendertype(renderType);
 
