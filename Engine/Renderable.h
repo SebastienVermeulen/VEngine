@@ -9,7 +9,7 @@ class Renderable abstract
 public:
 	inline virtual void Render(ID3D11Device* device, ID3D11DeviceContext* context, int passNr = 0) const {}
 
-	inline void SetMaterial(Material* pMat) 
+	virtual inline void SetMaterial(Material* pMat)
 	{
 		m_pMaterial = pMat;
 

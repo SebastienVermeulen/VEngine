@@ -35,34 +35,44 @@ bool MainScene::Init()
 	//Objects
 	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
-	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\box.obj")));
+	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\StanfordBunny.obj")));
 	pObject->SetRenderType(pMeshComp, RenderType::deferred);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
-	Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
-	pMaterial->SetRendertype(RenderType::deferred);
-	std::vector<MaterialTextureParam> TextureParamsDeferredMap{
-		MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
-		MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
-		MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
-	pMaterial->GetTextureParams().AddMap(TextureParamsDeferredMap);
-	pMeshComp->SetMaterial(pMaterial);
+	{
+		// Create the mesh material
+		Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
+		pMaterial->SetRendertype(RenderType::deferred);
+		// Setup the textures for our material
+		std::vector<MaterialTextureParam> TextureParamsDeferredMap{
+			MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
+			MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
+			MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
+		pMaterial->GetTextureParams().AddMap(TextureParamsDeferredMap);
+		// Set our material
+		pMeshComp->SetMaterial(pMaterial);
+	}
 	
 	objectName = "ForwardsObject";
 	pObject = CreateObject(objectName);
-	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\box.obj")));
+	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\StanfordBunny.obj")));
 	pObject->SetRenderType(pMeshComp, RenderType::forwards);
 	pObject->GetTransform()->Rotate(m_CurrentRotation);
 	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
-	pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx", RenderType::forwards);
-	pMaterial->SetRendertype(RenderType::forwards);
-	std::vector<MaterialTextureParam> TextureParamsForwardsMap{
-		MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
-		MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
-		MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
-	pMaterial->GetTextureParams().AddMap(TextureParamsForwardsMap);
-	pMeshComp->SetMaterial(pMaterial);
-	
+	{
+		// Create the mesh material
+		Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx");
+		pMaterial->SetRendertype(RenderType::forwards);
+		// Setup the textures for our material
+		std::vector<MaterialTextureParam> TextureParamsDeferredMap{
+			MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
+			MaterialTextureParam{ false, "gMetalnessMap", L"..\\Resources\\Textures\\LionMetalness.dds" },
+			MaterialTextureParam{ false, "gRoughnessMap", L"..\\Resources\\Textures\\LionRoughness.dds" } };
+		pMaterial->GetTextureParams().AddMap(TextureParamsDeferredMap);
+		// Set our material
+		pMeshComp->SetMaterial(pMaterial);
+	}
+
 	//Lights
 	objectName = "DirectionalLight";
 	pObject = CreateObject(objectName);

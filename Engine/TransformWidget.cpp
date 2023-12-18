@@ -29,7 +29,7 @@ void TransformWidget::RenderUIElement(int idx)
 
     const DirectX::XMFLOAT3 pos = m_pTransform->GetPosition();
     float positionArr[3] = { pos.x, pos.y, pos.z };
-    ImGui::SliderFloat3("Position", positionArr, -30.0f, 30.0f);
+    ImGui::DragFloat3("Position", positionArr, 0.1f);
 
     //TO-DO: Make a more elegant way of having lighting updated
     //(perhaps marking as dirty? to be picked up by lightingwidgets?)
@@ -45,7 +45,7 @@ void TransformWidget::RenderUIElement(int idx)
 
     const DirectX::XMFLOAT3 rot = m_pTransform->GetRotationEuler();
     float rotationArr[3] = { rot.x, rot.y, rot.z };
-    ImGui::SliderFloat3("Rotation", rotationArr, -180.0f, 180.0f);
+    ImGui::DragFloat3("Rotation", rotationArr, 0.1f, -180.0f, 180.0f);
     
     if (std::fabs(rot.x - rotationArr[0]) > DBL_EPSILON || std::fabs(rot.y - rotationArr[1]) > DBL_EPSILON || std::fabs(rot.z - rotationArr[2]) > DBL_EPSILON)
     {
@@ -59,7 +59,7 @@ void TransformWidget::RenderUIElement(int idx)
 
     const DirectX::XMFLOAT3 scale = m_pTransform->GetScale();
     float scaleArray[3] = { scale.x, scale.y, scale.z };
-    ImGui::SliderFloat3("Scale", scaleArray, 0.1f, 5.0f);
+    ImGui::DragFloat3("Scale", scaleArray, 0.1f, 0.1f);
 
     if (std::fabs(scale.x - scaleArray[0]) > DBL_EPSILON || std::fabs(scale.y - scaleArray[1]) > DBL_EPSILON || std::fabs(scale.z - scaleArray[2]) > DBL_EPSILON)
     {

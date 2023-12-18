@@ -23,7 +23,7 @@ void VAssetWriterReader::ReadAsset(const std::wstring& localPath, std::wstring& 
     std::ifstream binInStream(absoluteFilePath, std::ios::binary);
     if (binInStream.fail())
     {
-        V_LOG(LogVerbosity::Warning, V_WTEXT("VAssetWriterReader: Failed to find file from path: %s."), absoluteFilePath);
+        V_LOG(LogVerbosity::Warning, V_WTEXT("VAssetWriterReader: Failed to find file from path: " + V_TEXT(absoluteFilePath) + "."));
         return;
     }
     std::stringstream buffer;

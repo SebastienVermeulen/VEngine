@@ -34,7 +34,7 @@ void CameraWidget::RenderUIElement(int idx)
     //Separate each element with a line
     ImGui::Separator();
 
-    ImGui::SliderFloat("FOV", &FOV, 0.0f, 180.0f);
+    ImGui::SliderFloat("FOV", &FOV, 1.0f, 180.0f);
     if (settings.farPlane < settings.nearPlane)
     {
         settings.farPlane = settings.nearPlane + 1.0f;

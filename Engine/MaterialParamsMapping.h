@@ -63,8 +63,22 @@ struct MaterialScalarParam
 
 	ID3DX11EffectScalarVariable* m_Resource;
 	float m_Value;
-	float m_Min;
-	float m_Max;
+	float m_Min = 0.0f;
+	float m_Max = 0.0f;
+	std::string m_Name;
+};
+
+struct MaterialVectorParam
+{
+	~MaterialVectorParam()
+	{
+		SafeRelease(m_Resource);
+	}
+
+	ID3DX11EffectVectorVariable* m_Resource;
+	DirectX::XMFLOAT4 m_Value;
+	float m_Min = 0.0f;
+	float m_Max = 0.0f;
 	std::string m_Name;
 };
 
@@ -74,8 +88,8 @@ struct MaterialScalarParam
 
 struct MaterialScalarParamsMapping
 {
-	MaterialScalarParamsMapping();
-	~MaterialScalarParamsMapping();
+	MaterialScalarParamsMapping() {}
+	~MaterialScalarParamsMapping() {}
 
 	MaterialScalarParamsMapping(MaterialScalarParamsMapping& other) = delete;
 	MaterialScalarParamsMapping(MaterialScalarParamsMapping&& other) = delete;
@@ -90,17 +104,42 @@ struct MaterialScalarParamsMapping
 	void RemoveMappingbasedOnName(std::string& removingName);
 	void RemoveMapbasedOnName(std::vector<std::string>& removingNaming);
 
-	MaterialScalarParam* GetMappingbasedOnName(std::string& findName);
+	MaterialScalarParam* GetMappingbasedOnName(const std::string& findName);
 
 	inline void Empty() { m_MaterialScalarParams.clear(); }
 
 	std::vector<MaterialScalarParam> m_MaterialScalarParams;
 };
 
+struct MaterialVectorParamsMapping
+{
+	MaterialVectorParamsMapping() {}
+	~MaterialVectorParamsMapping() {}
+
+	MaterialVectorParamsMapping(MaterialVectorParamsMapping& other) = delete;
+	MaterialVectorParamsMapping(MaterialVectorParamsMapping&& other) = delete;
+	MaterialVectorParamsMapping operator=(MaterialVectorParamsMapping& other) = delete;
+	MaterialVectorParamsMapping& operator=(MaterialVectorParamsMapping&& other) = delete;
+
+	void AddMapping(MaterialVectorParam& newMapping);
+	void RemoveMapping(MaterialVectorParam& removingMapping);
+	void AddMap(std::vector<MaterialVectorParam>& newMap);
+	void RemoveMap(std::vector<MaterialVectorParam>& removingMap);
+
+	void RemoveMappingbasedOnName(std::string& removingName);
+	void RemoveMapbasedOnName(std::vector<std::string>& removingNaming);
+
+	MaterialVectorParam* GetMappingbasedOnName(const std::string& findName);
+
+	inline void Empty() { m_MaterialVectorParams.clear(); }
+
+	std::vector<MaterialVectorParam> m_MaterialVectorParams;
+};
+
 struct MaterialTextureParamsMapping
 {
-	MaterialTextureParamsMapping();
-	~MaterialTextureParamsMapping();
+	MaterialTextureParamsMapping() {}
+	~MaterialTextureParamsMapping() {}
 
 	MaterialTextureParamsMapping(MaterialTextureParamsMapping& other) = delete;
 	MaterialTextureParamsMapping(MaterialTextureParamsMapping&& other) = delete;
@@ -120,4 +159,29 @@ struct MaterialTextureParamsMapping
 	inline void Empty() { m_MaterialTextureParams.clear(); }
 
 	std::vector<MaterialTextureParam> m_MaterialTextureParams;
+};
+
+struct MaterialEnvironmentParamsMapping
+{
+	MaterialEnvironmentParamsMapping() { m_MaterialEnvironmentParams.push_back(D3D_SHADER_MACRO{ NULL, NULL }); }
+	~MaterialEnvironmentParamsMapping() {}
+
+	MaterialEnvironmentParamsMapping(MaterialEnvironmentParamsMapping& other) = delete;
+	MaterialEnvironmentParamsMapping(MaterialEnvironmentParamsMapping&& other) = delete;
+	MaterialEnvironmentParamsMapping operator=(MaterialEnvironmentParamsMapping& other) = delete;
+	MaterialEnvironmentParamsMapping& operator=(MaterialEnvironmentParamsMapping&& other) = delete;
+
+	void AddMapping(D3D_SHADER_MACRO& newMapping);
+	void RemoveMapping(D3D_SHADER_MACRO& removingMapping);
+	void AddMap(std::vector<D3D_SHADER_MACRO>& newMap);
+	void RemoveMap(std::vector<D3D_SHADER_MACRO>& removingMap);
+
+	void RemoveMappingbasedOnName(std::string& removingName);
+	void RemoveMapbasedOnName(std::vector<std::string>& removingNaming);
+
+	D3D_SHADER_MACRO* GetMappingbasedOnName(const std::string& findName);
+
+	inline void Empty() { m_MaterialEnvironmentParams.clear(); m_MaterialEnvironmentParams.push_back(D3D_SHADER_MACRO{ NULL, NULL }); }
+
+	std::vector<D3D_SHADER_MACRO> m_MaterialEnvironmentParams;
 };

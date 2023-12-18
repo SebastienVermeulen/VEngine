@@ -46,10 +46,10 @@ std::wstring FileManager::GetAbsoluteExePath()
 }
 std::wstring FileManager::GetFileName(const std::wstring& filePath)
 {
-	std::wstring fullFileName = GetFullFileName(filePath);
+	std::wstring fullFileName = filePath;
 
 	//Regex search
-	std::wregex reg(L"(.+)[.].+$");
+	std::wregex reg(L".+[\\/\\\\](.+)[.].+$");
 	std::wsmatch matches;
 	std::regex_match(fullFileName, matches, reg);
 
@@ -60,10 +60,10 @@ std::wstring FileManager::GetFileName(const std::wstring& filePath)
 
 	return matches[1].str();
 }
-std::wstring FileManager::GetFullFileName(const std::wstring& filePath)
+std::wstring FileManager::GetFullFilePath(const std::wstring& filePath)
 {
-	//Regex search for the full path withouth the .exe
-	std::wregex reg(L"(.+\\\\).+[.].+$");
+	//Regex search for the full path without the filetype
+	std::wregex reg(L"(.+\\\\.+)[.].+$");
 	std::wsmatch matches;
 	std::regex_match(filePath, matches, reg);
 
@@ -85,7 +85,7 @@ HRESULT FileManager::LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset)
 
 	if (!fileRead.is_open())
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed opening file for LoadOBJ \"", absoluteFilePath, "\"."));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed opening file for LoadOBJ \"" + absoluteFilePath + "\". With error: " + strerror(errno)));
 		return E_FAIL;
 	}
 
@@ -164,7 +164,7 @@ HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int v
 {
 	// Vertex data
 	// Pos
-	std::regex reg{ "v (-?\\d+.?\\d?) (-?\\d+.?\\d?) (-?\\d+.?\\d?)\\n" };
+	std::regex reg{ "v (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
 	std::smatch matches{};
 	positions.reserve(vertexCount);
 	for (int idx = 0; idx < vertexCount; ++idx)
@@ -195,7 +195,7 @@ HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int v
 			{
 				if (uvCount == 0)
 				{
-					return E_FAIL;
+					return S_OK;
 				}
 				else
 				{
@@ -221,7 +221,7 @@ HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int v
 	}
 
 	// Normals
-	reg = { "vn (-?\\d+.?\\d?) (-?\\d+.?\\d?) (-?\\d+.?\\d?)\\n" };
+	reg = { "vn (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
 	matches = {};
 	{
 		int normalCount = 0;
@@ -233,7 +233,8 @@ HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int v
 			{
 				if (normalCount == 0)
 				{
-					return E_FAIL;
+					V_LOG(LogVerbosity::Log, V_WTEXT("No Normal data present in obj."));
+					return S_OK;
 				}
 				else
 				{
@@ -263,32 +264,40 @@ HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int face
 	// Parse a face to see what type of index structure it holds
 	IndexGroup indexGroup;
 	{
+		// Check if there is a comment and if so remove it from the string
+		size_t commentCheck = (size_t)objFileContent.find_first_of("#");
+		if (commentCheck != std::string::npos)
+		{
+			commentCheck = (size_t)objFileContent.find_first_of("\n");
+			objFileContent = objFileContent.substr(commentCheck + 1, objFileContent.size() - (commentCheck + 1));
+		}
+
 		// Locate an example of an indexgroup
-		unsigned int firstFacePos = (unsigned int)objFileContent.find_first_of("\n");
+		size_t firstFacePos = (size_t)objFileContent.find_first_of("f");
 		if (firstFacePos == std::string::npos)
 		{
 			return E_FAIL;
 		}
-		unsigned int indexStartPos = (unsigned int)objFileContent.find_first_of(" ", firstFacePos);
-		unsigned int indexEndPos = (unsigned int)objFileContent.find_first_of(" ", indexStartPos + 1);
+		size_t indexStartPos = (size_t)objFileContent.find_first_of(" ", firstFacePos);
+		size_t indexEndPos = (size_t)objFileContent.find_first_of(" ", indexStartPos + 1);
 		std::string firstIndexGroup = objFileContent.substr(indexStartPos, indexEndPos - indexStartPos);
 	
 		// Check what type of group it is with some checks
-		unsigned int firstSlash = (unsigned int)firstIndexGroup.find("/");
-		unsigned int secondSlash = (unsigned int)firstIndexGroup.find("/", firstSlash + 1);
-		if (firstSlash == std::wstring::npos)
+		size_t firstSlash = (size_t)firstIndexGroup.find("/");
+		size_t secondSlash = (size_t)firstIndexGroup.find("/", firstSlash + 1);
+		if (firstSlash == std::wstring::npos) // "X"
 		{
 			indexGroup = IndexGroup::P;
 		}
-		else if (secondSlash == std::wstring::npos)
+		else if (secondSlash == std::wstring::npos) // "X/Y"
 		{
 			indexGroup = IndexGroup::PUV;
 		}
-		else if (secondSlash - firstSlash == 1)
+		else if (secondSlash - firstSlash == 1) // "X//Z"
 		{
 			indexGroup = IndexGroup::PN;
 		}
-		else 
+		else  // "X/Y/Z"
 		{
 			indexGroup = IndexGroup::PUVN;
 		}
@@ -299,7 +308,7 @@ HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int face
 	switch (indexGroup)
 	{
 	case IndexGroup::P:
-		reg = { "f (\\d + ) (\\d + ) (\\d + ))" };
+		reg = { "f (\\d+) (\\d+) (\\d+)" };
 		break;
 	case IndexGroup::PUV:
 		reg = { "f (\\d+)\\/(\\d+) (\\d+)\\/(\\d+) (\\d+)\\/(\\d+)" };

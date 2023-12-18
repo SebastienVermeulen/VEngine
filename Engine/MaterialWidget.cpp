@@ -30,6 +30,7 @@ void MaterialWidget::RenderUIElement(int idx)
     }
     if (textureDetected && ImGui::TreeNode("Textures:"))
     {
+        //fix de render debug view, ku via ne debug vlagge peisn ke
         ImGui::Unindent();
         for (MaterialTextureParam& textureParam : textureParams.m_MaterialTextureParams)
         {
@@ -60,12 +61,39 @@ void MaterialWidget::RenderUIElement(int idx)
     if (scalarDetected && ImGui::TreeNode("Scalars:"))
     {
         ImGui::Unindent();
-        for (MaterialScalarParam& scalarsParam : scalarParams.m_MaterialScalarParams)
+        for (MaterialScalarParam& scalarParam : scalarParams.m_MaterialScalarParams)
         {
-            if (scalarsParam.m_Resource->IsValid())
+            if (scalarParam.m_Resource->IsValid())
             {
                 ImGui::Separator();
-                ImGui::SliderFloat(scalarsParam.m_Name.c_str(), &scalarsParam.m_Value, scalarsParam.m_Min, scalarsParam.m_Max);
+                ImGui::SliderFloat(scalarParam.m_Name.c_str(), &scalarParam.m_Value, scalarParam.m_Min, scalarParam.m_Max);
+            }
+        }
+        ImGui::Indent();
+        ImGui::TreePop();
+    }
+
+    //Are there vectors
+    bool vectorDetected = false;
+    MaterialVectorParamsMapping& vectorParams = m_pMaterial->GetVectorParams();
+    for (MaterialVectorParam& vectorParam : vectorParams.m_MaterialVectorParams)
+    {
+        if (vectorParam.m_Resource->IsValid())
+        {
+            vectorDetected = true;
+            break;
+        }
+    }
+    //Make the tree
+    if (vectorDetected && ImGui::TreeNode("Vectors:"))
+    {
+        ImGui::Unindent();
+        for (MaterialVectorParam& vectorParam : vectorParams.m_MaterialVectorParams)
+        {
+            if (vectorParam.m_Resource->IsValid())
+            {
+                ImGui::Separator();
+                ImGui::ColorPicker4(vectorParam.m_Name.c_str(), &vectorParam.m_Value.x);
             }
         }
         ImGui::Indent();

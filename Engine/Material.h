@@ -6,8 +6,9 @@
 class MaterialWidget;
 class EngineDevice;
 class Light;
+class MeshAsset;
 
-class Material 
+class Material
 {
 public:
 	Material(const std::wstring& effectFile, RenderType type = RenderType::deferred);
@@ -19,6 +20,8 @@ public:
 	Material& operator=(Material&& other) = delete;
 
 	HRESULT InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
+	void AlignEnvironmentToGeometry(MeshAsset* pAsset);
+
 	void Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr);
 	void UpdateMatrix(MatrixRenderBuffer buffer);
 	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights);
@@ -27,11 +30,11 @@ public:
 
 	inline void SetRendertype(RenderType renderType)
 	{
-		m_RenderType = renderType; 
+		m_RenderType = renderType;
 	}
 	inline RenderType GetIfDeferred() const
 	{
-		return m_RenderType; 
+		return m_RenderType;
 	}
 
 	MaterialWidget* GetWidget() const;
@@ -43,12 +46,21 @@ public:
 	{
 		return m_MaterialScalarParamsMapping;
 	}
+	inline MaterialVectorParamsMapping& GetVectorParams()
+	{
+		return m_MaterialVectorParamsMapping;
+	}
+	inline MaterialEnvironmentParamsMapping& GetMaterialEnvironmentParams()
+	{
+		return m_MaterialEnvironmentParamsMapping;
+	}
 
 private:
 	HRESULT InitEffect(ID3D11Device* pDevice);
 	HRESULT InitInputLayout(ID3D11Device* pDevice);
 	HRESULT InitShaderVariables(ID3D11Device* pDevice);
 
+	//UI
 	MaterialWidget* m_pWidget;
 
 	//Effect
@@ -65,11 +77,15 @@ private:
 	ID3DX11EffectMatrixVariable* m_pInverseView;
 	ID3DX11EffectMatrixVariable* m_pProjection;
 	ID3DX11EffectMatrixVariable* m_pWorldViewProj;
-	MaterialTextureParamsMapping m_MaterialTextureParamsMapping;
-	MaterialScalarParamsMapping m_MaterialScalarParamsMapping;
 
 	ID3D11Buffer* m_LightsBuffer;
 	ID3DX11EffectConstantBuffer* m_BufferVariable;
+
+	//Mappings
+	MaterialScalarParamsMapping m_MaterialScalarParamsMapping;
+	MaterialVectorParamsMapping m_MaterialVectorParamsMapping;
+	MaterialTextureParamsMapping m_MaterialTextureParamsMapping;
+	MaterialEnvironmentParamsMapping m_MaterialEnvironmentParamsMapping;
 
 	//Layout
 	std::vector<ID3D11InputLayout*> m_pLayouts;

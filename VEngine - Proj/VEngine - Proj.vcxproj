@@ -72,6 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)\bin\$(ProjectName)\</OutDir>
@@ -79,6 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)\bin\$(ProjectName)\</OutDir>
@@ -86,6 +90,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <OutDir>$(SolutionDir)\Builds\Debug\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\int\Debug\$(ProjectName)\</IntDir>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
@@ -94,6 +100,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)AdditionalDependencies\Includes\DX11_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\DX11_Effects\Include;$(SolutionDir)AdditionalDependencies\Includes\FBX_SDK\Include;$(SolutionDir)AdditionalDependencies\Includes\VLD\Include;$(SolutionDir)AdditionalDependencies\Includes\DXTK\Include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)\Builds\Release\$(ProjectName)\</OutDir>
@@ -108,6 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,6 +141,7 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -140,8 +150,6 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <RunPostBuildEvent>Always</RunPostBuildEvent>
-      <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
       <Command>echo --- RESOURCE COPY STARTED ---
 xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
 xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
@@ -157,6 +165,7 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -172,16 +181,6 @@ xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y/i
 xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y/i
 echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>
-      </Command>
-      <Outputs>
-      </Outputs>
-    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -194,6 +193,7 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -204,11 +204,10 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <RunPostBuildEvent>Always</RunPostBuildEvent>
       <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
       <Command>echo --- RESOURCE COPY STARTED ---
-xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y
+xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y/i
+xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y/i
 echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

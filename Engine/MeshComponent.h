@@ -15,6 +15,8 @@ public:
 	MeshComponent operator=(MeshComponent& other) = delete;
 	MeshComponent& operator=(MeshComponent&& other) = delete;
 
+	virtual void SetMaterial(Material* pMat) override;
+
 	virtual bool Init() override;
 
 	virtual void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int passNr = 0) const override;

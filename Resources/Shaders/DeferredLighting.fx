@@ -1,4 +1,5 @@
 #include "CommonGlobals.fx"
+#include "CommonBRDF.fx"
 
 //--------------------------------------------------------------------------------------
 // Structs
@@ -13,17 +14,6 @@ struct PP1_In
 	float4 position : SV_POSITION;
 	float2 uv 		: TEXCOORD;
 };
-struct Light
-{
-	float4 position;
-	float4 direction;
-	float3 color;
-	float intensity;
-	int type;
-	// TO-DO: Remove this useless variable...
-	bool enabled;
-	float2 padding;
-};
 
 //--------------------------------------------------------------------------------------
 // Globals
@@ -31,7 +21,7 @@ struct Light
 //Lights
 cbuffer Lights : register(b0)
 {
-	Light lights[MAX_LIGHTS];
+    Light lights[gMaxLights];
 };
 
 //Matricies
@@ -51,7 +41,7 @@ Texture2D gMetalRoughnessMap;
 
 //Global math vars
 float3 gBackGroundColor = float3(0.0f, 0.2f, 0.4f);
-float gPhongExponent = 60.0f;
+
 float gAlbedoMultiply = 1.0f;
 float gMetalnessMultiply = 1.0f;
 float gRoughnessMultiply = 1.0f;
@@ -75,59 +65,6 @@ DepthStencilState DepthTestDeferred
 //--------------------------------------------------------------------------------------
 // Helper Func
 //--------------------------------------------------------------------------------------
-float4 Phong(float3 normal, float3 camDir, float3 lightDir)
-{
-	float lambert = pow(dot((-lightDir + 2.0f * (dot(normal, lightDir)) * normal), camDir), gPhongExponent);
-	return (float4)lambert;
-}
-float3 Lambert(float3 diffReflect, float3 diffColor)
-{
-	return (diffColor * diffReflect) / (float)gPI;
-}
-float TrowbridgeReitz(float3 halfVector, float3 normal, float rougness) //Normal distribution
-{
-	float a = rougness * rougness;
-	float dotNH = dot(normal, halfVector);
-	float div = (dotNH * dotNH) * (a - 1.0f) + 1.0f;
-	return a / (gPI * div * div); 
-}
-float3 Fresnel(float3 halfVector, float3 camDir, float3 albedo) //Fresnel Schlick
-{
-	float oneMinusDotHV = 1.0f - dot(halfVector, camDir);
-	return albedo + (1.0f - albedo) * (oneMinusDotHV * oneMinusDotHV * oneMinusDotHV * oneMinusDotHV * oneMinusDotHV);
-}
-float Schlick(float3 dir, float3 normal, float rougness) //Geometry Schlick-GGX
-{
-	float dotNV = max(dot(normal, dir), 0.0f);
-	float kDirect = (rougness + 1.0f) * (rougness + 1.0f) / 8.0f;
-	//float kIndirect = rougness * rougness / 2.0f;
-	return dotNV / (dotNV * (1.0f - kDirect) + kDirect);
-}
-float3 BRDF(float3 pixelPos, float3 normal, float3 lightDirection, float3 albedo, float metal, float rougness)
-{
-	//Metalness influence
-	float3 metalnessColor = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metal);
-
-	//Helping variables
-	float3 camDir = normalize(float3(gInverseView._41, gInverseView._42, gInverseView._43) - pixelPos);
-	float3 halfVector = (camDir + lightDirection) / length(camDir + lightDirection);
-
-	//Specular calculations
-	float D = TrowbridgeReitz(halfVector, normal, rougness);
-	float3 F = Fresnel(halfVector, camDir, metalnessColor);
-	float G = Schlick(lightDirection, normal, rougness) * Schlick(camDir, normal, rougness); //Smith's method
-	float3 cookTorrance = (D * F * G) / (4.0f * dot(lightDirection, normal) * dot(camDir, normal));
-
-	//Factors
-	float3 kd = (float3)1.0f - F;
-
-	//Diffuse
-	float3 lambert = Lambert(kd, albedo);
-
-	//Final
-	return lambert * kd + cookTorrance;
-}
-
 float3 PointLightBiradiance(float3 lightColor, float lightIntensity, float3 pos, float3 lightPos)
 {
 	float3 posToLight = lightPos - pos;
@@ -168,7 +105,7 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 	float3 color = float3(0.0f, 0.0f, 0.0f);
 
 	//For each light do the lighting calculation
-	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; ++lightIdx)
+	for(int lightIdx = 0; lightIdx < gMaxLights; ++lightIdx)
 	{
 		Light light = lights[lightIdx];
 		if(!light.enabled)
@@ -183,16 +120,15 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 		float cosineLaw = 0.0f;
 		switch(light.type)
 		{
-		case LIGHT_DIRECTIONAL:
+		case gLightDirectional:
 			lightColor = DirectionalLightBiradiance(light.color, light.intensity);
-			brdf = BRDF(pixelPos, normal, light.direction.xyz, albedo.rgb, metal, rougness);
+            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, light.direction.xyz, albedo.rgb, metal, rougness);
 			cosineLaw = dot(normal, light.direction.xyz);
 			break;
-		case LIGHT_POINT:
+		case gLightPoint:
 			float3 lightDir = normalize(light.position.xyz - pixelPos);
-
 			lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos, light.position.xyz);
-            brdf = BRDF(pixelPos, normal, lightDir, albedo.rgb, metal, rougness);
+            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, lightDir, albedo.rgb, metal, rougness);
 			cosineLaw = dot(normal, lightDir);
 			break;
 		}

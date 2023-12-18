@@ -1,33 +1,5 @@
 #include "CommonGlobals.fx"
-
-//--------------------------------------------------------------------------------------
-// Structs
-//--------------------------------------------------------------------------------------
-struct VP0_In
-{
-    float4 tangent : TANGENT;
-    float3 position : POSITION;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD;
-};
-struct PP0_In
-{
-    float4 tangent : TANGENT;
-    float4 position : SV_POSITION;
-    float4 wPos : TEXCOORD0;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD1;
-};
-struct Light
-{
-	float4 position;
-	float4 direction;
-	float3 color;
-	float intensity;
-	int type;
-	bool enabled;
-	float2 padding;
-};
+#include "CommonBRDF.fx"
 
 //--------------------------------------------------------------------------------------
 // Globals
@@ -35,7 +7,7 @@ struct Light
 //Lights
 cbuffer Lights : register(b0)
 {
-	Light lights[MAX_LIGHTS];
+    Light lights[gMaxLights];
 };
 
 //Matricies
@@ -46,12 +18,23 @@ float4x4 gProjection : PROJECTION;
 float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
 
 //Textures
-Texture2D gAlbedoMap;
-Texture2D gMetalnessMap;
-Texture2D gRoughnessMap;
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	float4 gObjectColor;
+#else
+	Texture2D gAlbedoMap;
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	float gObjectMetal;
+#else
+	Texture2D gMetalnessMap;
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+#if defined(ROUGHNESS_SCALAR_PARAMETER)
+	float gObjectRoughness;
+#else
+	Texture2D gRoughnessMap;
+#endif //defined(ROUGHNESS_SCALAR_PARAMETER)
 
 //Global math vars
-float gPhongExponent = 60.0f;
 float gAlbedoMultiply = 1.0f;
 float gMetalnessMultiply = 1.0f;
 float gRoughnessMultiply = 1.0f;
@@ -75,59 +58,6 @@ DepthStencilState DepthTest
 //--------------------------------------------------------------------------------------
 // Helper Func
 //--------------------------------------------------------------------------------------
-float4 Phong(float3 normal, float3 camDir, float3 lightDir)
-{
-	float lambert = pow(dot((-lightDir + 2.0f * (dot(normal, lightDir)) * normal), camDir), gPhongExponent);
-	return (float4)lambert;
-}
-float3 Lambert(float3 diffReflect, float3 diffColor)
-{
-	return (diffColor * diffReflect) / (float)gPI;
-}
-float TrowbridgeReitz(float3 halfVector, float3 normal, float rougness) //Normal distribution
-{
-	float a = rougness * rougness;
-	float dotNH = dot(normal, halfVector);
-	float div = (dotNH * dotNH) * (a - 1.0f) + 1.0f;
-	return a / (gPI * div * div); 
-}
-float3 Fresnel(float3 halfVector, float3 camDir, float3 albedo) //Fresnel Schlick
-{
-	float oneMinusDotHV = 1.0f - dot(halfVector, camDir);
-	return albedo + (1.0f - albedo) * (oneMinusDotHV * oneMinusDotHV * oneMinusDotHV * oneMinusDotHV * oneMinusDotHV);
-}
-float Schlick(float3 dir, float3 normal, float rougness) //Geometry Schlick-GGX
-{
-	float dotNV = max(dot(normal, dir), 0.0f);
-	float kDirect = (rougness + 1.0f) * (rougness + 1.0f) / 8.0f;
-	//float kIndirect = rougness * rougness / 2.0f;
-	return dotNV / (dotNV * (1.0f - kDirect) + kDirect);
-}
-float3 BRDF(float3 pixelPos, float3 normal, float3 tangent, float3 lightDirection, float3 albedo, float metal, float rougness)
-{
-	//Metalness influence
-	float3 metalnessColor = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metal);
-
-	//Helping variables
-	float3 camDir = normalize(float3(gInverseView._41, gInverseView._42, gInverseView._43) - pixelPos);
-	float3 halfVector = (camDir + lightDirection) / length(camDir + lightDirection);
-
-	//Specular calculations
-	float D = TrowbridgeReitz(halfVector, normal, rougness);
-	float3 F = Fresnel(halfVector, camDir, metalnessColor);
-	float G = Schlick(lightDirection, normal, rougness) * Schlick(camDir, normal, rougness); //Smith's method
-	float3 cookTorrance = (D * F * G) / (4.0f * dot(lightDirection, normal) * dot(camDir, normal));
-
-	//Factors
-	float3 kd = (float3)1.0f - F;
-
-	//Diffuse
-	float3 lambert = Lambert(kd, albedo);
-
-	//Final
-	return lambert * kd + cookTorrance;
-}
-
 float3 PointLightBiradiance(float3 lightColor, float lightIntensity, float3 pos, float3 lightPos)
 {
 	float3 posToLight = lightPos - pos;
@@ -138,15 +68,39 @@ float3 DirectionalLightBiradiance(float3 dirLightColor, float dirLightIntensity)
 	return dirLightColor * dirLightIntensity;
 }
 
+void GatherParams(in float2 uv, out float4 albedo, out float metal, out float roughness)
+{
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	albedo = gObjectColor;
+#else
+    albedo = gAlbedoMap.Sample(samLinear, uv);
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+    albedo = float4(min(1.0f, gAlbedoMultiply * albedo.rgb), albedo.a);
+	
+#if defined(ALBEDO_SCALAR_PARAMETER)
+    metal = gObjectMetal;
+#else
+    metal = gMetalnessMap.Sample(samLinear, uv).r;
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+    metal = min(1.0f, gMetalnessMultiply * metal);
+	
+#if defined(ROUGHNESS_SCALAR_PARAMETER)
+    roughness = gObjectRoughness;
+#else
+    roughness = gRoughnessMap.Sample(samLinear, uv).r;
+#endif //defined(ROUGHNESS_SCALAR_PARAMETER)
+    roughness = min(1.0f, gRoughnessMultiply * roughness);
+}
+
 //--------------------------------------------------------------------------------------
 // FirstPass
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PP0_In VShaderP0(VP0_In input)
+P_In_Shading VShaderP0(V_In_Shading input)
 {
-	PP0_In output;
+    P_In_Shading output;
 
 	//Change the position vector to be 4 units for proper matrix calculations.
     output.wPos = float4(input.position, 1.0f);
@@ -166,20 +120,22 @@ PP0_In VShaderP0(VP0_In input)
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PShaderP0(PP0_In input) : SV_TARGET
+float4 PShaderP0(P_In_Shading input) : SV_TARGET
 {
 	//Buffer variables
     float3 pixelPos = input.wPos.xyz;
 	float3 normal = input.normal;
 	float3 tangent = input.tangent;
-	float3 albedo = min(1.0f, gAlbedoMultiply * gAlbedoMap.Sample(samLinear, input.uv));
-	float metal = min(1.0f, gMetalnessMultiply * gMetalnessMap.Sample(samLinear, input.uv));
-	float rougness = min(1.0f, gRoughnessMultiply * gRoughnessMap.Sample(samLinear, input.uv));
+	
+    float4 albedo = (float4)0.0f;
+    float metal = 0.0f;
+    float rougness = 0.0f;
+    GatherParams(input.uv, albedo, metal, rougness);
 
 	float3 color = float3(0.0f, 0.0f, 0.0f);
 
 	//For each light do the lighting calculation
-	for(int lightIdx = 0; lightIdx < MAX_LIGHTS; ++lightIdx)
+    for (int lightIdx = 0; lightIdx < gMaxLights; ++lightIdx)
 	{
 		Light light = lights[lightIdx];
 		if(!light.enabled)
@@ -194,15 +150,15 @@ float4 PShaderP0(PP0_In input) : SV_TARGET
 		float cosineLaw = 0.0f;
 		switch(light.type)
 		{
-		case LIGHT_DIRECTIONAL:
+        case gLightDirectional:
 			lightColor = DirectionalLightBiradiance(light.color, light.intensity);
-			brdf = BRDF(pixelPos, normal, tangent, light.direction.xyz, albedo.xyz, metal, rougness);
+            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, light.direction.xyz, albedo.xyz, metal, rougness);
 			cosineLaw = dot(normal, light.direction.xyz);
 			break;
-		case LIGHT_POINT:
+        case gLightPoint:
 			float3 lightDir = normalize(light.position.xyz - pixelPos);
 			lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos, light.position.xyz);
-			brdf = BRDF(pixelPos, normal, tangent, lightDir, albedo.xyz, metal, rougness);
+            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, lightDir, albedo.xyz, metal, rougness);
 			cosineLaw = dot(normal, lightDir);
 			break;
 		}

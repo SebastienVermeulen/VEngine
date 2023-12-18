@@ -25,22 +25,17 @@ UIRenderer::~UIRenderer()
 void UIRenderer::RenderUI()
 {
 	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	NewFrame();
 
 	ImGuiWindowFlags window_flags = 0;
-	window_flags |= ImGuiWindowFlags_NoMove;
-	window_flags |= ImGuiWindowFlags_NoResize;
+	//window_flags |= ImGuiWindowFlags_NoMove;
+	//window_flags |= ImGuiWindowFlags_NoResize;
 
-	//We specify a default position/size in case there's no data in the .ini file.
-	//We only do it to make the demo applications a little more welcoming, but typically this isn't required.
 	const ImGuiViewport* main_viewport = GetMainViewport();
-	m_DetailsSize = { 350, main_viewport->Size.y };
-	m_DetailsPos = { main_viewport->Size.x - 350, 0 };
-	SetNextWindowPos(m_DetailsPos, ImGuiCond_Always);
-	SetNextWindowSize(m_DetailsSize, ImGuiCond_Always);
 
 	//Main body of the Demo window starts here.
 	if (!Begin("Details Panel:", NULL, window_flags))
@@ -53,6 +48,7 @@ void UIRenderer::RenderUI()
 		ImGui_ImplDX11_RenderDrawData(GetDrawData());
 		return;
 	}
+
 
 	if (CollapsingHeader("Metrics:"))
 	{
@@ -74,19 +70,19 @@ void UIRenderer::RenderUI()
 	RenderObjectDetails();
 	RenderPostProcessDetails();
 
-	if (CollapsingHeader("Info:"))
-	{
-		TextWrapped("METRICS DISPLAY some basic info on the framework.");
-		Separator();
-		TextWrapped("ENGINE SETTINGS provides option on how to render. And also the settings to adjust the deferred material lighting step (which can be found inside the forwards rendered material's detail as well).");
-		Separator();
-		TextWrapped("SCENE TREE display a rudementory tree of the objects inside the scene.");
-		Separator();
-		TextWrapped("OBJECT DETAILS allows you to adjust the parameters of the objects.");
-		Text("\n");
-		TextWrapped("Framework made by Sebastien Vermeulen. 27/10/2021");
-		TextWrapped("Using: DirectX11, Effects11, FBX SDK, DirectXTK and Visual Leak Detector as thirdparty software.");
-	}
+	//if (CollapsingHeader("Info:"))
+	//{
+	//	TextWrapped("METRICS DISPLAY some basic info on the framework.");
+	//	Separator();
+	//	TextWrapped("ENGINE SETTINGS provides option on how to render. And also the settings to adjust the deferred material lighting step (which can be found inside the forwards rendered material's detail as well).");
+	//	Separator();
+	//	TextWrapped("SCENE TREE display a rudementory tree of the objects inside the scene.");
+	//	Separator();
+	//	TextWrapped("OBJECT DETAILS allows you to adjust the parameters of the objects.");
+	//	Text("\n");
+	//	TextWrapped("Framework made by Sebastien Vermeulen. 27/10/2021");
+	//	TextWrapped("Using: DirectX11, Effects11, FBX SDK, DirectXTK and Visual Leak Detector as thirdparty software.");
+	//}
 
 	End();
 	//Assembletogether draw data

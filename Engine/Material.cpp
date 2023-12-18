@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "Light.h"
 #include "MaterialWidget.h"
+#include "MeshAsset.h"
 
 Material::Material(const std::wstring& effectFile, RenderType type)
 	:m_pWidget{new MaterialWidget(this)}
@@ -37,6 +38,7 @@ Material::~Material()
 	//Parameters
 	m_MaterialTextureParamsMapping.Empty();
 	m_MaterialScalarParamsMapping.Empty();
+	m_MaterialVectorParamsMapping.Empty();
 	// Matrix
 	SafeRelease(m_pWorldViewProj);
 	SafeRelease(m_pProjection);
@@ -55,21 +57,21 @@ HRESULT Material::InitShader(ID3D11Device* pDevice, ID3D11DeviceContext* pContex
 	hr = InitEffect(pDevice);
 	if (hr != S_OK)
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitEffect for %s.", FileManager::GetFileName(m_EffectFile)));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitEffect for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 		return hr;
 	}
 
 	hr = InitInputLayout(pDevice);
 	if (hr != S_OK)
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitInputLayout for %s.", FileManager::GetFileName(m_EffectFile)));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitInputLayout for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 		return hr;
 	}
 
 	hr = InitShaderVariables(pDevice);
 	if (hr != S_OK)
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitShaderVariables for %s.", FileManager::GetFileName(m_EffectFile)));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to InitShaderVariables for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 		return hr;
 	}
 
@@ -92,13 +94,14 @@ HRESULT Material::InitEffect(ID3D11Device* pDevice)
 	LPCWSTR shaderPath = fullPath.c_str();
 
 	HRESULT hr = D3DX11CompileEffectFromFile(shaderPath,
-		nullptr,
+		&m_MaterialEnvironmentParamsMapping.m_MaterialEnvironmentParams[0],
 		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		shaderFlags,
 		0,
 		pDevice,
 		&m_pEffect,
 		&pErrorBlob);
+
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -241,7 +244,7 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 			}
 			else
 			{
-				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to SetResource for %s, since the texture was not created.", FileManager::GetFileName(m_EffectFile)));
+				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to SetResource for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + ", since the texture was not created."));
 				return E_FAIL;
 			}
 		}
@@ -251,6 +254,12 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 	for (int idx = 0; idx < scalarParams.size(); ++idx)
 	{
 		scalarParams[idx].m_Resource = m_pEffect->GetVariableByName(scalarParams[idx].m_Name.c_str())->AsScalar();
+	}	
+	// Vectors
+	auto& vectorParams = m_MaterialVectorParamsMapping.m_MaterialVectorParams;
+	for (int idx = 0; idx < vectorParams.size(); ++idx)
+	{
+		vectorParams[idx].m_Resource = m_pEffect->GetVariableByName(vectorParams[idx].m_Name.c_str())->AsVector();
 	}
 
 	if (m_RenderType == RenderType::forwards || m_RenderType == RenderType::lightingPass)
@@ -271,7 +280,7 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 		hr = pDevice->CreateBuffer(&cbDesc, NULL, &m_LightsBuffer);
 		if (FAILED(hr))
 		{
-			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a constant lightbuffer for %s.", FileManager::GetFileName(m_EffectFile)));
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a constant lightbuffer for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 			return hr;
 		}
 	}
@@ -279,12 +288,52 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 	return hr;
 }
 
+// TO-DO: Make some form of a calback for when a material gets assigned to geometry that calls this
+void Material::AlignEnvironmentToGeometry(MeshAsset* pAsset)
+{
+	// Setup the correct material environment
+	m_MaterialEnvironmentParamsMapping.Empty();
+
+	MeshSettings& meshSettings = pAsset->GetMeshSettings();
+	D3D_SHADER_MACRO macro{ "ALBEDO_SCALAR_PARAMETER", std::to_string(meshSettings.m_AlbedoScalar).c_str() };
+	m_MaterialEnvironmentParamsMapping.AddMapping(macro);
+	macro = D3D_SHADER_MACRO{ "METAL_SCALAR_PARAMETER", std::to_string(meshSettings.m_MetalnessScalar).c_str() };
+	m_MaterialEnvironmentParamsMapping.AddMapping(macro);
+	macro = D3D_SHADER_MACRO{ "ROUGHNESS_SCALAR_PARAMETER", std::to_string(meshSettings.m_RoughnessScalar).c_str() };
+	m_MaterialEnvironmentParamsMapping.AddMapping(macro);
+
+	if (meshSettings.m_AlbedoScalar)
+	{
+		MaterialVectorParam materialVectorParam{ nullptr, DirectX::XMFLOAT4{1.0, 0.1f, 0.2f, 1.0f}, 0.0f,  1.0f, "gObjectColor" };
+		m_MaterialVectorParamsMapping.AddMapping(materialVectorParam);
+
+		std::string name = "gAlbedoMap";
+		m_MaterialTextureParamsMapping.RemoveMappingbasedOnName(name);
+	}
+	if (meshSettings.m_MetalnessScalar)
+	{
+		MaterialScalarParam materialScalarParam{ nullptr, 0.5f, 0.0f,  1.0f, "gObjectMetal" };
+		m_MaterialScalarParamsMapping.AddMapping(materialScalarParam);
+
+		std::string name = "gMetalnessMap";
+		m_MaterialTextureParamsMapping.RemoveMappingbasedOnName(name);
+	}
+	if (meshSettings.m_RoughnessScalar)
+	{
+		MaterialScalarParam materialScalarParam{ nullptr, 0.5f, 0.0f,  1.0f, "gObjectRoughness" };
+		m_MaterialScalarParamsMapping.AddMapping(materialScalarParam);
+
+		std::string name = "gRoughnessMap";
+		m_MaterialTextureParamsMapping.RemoveMappingbasedOnName(name);
+	}
+}
+
 void Material::Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr)
 {
 	//Safety check
 	if (m_pLayouts.size() <= passNr)
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: The requested pass index is out of bounds for %s.", FileManager::GetFileName(m_EffectFile)));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("Material: The requested pass index is out of bounds for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 		return;
 	}
 
@@ -347,13 +396,13 @@ HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)
 	{
 		if (!textureParams[idx].m_Resource || !textureParams[idx].m_Resource->IsValid())
 		{
-			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:", m_EffectFile, ", we couldn't update textureparam: ", textureParams[idx].m_Name, ", since its resource was invalid."));
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:" + V_TEXT(m_EffectFile) + ", we couldn't update textureparam: " + textureParams[idx].m_Name + ", since its resource was invalid."));
 			continue;
 		}
 
 		if (!textureParams[idx].GetTexture())
 		{
-			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: We couldn't update textureparam: ", textureParams[idx].m_Name, ", since its there was no texture assigned."));
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: We couldn't update textureparam: " + textureParams[idx].m_Name + ", since its there was no texture assigned."));
 			continue;
 		}
 
@@ -366,11 +415,25 @@ HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)
 	{
 		if (!scalarParams[idx].m_Resource || !scalarParams[idx].m_Resource->IsValid())
 		{
-			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:", m_EffectFile, ", we couldn't update scalarparam: ", scalarParams[idx].m_Name, ", since its resource was invalid."));
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:" + V_TEXT(m_EffectFile) + ", we couldn't update scalarparam: " + scalarParams[idx].m_Name + ", since its resource was invalid."));
 			continue;
 		}
 
 		scalarParams[idx].m_Resource->SetFloat(scalarParams[idx].m_Value);
+	}
+
+	// Vectors
+	auto& vectorParams = m_MaterialVectorParamsMapping.m_MaterialVectorParams;
+	for (int idx = 0; idx < vectorParams.size(); ++idx)
+	{
+		if (!vectorParams[idx].m_Resource || !vectorParams[idx].m_Resource->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material:" + V_TEXT(m_EffectFile) + ", we couldn't update vectorParams: " + vectorParams[idx].m_Name + ", since its resource was invalid."));
+			continue;
+		}
+
+		// TO-DO: One day this should support more than just floats
+		vectorParams[idx].m_Resource->SetFloatVector(&vectorParams[idx].m_Value.x);
 	}
 
 	return S_OK;

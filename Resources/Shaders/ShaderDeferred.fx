@@ -1,23 +1,9 @@
 #include "CommonGlobals.fx"
+#include "CommonBRDF.fx"
 
 //--------------------------------------------------------------------------------------
 // Structs
 //--------------------------------------------------------------------------------------
-struct VP0_In
-{
-	float4 tangent 	: TANGENT;
-	float3 position : POSITION;
-	float3 normal 	: NORMAL;
-	float2 uv 		: TEXCOORD;
-};
-struct PP0_In
-{
-	float4 tangent 	: TANGENT;
-	float4 position : SV_POSITION;
-	float4 wPos 	: TEXCOORD0;
-	float3 normal 	: NORMAL;
-	float2 uv 		: TEXCOORD1;
-};
 struct PP0_Out
 {
 	float4 position 		: SV_Target0;
@@ -36,9 +22,22 @@ float4x4 gInverseView 	: INVERSEVIEW;
 float4x4 gProjection 	: PROJECTION;
 float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
 
+//Textures
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	float4 gObjectColor;
+#else
 Texture2D gAlbedoMap;
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	float gObjectMetal;
+#else
 Texture2D gMetalnessMap;
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+#if defined(ROUGHNESS_SCALAR_PARAMETER)
+	float gObjectRoughness;
+#else
 Texture2D gRoughnessMap;
+#endif //defined(ROUGHNESS_SCALAR_PARAMETER)
 
 //--------------------------------------------------------------------------------------
 // States
@@ -63,14 +62,39 @@ BlendState AlphaBlendingOn
 };
 
 //--------------------------------------------------------------------------------------
+// Helper Func
+//--------------------------------------------------------------------------------------
+void GatherParams(in float2 uv, out float4 albedo, out float metal, out float roughness)
+{
+#if defined(ALBEDO_SCALAR_PARAMETER)
+	albedo = gObjectColor;
+#else
+    albedo = gAlbedoMap.Sample(samLinear, uv);
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+	
+#if defined(ALBEDO_SCALAR_PARAMETER)
+    metal = gObjectMetal;
+#else
+    metal = gMetalnessMap.Sample(samLinear, uv);
+#endif //defined(ALBEDO_SCALAR_PARAMETER)
+	
+#if defined(ROUGHNESS_SCALAR_PARAMETER)
+    roughness = gObjectRoughness;
+#else
+    roughness = gRoughnessMap.Sample(samLinear, uv);
+#endif //defined(ROUGHNESS_SCALAR_PARAMETER)
+
+}
+
+//--------------------------------------------------------------------------------------
 // FirstPass
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PP0_In VShaderP0(VP0_In input)
+P_In_Shading VShaderP0(V_In_Shading input)
 {
-	PP0_In output;
+    P_In_Shading output;
 
 	//Change the position vector to be 4 units for proper matrix calculations.
 	output.wPos = float4(input.position, 1.0f);
@@ -80,7 +104,7 @@ PP0_In VShaderP0(VP0_In input)
 	output.wPos = mul(output.wPos, gWorld);
 	
 	//Calculate the normal and tangent of the vertex against the world rotation and scale.
-    output.normal = mul(input.normal, (float3x3)gWorld);
+    output.normal = normalize(mul(input.normal, (float3x3) gWorld));
     output.tangent = input.tangent;
 	
 	output.uv = input.uv;
@@ -90,15 +114,14 @@ PP0_In VShaderP0(VP0_In input)
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-PP0_Out PShaderP0(PP0_In input)
+PP0_Out PShaderP0(P_In_Shading input)
 {
 	PP0_Out output;
 
 	output.position = input.wPos;
 	output.normal = float4(input.normal, 1.0f);
     output.tangent = input.tangent;
-	output.albedo = gAlbedoMap.Sample(samLinear, input.uv);
-	output.metalRoughness = float2(gMetalnessMap.Sample(samLinear, input.uv).x, gRoughnessMap.Sample(samLinear, input.uv).x);
+    GatherParams(input.uv, output.albedo, output.metalRoughness.x, output.metalRoughness.y);
 
 	return output;
 }

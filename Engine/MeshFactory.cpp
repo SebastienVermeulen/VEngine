@@ -21,7 +21,7 @@ HRESULT MeshFactory::CreateAsset(const std::wstring& localFilePath, MeshAsset** 
 	
 	if (FAILED(FileManager::LoadOBJ(localFilePath, *pMeshAsset)))
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to load FBX file for %s.", FileManager::GetFileName(localFilePath)));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to load OBJ file for " + V_TEXT(FileManager::GetFileName(localFilePath)) + "."));
 		return E_FAIL;
 	}
 	return S_OK;

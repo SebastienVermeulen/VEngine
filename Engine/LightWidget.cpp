@@ -5,6 +5,7 @@
 #include "EngineSettings.h"
 #include "Renderer.h"
 #include "RenderUtils.h"
+#include "Object.h"
 
 LightWidget::LightWidget(Light* pLight)
     :Widget()
@@ -26,7 +27,7 @@ bool LightWidget::RenderUITitle(int idx)
         return ImGui::TreeNode("Point Light:");
         break;
     default:
-        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light type, on %s.", m_pLight->GetObject()->GetName()));
+        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light type, on " + m_pLight->GetObject()->GetName() + "."));
         return false;
         break;
     }
@@ -63,13 +64,13 @@ void LightWidget::RenderUIElement(int idx)
     switch (m_pLight->GetLightType())
     {
     case LightType::directional:
-        ImGui::SliderFloat("Intensity", &intensity, 0.0f, 100.0f);                
+        ImGui::DragFloat("Intensity", &intensity, 0.01f, 0.0f);                
         break;
     case LightType::point:
-        ImGui::SliderFloat("Intensity", &intensity, 0.0f, 300.0f);
+        ImGui::DragFloat("Intensity", &intensity, 0.1f, 0.0f);
         break;
     default:
-        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light intensity, on %s.", m_pLight->GetObject()->GetName()));
+        V_LOG(LogVerbosity::Warning, V_WTEXT("LightWidget: Undefined light intensity, on " + m_pLight->GetObject()->GetName() + "."));
         break;
     }
     ImGui::InputFloat("Exact", &intensity);       

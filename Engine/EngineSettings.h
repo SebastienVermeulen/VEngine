@@ -27,6 +27,8 @@ public:
 	void SetVSync(bool FPSLimit);
 	bool GetIfVSync() const;
 
+	WindowSettings& GetWindowSettings();
+
 private:
 	WindowSettings m_WindowSettings;
 	RenderType m_CurrentRenderType;

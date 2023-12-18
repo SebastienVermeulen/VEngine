@@ -56,3 +56,8 @@ bool EngineSettings::GetIfVSync() const
 {
 	return m_VSync;
 }
+
+WindowSettings& EngineSettings::GetWindowSettings()
+{
+	return m_WindowSettings;
+}

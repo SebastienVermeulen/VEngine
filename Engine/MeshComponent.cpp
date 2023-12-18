@@ -25,6 +25,16 @@ MeshComponent::~MeshComponent()
 	SafeRelease(m_pIndexBuffer);
 }
 
+void MeshComponent::SetMaterial(Material* pMat)
+{
+	if (pMat != nullptr) 
+	{
+		pMat->AlignEnvironmentToGeometry(m_pAsset);
+	}
+
+	Renderable::SetMaterial(pMat);
+}
+
 bool MeshComponent::Init()
 {
 	m_CanRender = true;
@@ -43,12 +53,12 @@ bool MeshComponent::Init()
 	EngineDevice* pEngineDiv = EngineManager::Instance()->GetDevice();
 	if (FAILED(pEngineDiv->CreateVertexBuffer(verticies, &m_pVertexBuffer)))
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create vertexbuffer for %s."), FileManager::GetFileName(m_FileName));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create vertexbuffer for " + V_TEXT(FileManager::GetFileName(m_FileName)) + "."));
 		return false;
 	}
 	if (FAILED(pEngineDiv->CreateIndexBuffer(indicies, &m_pIndexBuffer)))
 	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create indexbuffer for %s."), FileManager::GetFileName(m_FileName));
+		V_LOG(LogVerbosity::Warning, V_WTEXT("MeshComponent: Failed to create indexbuffer for %s."+ V_TEXT(FileManager::GetFileName(m_FileName)) + "."));
 		return false;
 	}
 	m_NrVerticies = (UINT)verticies.size();

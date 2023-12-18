@@ -1,27 +1,55 @@
+
+#ifndef COMMON_GLOBALS
+#define COMMON_GLOBALS 1
+
 //--------------------------------------------------------------------------------------
 // Defines
 //--------------------------------------------------------------------------------------
-#define MAX_LIGHTS 10
-#define LIGHT_DIRECTIONAL 0
-#define LIGHT_POINT 1
+static const uint gMaxLights = 10;
+static const uint gLightDirectional = 0;
+static const uint gLightPoint = 1;
 
-//--------------------------------------------------------------------------------------
-// Globals
-//--------------------------------------------------------------------------------------
-float gPI = 3.14159265359f;
+static const float gPI = 3.14159265359f;
 
 //--------------------------------------------------------------------------------------
 // Structs
 //--------------------------------------------------------------------------------------
+struct Light
+{
+    float4 position;
+    float4 direction;
+    float3 color;
+    float intensity;
+    int type;
+	// TO-DO: Remove this useless variable...
+    bool enabled;
+    float2 padding;
+};
+
 struct V_In_Common
 {
     float3 position : POSITION;
-    float2 uv : TEXCOORD;
+    float2 uv       : TEXCOORD;
 };
 struct P_In_Common
 {
     float4 position : SV_POSITION;
-    float2 uv : TEXCOORD;
+    float2 uv       : TEXCOORD;
+};
+struct V_In_Shading
+{
+    float4 tangent  : TANGENT;
+    float3 position : POSITION;
+    float3 normal   : NORMAL;
+    float2 uv       : TEXCOORD;
+};
+struct P_In_Shading
+{
+    float4 tangent  : TANGENT;
+    float4 position : SV_POSITION;
+    float4 wPos     : TEXCOORD0;
+    float3 normal   : NORMAL;
+    float2 uv       : TEXCOORD1;
 };
 
 //--------------------------------------------------------------------------------------
@@ -50,3 +78,4 @@ P_In_Common VShader_Common(V_In_Common input)
 
     return output;
 }
+#endif // COMMON_GLOBALS

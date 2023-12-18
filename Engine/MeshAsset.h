@@ -2,6 +2,26 @@
 #include "Asset.h"
 #include "ShaderStructures.h"
 
+struct MeshSettings
+{
+	// Geometry related
+	bool m_ForceGenerateNormals = false;
+	bool m_CombineNormals = false;
+	bool m_ForceGenerateTangents = false;
+	// Generation
+	bool m_GeneratedUVs = false;
+	bool m_GeneratedNormals = false;
+	bool m_GeneratedTangents = false;
+
+	// UV
+	int m_ChosenUVMap = 0;
+
+	// Material related
+	bool m_AlbedoScalar = false;
+	bool m_MetalnessScalar = false;
+	bool m_RoughnessScalar = false;
+};
+
 class MeshAsset : public Asset 
 {
 public:
@@ -42,8 +62,19 @@ public:
 	*/
 	void RefillVertexVector();
 
+	void AutoUnwrapUVs();
+	void GenerateNormals();
+	void GenerateTangents();
+
+	inline MeshSettings& GetMeshSettings() 
+	{
+		return m_MeshSettings;
+	}
+
 private:
 	virtual void WriteToVAsset() const override;
+
+	MeshSettings m_MeshSettings;
 
 	std::vector<Vertex> m_Vertices;
 	// TO-DO: Make this temporal, since this is a lot of memory to just keep around

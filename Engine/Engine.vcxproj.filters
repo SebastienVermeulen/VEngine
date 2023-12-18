@@ -94,6 +94,9 @@
     <Filter Include="Engine Files\Core\Math">
       <UniqueIdentifier>{62f4a969-ae04-485a-b235-3a9906994153}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\UI\Tabs">
+      <UniqueIdentifier>{81f4984a-f965-4b76-8e31-87d00ed58eb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -450,6 +453,9 @@
     </FxCompile>
     <FxCompile Include="..\Resources\Shaders\PostProcessing\ScreenSpaceCopy.fx">
       <Filter>Resource Files\Shaders\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\CommonBRDF.fx">
+      <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

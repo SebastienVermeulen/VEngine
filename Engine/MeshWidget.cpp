@@ -25,6 +25,7 @@ void MeshWidget::RenderUIElement(int idx)
     EngineManager* pEngineManager = EngineManager::Instance();
     if (!IsRenderTypeInVector(EngineSettings::Instance()->GetRenderType(), m_pMeshComponent->GetRenderTypes()))
     {
+        ImGui::TreePop();
         return;
     }
 
