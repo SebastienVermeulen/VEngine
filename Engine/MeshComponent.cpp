@@ -5,7 +5,6 @@
 #include "EngineManager.h"
 #include "FileManager.h"
 #include "MeshWidget.h"
-#include "MeshAsset.h"
 #include "MeshFactory.h"
 
 MeshComponent::MeshComponent(const std::wstring& fileName)
@@ -87,4 +86,17 @@ void MeshComponent::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_pMaterial->Render(pContext, m_NrIndicies, passNr);
+}
+
+void MeshComponent::SetMeshSettings(MeshSettings& meshSettings)
+{
+	if (m_pAsset == nullptr)
+	{
+		m_pAsset = new MeshAsset();
+		m_pAsset->SetMeshSettings(meshSettings);
+	}
+	else 
+	{
+		V_LOG(LogVerbosity::Log, V_WTEXT("MeshComponent: can not yet regenerate its asset on the fly to account for adjusted mesh settings."));
+	}
 }

@@ -70,6 +70,10 @@ public:
 	{
 		return m_MeshSettings;
 	}
+	inline void SetMeshSettings(MeshSettings& meshSettings)
+	{
+		m_MeshSettings = meshSettings;
+	}
 
 private:
 	virtual void WriteToVAsset() const override;

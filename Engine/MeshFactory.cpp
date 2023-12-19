@@ -14,7 +14,10 @@ MeshFactory::~MeshFactory()
 
 HRESULT MeshFactory::CreateAsset(const std::wstring& localFilePath, MeshAsset** pMeshAsset)
 {
-	*pMeshAsset = new MeshAsset();
+	if (*pMeshAsset == nullptr)
+	{
+		*pMeshAsset = new MeshAsset();
+	}
 
 	//TO-DO: Make an asset reference holder, to look up already parsed meshes (think UAsset)
 	(*pMeshAsset)->SetFilePath(localFilePath);

@@ -7,10 +7,10 @@
 #include "Transform.h"
 #include "PointLight.h"
 #include "DirectionalLight.h"
+#include "MeshAsset.h"
 
 MainScene::MainScene() 
-	: m_CurrentRotation{ 0.0f, 0.0f, 0.0f }//-90.0f, 90.0f, 135.0f }
-	, m_pDirectionalLight{}
+	: m_pDirectionalLight{}
 	, m_pPointLight{}
 {
 }
@@ -20,7 +20,8 @@ MainScene::~MainScene()
 
 bool MainScene::Init()
 {
-	//Settings
+	// --------
+	// Settings
 	EngineSettings::Instance()->SetRendertype(RenderType::deferred);
 	
 	std::string objectName = "Camera";
@@ -32,13 +33,14 @@ bool MainScene::Init()
 	DirectX::XMFLOAT3 newCamPos = { 0.0f, 0.0f, -5.0f };
 	pObject->GetTransform()->Translate(newCamPos);
 	 
-	//Objects
+	// -------
+	// Objects
 	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
 	MeshComponent* pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\StanfordBunny.obj")));
 	pObject->SetRenderType(pMeshComp, RenderType::deferred);
-	pObject->GetTransform()->Rotate(m_CurrentRotation);
-	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
+	pObject->GetTransform()->Rotate(0.0f, -109.0f, 0.0f);
+	pObject->GetTransform()->Translate(0.05f, -0.1f, -4.5f);
 	{
 		// Create the mesh material
 		Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
@@ -52,17 +54,23 @@ bool MainScene::Init()
 		// Set our material
 		pMeshComp->SetMaterial(pMaterial);
 	}
-	
-	objectName = "ForwardsObject";
+
+	// Object 2
+	objectName = "DeferredObject";
 	pObject = CreateObject(objectName);
-	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(new MeshComponent(L"..\\Resources\\Meshes\\StanfordBunny.obj")));
-	pObject->SetRenderType(pMeshComp, RenderType::forwards);
-	pObject->GetTransform()->Rotate(m_CurrentRotation);
-	pObject->GetTransform()->Translate(0.0f, 0.0f, 0.0f);
+
+	pMeshComp = new MeshComponent(L"..\\Resources\\Meshes\\StanfordBunny.obj");
+	MeshSettings meshSettings;
+	meshSettings.m_CombineNormals = true;
+	pMeshComp->SetMeshSettings(meshSettings);
+	pMeshComp = dynamic_cast<MeshComponent*>(pObject->AddComponent(pMeshComp));
+	pObject->SetRenderType(pMeshComp, RenderType::deferred);
+	pObject->GetTransform()->Rotate(0.0f, -109.0f, 0.0f);
+	pObject->GetTransform()->Translate(-0.05f, -0.1f, -4.5f);
 	{
 		// Create the mesh material
-		Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderForwards.fx");
-		pMaterial->SetRendertype(RenderType::forwards);
+		Material* pMaterial = new Material(L"..\\Resources\\Shaders\\ShaderDeferred.fx");
+		pMaterial->SetRendertype(RenderType::deferred);
 		// Setup the textures for our material
 		std::vector<MaterialTextureParam> TextureParamsDeferredMap{
 			MaterialTextureParam{ false, "gAlbedoMap", L"..\\Resources\\Textures\\LionAlbedo.dds" },
@@ -73,7 +81,8 @@ bool MainScene::Init()
 		pMeshComp->SetMaterial(pMaterial);
 	}
 
-	//Lights
+	// ------
+	// Lights
 	objectName = "DirectionalLight";
 	pObject = CreateObject(objectName);
 	m_pDirectionalLight = dynamic_cast<DirectionalLight*>(pObject->AddComponent(new DirectionalLight()));

@@ -20,8 +20,6 @@ public:
 	virtual void Update(const float elapsedSec) override;
 
 private:
-	DirectX::XMFLOAT3 m_CurrentRotation;
-
 	DirectionalLight* m_pDirectionalLight;
 	PointLight* m_pPointLight;
 };

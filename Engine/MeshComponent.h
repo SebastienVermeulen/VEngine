@@ -1,8 +1,8 @@
 #pragma once
 #include "Component.h"
+#include "MeshAsset.h"
 
 class Material;
-class MeshAsset;
 
 class MeshComponent : public Component
 {
@@ -20,6 +20,8 @@ public:
 	virtual bool Init() override;
 
 	virtual void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int passNr = 0) const override;
+
+	void SetMeshSettings(MeshSettings& meshSettings);
 
 private:
 	MeshAsset* m_pAsset;
