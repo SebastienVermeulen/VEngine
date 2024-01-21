@@ -170,15 +170,14 @@ echo --- RESOURCE COPY FINISHED ---</Command>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11d.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Debug;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Debug;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;vld.lib;Effects11d.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <RunPostBuildEvent>Always</RunPostBuildEvent>
       <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
       <Command>echo --- RESOURCE COPY STARTED ---
 xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y/i
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y/i
 echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -200,14 +199,13 @@ echo --- RESOURCE COPY FINISHED ---</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libfbxsdk.lib;d3dcompiler.lib;vld.lib;Effects11.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(SolutionDir)AdditionalDependencies\Libraries\DX11_SDK\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DX11_Effects\Lib\Release;$(SolutionDir)AdditionalDependencies\Libraries\VLD\Lib\x64;$(SolutionDir)AdditionalDependencies\Libraries\DXTK\Lib\x64\Release;$(LibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;vld.lib;Effects11.lib;DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
       <Command>echo --- RESOURCE COPY STARTED ---
 xcopy "$(ProjectDir)..\Resources" "$(TargetDir)..\Resources" /e/y/i
-xcopy "$(ProjectDir)..\AdditionalDependencies\Libraries\FBX_SDK\Lib\x64\release\libfbxsdk.dll" "$(TargetDir)" /y/i
 echo --- RESOURCE COPY FINISHED ---</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
