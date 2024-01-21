@@ -60,15 +60,6 @@
 #pragma endregion
 
 #pragma region ThirdParty
-//Include the FBX SDK
-#pragma warning (push, 0) //Ignore all warnings, be specific due to high warning level
-#pragma warning (disable : 26495)
-#pragma warning (disable : 26812)
-#pragma warning (disable : 26451)
-#include <fbxsdk.h>
-#pragma comment (lib, "libfbxsdk.lib")
-#pragma warning (pop)
-
 //Effects 11 (Helper for loading Effects (D3DX11))
 //https://fx11.codeplex.com/
 #pragma warning (push, 0) //Ignore all warnings
