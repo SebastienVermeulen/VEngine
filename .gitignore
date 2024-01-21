@@ -37,3 +37,7 @@ bin
 
 # Ingore folder
 Ignore/
+
+# Don't ignore
+!AdditionalDependencies/Libraries/
+!AdditionalDependencies/Libraries/**
