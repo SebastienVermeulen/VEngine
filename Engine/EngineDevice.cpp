@@ -8,8 +8,7 @@ EngineDevice::EngineDevice()
     , m_pDevice{ nullptr }
     , m_pDeviceContext{ nullptr }
     , m_RenderTargets{ }
-    , m_pDepthStencilView{ nullptr }
-    , m_pDepthStencilBuffer{ nullptr }
+    , m_DepthStencils{ }
     , m_DefaultWidth{}
     , m_DefaultHeight{}
 {
@@ -134,22 +133,7 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     depthStencilDesc.CPUAccessFlags = 0;
     depthStencilDesc.MiscFlags = 0;
 
-    hr = m_pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &m_pDepthStencilBuffer);
-
-    if (hr != S_OK)
-    {
-        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the texture for the DepthStencilView."));
-    }
-
-    if (m_pDepthStencilBuffer != nullptr)
-    {
-        hr = m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer, nullptr, &m_pDepthStencilView);
-    }
-
-    if (hr != S_OK)
-    {
-        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the DepthStencilView."));
-    }
+    TryGetDepthStencil(true, depthStencilDesc);
 #pragma endregion 
 
 #pragma region ImGui
@@ -161,14 +145,14 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     ImGui::StyleColorsDark();
 #pragma endregion
 }
+
 void EngineDevice::CleanD3D()
 {
     // Switch to windowed mode
     m_pSwapChain->SetFullscreenState(FALSE, NULL); 
 
     // Close and release all existing COM objects
-    SafeRelease(m_pDepthStencilBuffer);
-    SafeRelease(m_pDepthStencilView);
+    SafeDelete(m_DepthStencils);
     SafeDelete(m_RenderTargets);
     SafeRelease(m_pSwapChain);
     SafeRelease(m_pDevice);
@@ -184,16 +168,16 @@ RenderTarget* EngineDevice::TryGetRenderTarget(bool customDesc, D3D11_TEXTURE2D_
 {
     return FindAvailableTarget(customDesc, desc);
 }
+
 RenderTarget* EngineDevice::GetNewRenderTarget(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc)
 {
-    //Use the back buffer address to create the render target
     index = (int)m_RenderTargets.size();
     m_RenderTargets.push_back(new RenderTarget());
 
     // TO-DO: Move this to a reusable spot
     if (!customDesc) 
     {
-        //Describe our Depth/Stencil Buffer
+        // Describe our Target
         ZeroMemory(&desc, sizeof(desc));
 
         desc.Width = m_DefaultWidth;
@@ -249,7 +233,7 @@ RenderTarget* EngineDevice::FindAvailableTarget(bool customDesc, D3D11_TEXTURE2D
     // TO-DO: Move this to a reusable spot
     if (!customDesc)
     {
-        //Describe our Depth/Stencil Buffer
+        // Describe our Target
         ZeroMemory(&desc, sizeof(desc));
 
         desc.Width = m_DefaultWidth;
@@ -277,6 +261,7 @@ RenderTarget* EngineDevice::FindAvailableTarget(bool customDesc, D3D11_TEXTURE2D
     int newTargetIdx = 0;
     return GetNewRenderTarget(newTargetIdx, true, desc);
 }
+
 bool EngineDevice::CompareTargetFormats(RenderTarget* pTarget, D3D11_TEXTURE2D_DESC desc)
 {
     return pTarget->CompareDesc(desc);
@@ -318,6 +303,122 @@ void EngineDevice::ReleaseTarget(RenderTarget* pTarget)
     SafeDelete(pTarget);
 }
 
+DepthStencil* EngineDevice::TryGetDepthStencil(bool customDesc, D3D11_TEXTURE2D_DESC desc) 
+{
+    return FindAvailableStencil(customDesc, desc);
+}
+
+DepthStencil* EngineDevice::GetNewDepthStencil(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc) 
+{
+    index = (int)m_RenderTargets.size();
+    m_RenderTargets.push_back(new RenderTarget());
+
+    // TO-DO: Move this to a reusable spot
+    if (!customDesc)
+    {
+        // Describe our Depth/Stencil Buffer
+        desc.Width = m_DefaultWidth;
+        desc.Height = m_DefaultHeight;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
+        desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = 0;
+    }
+
+    HRESULT hr = m_pDevice->CreateTexture2D(&desc, nullptr, m_DepthStencils[index]->GetStencilBufferLocation());
+    if (hr != S_OK)
+    {
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the texture for the DepthStencilView."));
+    }
+
+    hr = m_pDevice->CreateDepthStencilView(m_DepthStencils[index]->GetStencilBuffer(), nullptr, m_DepthStencils[index]->GetStencilViewLocation());
+    if (hr != S_OK)
+    {
+        V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the DepthStencilView."));
+    }
+
+    m_DepthStencils[index]->MarkAsUsed();
+    return m_DepthStencils[index];
+}
+
+DepthStencil* EngineDevice::FindAvailableStencil(bool customDesc, D3D11_TEXTURE2D_DESC desc)
+{
+    // TO-DO: Move this to a reusable spot
+    if (!customDesc)
+    {
+        //Describe our Depth/Stencil Buffer
+        ZeroMemory(&desc, sizeof(desc));
+
+        desc.Width = m_DefaultWidth;
+        desc.Height = m_DefaultHeight;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
+        desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = 0;
+    }
+
+    for (DepthStencil* pStencil : m_DepthStencils)
+    {
+        if (!pStencil->IsUsed() && CompareStencilFormats(pStencil, desc))
+        {
+            pStencil->MarkAsUsed();
+            return pStencil;
+        }
+    }
+
+    int newStencilIdx = 0;
+    return GetNewDepthStencil(newStencilIdx, true, desc);
+}
+
+bool EngineDevice::CompareStencilFormats(DepthStencil* pStencil, D3D11_TEXTURE2D_DESC desc) 
+{
+    return pStencil->CompareDesc(desc);
+}
+
+void EngineDevice::UpdateStencilLifeTimes(float deltaTime) 
+{
+    // We limit the deltatime to be just below the max, since otherwise would release our stencils when there is a large hitch
+    deltaTime = m_MaxUnusedTargetLifeTime < deltaTime ? 0.9f * m_MaxUnusedTargetLifeTime : deltaTime;
+
+    for (int i = 0; i < m_DepthStencils.size(); ++i)
+    {
+        if (!m_DepthStencils[i]->IsUsed() && m_DepthStencils[i]->UpdateTimeSpentUnused(deltaTime) >= m_MaxUnusedTargetLifeTime)
+        {
+            DepthStencil* pStencil = m_DepthStencils[i];
+            m_DepthStencils.erase(m_DepthStencils.begin() + i);
+            ReleaseStencil(pStencil);
+
+            // We step one index back
+            --i;
+        }
+        else
+        {
+            m_DepthStencils[i]->MarkAsUnused();
+        }
+    }
+}
+
+void EngineDevice::ReleaseStencil(DepthStencil* pStencil) 
+{
+    m_DepthStencils.erase(
+        std::remove_if(m_DepthStencils.begin(), m_DepthStencils.end(), [pStencil](DepthStencil* pIteratorStencil)
+            {
+                return pStencil == pIteratorStencil;
+            }),
+        m_DepthStencils.end());
+    SafeDelete(pStencil);
+}
+
 HRESULT EngineDevice::CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Buffer** ppVertexBuffer) const
 {
     Vertex* verticesArray = &vertices[0];
@@ -348,6 +449,7 @@ HRESULT EngineDevice::CreateVertexBuffer(std::vector<Vertex>& vertices, ID3D11Bu
     }
     return result;
 }
+
 HRESULT EngineDevice::CreateIndexBuffer(std::vector<int>& indices, ID3D11Buffer** ppIndexBuffer) const
 {
     int* indicesArray = &indices[0];

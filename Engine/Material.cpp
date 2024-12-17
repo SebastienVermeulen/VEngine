@@ -20,7 +20,7 @@ Material::Material(const std::wstring& effectFile, RenderType type)
 	, m_pProjection{}
 	, m_pWorldViewProj{}
 	, m_LightsBuffer{}
-	, m_BufferVariable{}
+	, m_LightsBufferVariable{}
 	, m_pLayouts{}
 	, m_pInputLayoutSize{}
 	, m_pNrBasisRenderTargets{3}
@@ -262,9 +262,9 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 		vectorParams[idx].m_Resource = m_pEffect->GetVariableByName(vectorParams[idx].m_Name.c_str())->AsVector();
 	}
 
-	if (m_RenderType == RenderType::forwards || m_RenderType == RenderType::lightingPass)
+	if (m_RenderType == RenderType::lightingPass)
 	{
-		m_BufferVariable = m_pEffect->GetConstantBufferByName("Lights");
+		m_LightsBufferVariable = m_pEffect->GetConstantBufferByName("Lights");
 
 		//Fill in a buffer description.
 		const int maxNrLights = Light::GetMaxNrLights();
@@ -304,7 +304,7 @@ void Material::AlignEnvironmentToGeometry(MeshAsset* pAsset)
 
 	if (meshSettings.m_AlbedoScalar)
 	{
-		MaterialVectorParam materialVectorParam{ nullptr, DirectX::XMFLOAT4{1.0, 0.1f, 0.2f, 1.0f}, 0.0f,  1.0f, "gObjectColor" };
+		MaterialVectorParam materialVectorParam{ nullptr, DirectX::XMFLOAT4{0.7f, 0.7f, 0.75f, 1.0f}, 0.0f,  1.0f, "gObjectColor" };
 		m_MaterialVectorParamsMapping.AddMapping(materialVectorParam);
 
 		std::string name = "gAlbedoMap";
@@ -344,32 +344,32 @@ void Material::Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr)
 	pContext->DrawIndexed(nrIndices, 0, 0);
 }
 
-void Material::UpdateMatrix(MatrixRenderBuffer buffer)
+void Material::UpdateMatrix(MatrixTransformationContainer buffer)
 {
-	if (m_pWorld)
+	if (m_pWorld && buffer.updateWorld)
 	{
 		m_pWorld->SetMatrix(reinterpret_cast<float*>(&buffer.world));
 	}
-	if (m_pView)
+	if (m_pView && buffer.updateView)
 	{
 		m_pView->SetMatrix(reinterpret_cast<float*>(&buffer.view));
 	}	
-	if (m_pInverseView)
+	if (m_pInverseView && buffer.updateInverseView)
 	{
 		m_pInverseView->SetMatrix(reinterpret_cast<float*>(&buffer.inverseView));
 	}
-	if (m_pProjection)
+	if (m_pProjection && buffer.updateProjection)
 	{
 		m_pProjection->SetMatrix(reinterpret_cast<float*>(&buffer.projection));
 	}
-	if (m_pWorldViewProj)
+	if (m_pWorldViewProj && buffer.updateWorldViewProjection)
 	{
 		m_pWorldViewProj->SetMatrix(reinterpret_cast<float*>(&buffer.worldViewProj));
 	}
 }
 void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights)
 {
-	if (m_BufferVariable && m_LightsBuffer)
+	if (m_LightsBufferVariable && m_LightsBuffer)
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedResource;
 		ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
@@ -380,7 +380,7 @@ void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector
 		//Reenable GPU access to the vertex buffer data.
 		pContext->Unmap(m_LightsBuffer, 0);
 
-		m_BufferVariable->SetConstantBuffer(m_LightsBuffer);
+		m_LightsBufferVariable->SetConstantBuffer(m_LightsBuffer);
 	}
 }
 HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)

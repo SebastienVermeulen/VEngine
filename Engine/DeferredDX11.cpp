@@ -127,6 +127,8 @@ void DeferredDX11::MarkTargetsAsNotUsed()
 	m_DeferredRenderTargets.m_TangentTarget->MarkAsUnused();
 	m_DeferredRenderTargets.m_AlbedoTarget->MarkAsUnused();
 	m_DeferredRenderTargets.m_MetalRoughnessTarget->MarkAsUnused();
+
+	GetSceneDepthBuffer()->MarkAsUnused();
 }
 
 void DeferredDX11::Render()
@@ -167,6 +169,32 @@ void DeferredDX11::Render()
 	}
 
 	{
+		//**********************************************************************
+		// 	   Render Shadowmaps and Update Lighting
+		//**********************************************************************
+
+		if (m_UpdateLighting)
+		{
+			V_DX11_ANNOTATE(V_WTEXT("LightingUpdate"));
+
+			if (m_RenderShadows)
+			{
+				V_DX11_ANNOTATE(V_WTEXT("Shadowmaps"));
+				
+				// Render our shadows
+				RenderShadows();
+				// Update for the final deferred renderpass
+				UpdateShadows(m_pDeferredLightingMaterial);
+			}
+
+			// Update the lights
+			// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
+			//	not updated before the shadows since they don't need this data)
+			UpdateLights(m_pDeferredLightingMaterial);
+		}
+	}
+
+	{
 		V_DX11_ANNOTATE(V_WTEXT("Deferred"));
 
 		//**********************************************************************
@@ -175,11 +203,6 @@ void DeferredDX11::Render()
 		{
 			//Set the material buffers
 			m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
-			if (m_UpdateLighting)
-			{
-				// Update the lights
-				UpdateLights(m_pDeferredLightingMaterial);
-			}
 			// Update view matrix
 			UpdateMatrices(m_pDeferredLightingMaterial);
 			// Set the render target
@@ -218,7 +241,7 @@ void DeferredDX11::Render()
 	//**********************************************************************
 	// 	   Final present + UI (ImGui)
 	//**********************************************************************
-	// Reset bool here as it can be flipped by UI interactions
+	// Reset bool here as it can be flipped by UI interactions or other project systems
 	m_UpdateLighting = false;
 	{
 		V_DX11_ANNOTATE(V_WTEXT("UI"));
@@ -249,7 +272,7 @@ void DeferredDX11::ClearBuffers()
 	pContext->ClearRenderTargetView(m_DeferredRenderTargets.m_AlbedoTarget->GetRenderTargetView(), &black.x);
 	pContext->ClearRenderTargetView(m_DeferredRenderTargets.m_MetalRoughnessTarget->GetRenderTargetView(), &black.x);
 	// Clear the depth buffer to the max value
-	pContext->ClearDepthStencilView(m_pDevice->GetDepthBuffer(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	pContext->ClearDepthStencilView(GetSceneDepthBuffer()->GetStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 #pragma region RenderHelpers
@@ -266,7 +289,7 @@ void DeferredDX11::SetupTargetsDeferredFirstPass()
 		m_DeferredRenderTargets.m_AlbedoTarget->GetRenderTargetView(),
 		m_DeferredRenderTargets.m_MetalRoughnessTarget->GetRenderTargetView(),
 	};
-	pContext->OMSetRenderTargets(m_NrBasisRenderTargets, renderTargs, m_pDevice->GetDepthBuffer());
+	pContext->OMSetRenderTargets(m_NrBasisRenderTargets, renderTargs, GetSceneDepthBuffer()->GetStencilView());
 }
 void DeferredDX11::SetupTargetsDeferredSecondPass()
 {

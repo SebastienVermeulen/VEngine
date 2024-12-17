@@ -19,10 +19,12 @@ struct PP1_In
 // Globals
 //--------------------------------------------------------------------------------------
 //Lights
-cbuffer Lights : register(b0)
+cbuffer LightsInfo : register(b0)
 {
-    Light lights[gMaxLights];
+    int nrLights;
 };
+StructuredBuffer<Light> lights;
+Texture2DArray shadowStencils : register(t0);
 
 //Matricies
 float4x4 gWorld : WORLD;
@@ -30,6 +32,7 @@ float4x4 gView : VIEW;
 float4x4 gInverseView : INVERSEVIEW;
 float4x4 gProjection : PROJECTION;
 float4x4 gWorldViewProj : WORLDVIEWPROJECTION; 
+float4x4 gInverseWorldViewProj : INVERSEWORLDVIEWPROJECTION; 
 
 //Textures
 Texture2D gPositionMap;
@@ -75,6 +78,39 @@ float3 DirectionalLightBiradiance(float3 dirLightColor, float dirLightIntensity)
 	return dirLightColor * dirLightIntensity;
 }
 
+bool DepthTestShadowStencil(Light light, float4 pos)
+{
+    // Calculate the shadowdepth of our rendered pixel
+    pos = mul(pos, gInverseWorldViewProj);
+    pos = mul(pos, light.worldViewProj);
+    
+	// Compute texture coordinates for the current point's location on the shadow map.
+    float2 shadowTexCoords;
+    shadowTexCoords.x = 0.5f + (pos.x / pos.w * 0.5f);
+    shadowTexCoords.y = 0.5f - (pos.y / pos.w * 0.5f);
+    float pixelDepth = pos.z / pos.w;
+
+    // Check if the pixel texture coordinate is in the view frustum of the 
+    // light before doing any shadow work.
+    if ((saturate(shadowTexCoords.x) == shadowTexCoords.x) &&
+        (saturate(shadowTexCoords.y) == shadowTexCoords.y) &&
+        (pixelDepth > 0))
+    {
+        // Sample the shadowmap
+        float shadowDepth = shadowStencils.Sample(samLinear, float3(shadowTexCoords, light.shadowIndex));
+        
+        if (shadowDepth < pixelDepth)
+        {
+            // The shadowdepth is closer than our point, so the light is blocked by other geometry
+            // TO-DO: Add more settings for the shadows
+            return true;
+        }
+    }
+    
+    // Our point is not blocked by geometry
+    return false;
+}
+
 //--------------------------------------------------------------------------------------
 // FirstPass
 //--------------------------------------------------------------------------------------
@@ -88,7 +124,7 @@ float3 DirectionalLightBiradiance(float3 dirLightColor, float dirLightIntensity)
 float4 PShaderP1(PP1_In input) : SV_TARGET
 {
 	//Buffer variables
-	float3 pixelPos = gPositionMap.Sample(samLinear, input.uv).xyz;
+    float4 pixelPos = gPositionMap.Sample(samLinear, input.uv);
 	float3 normal = gNormalMap.Sample(samLinear, input.uv);
 	float3 tangent = gTangentMap.Sample(samLinear, input.uv);
 	float4 albedo = gAlbedoMap.Sample(samLinear, input.uv);
@@ -106,32 +142,34 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 
 	//For each light do the lighting calculation
 	for(int lightIdx = 0; lightIdx < gMaxLights; ++lightIdx)
-	{
-		Light light = lights[lightIdx];
-		if(!light.enabled)
-		{
+    {
+        Light light = lights[lightIdx];
+        
+		//Shadow depth
+        if (DepthTestShadowStencil(light, pixelPos))
+        {
 			//Skip light
-			continue;
-		}
+            continue;
+        }
 
 		//Lighting calculation
-		float3 lightColor = float3(0.0f, 0.0f, 0.0f);
-		float3 brdf = float3(0.0f, 0.0f, 0.0f);
-		float cosineLaw = 0.0f;
-		switch(light.type)
-		{
-		case gLightDirectional:
-			lightColor = DirectionalLightBiradiance(light.color, light.intensity);
-            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, light.direction.xyz, albedo.rgb, metal, rougness);
-			cosineLaw = dot(normal, light.direction.xyz);
-			break;
-		case gLightPoint:
-			float3 lightDir = normalize(light.position.xyz - pixelPos);
-			lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos, light.position.xyz);
-            brdf = BRDF(pixelPos, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, lightDir, albedo.rgb, metal, rougness);
-			cosineLaw = dot(normal, lightDir);
-			break;
-		}
+        float3 lightColor = float3(0.0f, 0.0f, 0.0f);
+        float3 brdf = float3(0.0f, 0.0f, 0.0f);
+        float cosineLaw = 0.0f;
+        switch (light.type)
+        {
+        case gLightDirectional:
+            lightColor = DirectionalLightBiradiance(light.color, light.intensity);
+            brdf = BRDF(pixelPos.xyz, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, light.direction.xyz, albedo.rgb, metal, rougness);
+            cosineLaw = dot(normal, light.direction.xyz);
+            break;
+        case gLightPoint:
+            float3 lightDir = normalize(light.position.xyz - pixelPos.xyz);
+            lightColor = PointLightBiradiance(light.color, light.intensity, pixelPos.xyz, light.position.xyz);
+            brdf = BRDF(pixelPos.xyz, float3(gInverseView._41, gInverseView._42, gInverseView._43), normal, lightDir, albedo.rgb, metal, rougness);
+            cosineLaw = dot(normal, lightDir);
+            break;
+        }
         color += max(lightColor * brdf * cosineLaw, 0.0f);
     }
 	

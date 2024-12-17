@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "RendererWidget.h"
 #include "PostProcesses.h"
+#include "ShadowCasting.h"
 
 EngineDevice* Renderer::m_pDevice = nullptr;
 EngineSettings* Renderer::m_pEngineSettings = nullptr;
@@ -24,6 +25,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_Lights{}
 	, m_pCameraList{}
 	, m_pRenderingCamera{}
+	, m_pShadowCasting{new ShadowCasting()}
 	, m_pPostProcessingPipeline{new PostProcessPipeline()}
 	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
 	, m_NrBasisRenderTargets{5} // TO-DO: Uh oh, what was I thinking
@@ -34,6 +36,8 @@ Renderer::Renderer(EngineDevice* pDevice)
 }
 Renderer::~Renderer()
 {
+	SafeDelete(m_pShadowCasting);
+	SafeDelete(m_pPostProcessingPipeline);
 	SafeDelete(m_pRendererWidget);
 	for (int i = 0; i < m_Renderables.size(); ++i)
 	{
@@ -77,11 +81,14 @@ void Renderer::AllocatePromisedTargets()
 	desc1.MiscFlags = 0;
 
 	m_RenderTargets.m_FinalSceneTarget = m_pDevice->TryGetRenderTarget(true, desc1);
+
+	m_RenderTargets.m_DepthBuffer = m_pDevice->TryGetDepthStencil(false);
 }
 void Renderer::CleanPointersToTargets()
 {
 	m_RenderTargets.m_FinalTarget = nullptr;
 	m_RenderTargets.m_FinalSceneTarget = nullptr;
+	m_RenderTargets.m_DepthBuffer = nullptr;
 }
 
 void Renderer::OponActivation()
@@ -195,7 +202,7 @@ void Renderer::LightRemovedFromScene(Light* pLight)
 #pragma region RenderHelpers
 void Renderer::UpdateMatrices(Component* pRenderable) const
 {
-	MatrixRenderBuffer buffer;
+	MatrixTransformationContainer buffer;
 
 	buffer.world = pRenderable->GetObject()->GetTransform()->GetWorld();
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
@@ -209,7 +216,7 @@ void Renderer::UpdateMatrices(Component* pRenderable) const
 }
 void Renderer::UpdateMatrices(Material* pMaterial) const
 {
-	MatrixRenderBuffer buffer;
+	MatrixTransformationContainer buffer;
 
 	DirectX::XMStoreFloat4x4(&buffer.world, DirectX::XMMatrixIdentity());
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
@@ -221,7 +228,34 @@ void Renderer::UpdateMatrices(Material* pMaterial) const
 
 	pMaterial->UpdateMatrix(buffer);
 }
-void Renderer::UpdateLights(Material* pMaterial)
+void Renderer::UpdateLightMatrices(Light* pLight) const 
+{
+	MatrixTransformationContainer buffer;
+
+	buffer.view = pLight->GetShadowViewMatrix();
+	buffer.updateView = true;
+	buffer.inverseView = pLight->GetShadowViewInverseMatrix();
+	buffer.updateInverseView = true;
+	buffer.projection = pLight->GetShadowProjectionMatrix();
+	buffer.updateProjection = true;
+	// fuck
+	DirectX::XMFLOAT4X4 worldViewProj
+	DirectX::XMStoreFloat4x4(&worldViewProj, DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
+	buffer.worldViewProj = worldViewProj;
+	buffer.updateWorldViewProjection = true;
+
+	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
+}
+void Renderer::UpdateWorldMatrix(Component* pRenderables) const 
+{
+	MatrixTransformationContainer buffer;
+
+	buffer.world = pRenderables->GetObject()->GetTransform()->GetWorld();
+	buffer.updateWorld = true;
+
+	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
+}
+void Renderer::UpdateLights(Material* pMaterial) const
 {
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};
@@ -240,7 +274,7 @@ void Renderer::UpdateLights(Material* pMaterial)
 				m_Lights[i]->GetColor(),
 				m_Lights[i]->GetIntensity(),
 				m_Lights[i]->GetLightType(),
-				m_Lights[i]->GetIsEnabled() };
+				m_Lights[i]->GetShadowStartingIndex() };
 			lightsStructure.push_back(light);
 		}
 		else
@@ -250,6 +284,43 @@ void Renderer::UpdateLights(Material* pMaterial)
 		}
 	}
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
+}
+void Renderer::RenderShadows() const
+{
+	const int maxNrLights = Light::GetMaxNrLights();
+	std::vector<ShaderLight> lightsStructure{};
+	lightsStructure.reserve(maxNrLights);
+
+	// Loop over all lights and determine if they should be casting
+	for (int i = 0; i < maxNrLights; ++i)
+	{
+		if (m_Lights.size() <= i || !m_Lights[i]->GetIsShadowCasting())
+		{
+			continue;
+		}
+
+		// If they can cast we push their info to the GPU for rendering
+		ShadowData shadowData = m_Lights[i]->GetShadowData();
+		UpdateLightMatrices(m_Lights[i]);
+		// Set the shadow depthbuffer
+		m_pDevice->GetDeviceContext()->OMSetRenderTargets(0, nullptr, shadowData.m_pDepthStencil->GetStencilView());
+
+		// Run through all the renderables and render the shadow casting ones
+		for (int i = 0; i < m_Renderables.size(); ++i)
+		{
+			if (m_Renderables[i]->IsShadowCasting())
+			{
+				// Update matrices
+				UpdateWorldMatrix(m_Renderables[i]);
+				// Render object to the buffer
+				m_Renderables[i]->RenderShadow(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), m_pShadowCasting, 0);
+			}
+		}
+	}
+}
+
+void Renderer::UpdateShadows(Material* pMaterial) const
+{
 }
 
 void Renderer::ExplicitlyUnbindingRenderTargets(Material* pMaterial)

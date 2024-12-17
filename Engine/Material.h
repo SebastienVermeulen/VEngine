@@ -23,7 +23,7 @@ public:
 	void AlignEnvironmentToGeometry(MeshAsset* pAsset);
 
 	void Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr);
-	void UpdateMatrix(MatrixRenderBuffer buffer);
+	void UpdateMatrix(MatrixTransformationContainer buffer);
 	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights);
 	HRESULT UpdateParameterValues(EngineDevice* pEngineDevice);
 	HRESULT ExplicitlyUnbindingResources(EngineDevice* pEngineDevice);
@@ -60,6 +60,7 @@ private:
 	HRESULT InitInputLayout(ID3D11Device* pDevice);
 	HRESULT InitShaderVariables(ID3D11Device* pDevice);
 
+	// TO-DO: Lot's these member-variables are too specific to have in each material
 	//UI
 	MaterialWidget* m_pWidget;
 
@@ -79,7 +80,7 @@ private:
 	ID3DX11EffectMatrixVariable* m_pWorldViewProj;
 
 	ID3D11Buffer* m_LightsBuffer;
-	ID3DX11EffectConstantBuffer* m_BufferVariable;
+	ID3DX11EffectConstantBuffer* m_LightsBufferVariable;
 
 	//Mappings
 	MaterialScalarParamsMapping m_MaterialScalarParamsMapping;

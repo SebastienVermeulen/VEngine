@@ -9,7 +9,6 @@
 
 //TO-DO: Remove these dependencies, or at least move them to the cpp
 #include "DeferredDX11.h"
-#include "ForwardsDX11.h"
 
 class EngineManager final : public Singleton<EngineManager>
 {
@@ -106,7 +105,6 @@ private:
 	inline void CreateRenderers() 
 	{
 		AddRenderer(new DeferredDX11(m_pDevice));
-		AddRenderer(new ForwardsDX11(m_pDevice));
 		
 		for (Renderer* pRenderer : m_pRenderers)
 		{

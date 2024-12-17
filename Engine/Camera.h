@@ -20,8 +20,6 @@ public:
 	float nearPlane;
 };
 
-class Transform;
-
 class Camera : public Component
 {
 public:
@@ -40,7 +38,7 @@ public:
 	DirectX::XMFLOAT4X4& GetViewInverseMatrix();
 
 	inline void SetCameraSettings(CameraSettings settings) { m_Settings = settings; }
-	inline CameraSettings GetCameraSettings() const { return m_Settings; }
+	inline CameraSettings& GetCameraSettings() { return m_Settings; }
 
 private:
 	DirectX::XMFLOAT4X4 m_ProjectionMatrix, m_ViewMatrix, m_InverseViewMatrix;

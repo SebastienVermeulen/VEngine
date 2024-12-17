@@ -16,13 +16,13 @@ static const float gPI = 3.14159265359f;
 //--------------------------------------------------------------------------------------
 struct Light
 {
+    float4x4 worldViewProj; // This may vary between directional and others
     float4 position;
     float4 direction;
     float3 color;
     float intensity;
     int type;
-	// TO-DO: Remove this useless variable...
-    bool enabled;
+    int shadowIndex; // We need an index in case not all lights shadowcast and we are offset
     float2 padding;
 };
 

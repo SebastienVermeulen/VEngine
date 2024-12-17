@@ -4,10 +4,13 @@
 #include "EngineDevice.h"
 #include "ShaderStructures.h"
 
+class ShadowCasting;
+
 class Renderable abstract
 {
 public:
 	inline virtual void Render(ID3D11Device* device, ID3D11DeviceContext* context, int passNr = 0) const {}
+	inline virtual void RenderShadow(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ShadowCasting* pShadowCasting, int passNr = 0) const {}
 
 	virtual inline void SetMaterial(Material* pMat)
 	{
@@ -26,6 +29,8 @@ public:
 	inline void SetCanRender(bool canRender) { m_CanRender = canRender; }	
 	inline bool IsVisible() const { return m_Visible; }
 	inline void SetVisible(bool visible) { m_Visible = visible; }
+	inline bool IsShadowCasting() const { return m_ShadowCasting; }
+	inline void SetShadowCasting(bool shadowCasting) { m_ShadowCasting = shadowCasting; }
 
 	// The following 4 functions should only update internal types
 	inline void SetRenderType(RenderType type)
@@ -75,4 +80,5 @@ protected:
 	std::vector<RenderType> m_RenderTypes;
 	bool m_CanRender;
 	bool m_Visible;
+	bool m_ShadowCasting;
 };

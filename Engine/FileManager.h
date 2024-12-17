@@ -28,22 +28,27 @@ public:
 	static std::wstring GetFullFilePath(const std::wstring& localFilePath);
 
 #pragma region Meshes
-public:
-	// TO-DO: Extend the .OBJ format: https://devtalk.blender.org/t/extended-obj-format-with-skeletal-animation-info/447
-	// Other file formats are just too cumbursome to even bother with ngl
+	#pragma region OBJ
+	public:
+		/// <summary>
+		/// Loads an obj and places the data into the given buffers.
+		/// </summary>
+		static HRESULT LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset);
+		static HRESULT OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount);
+		static HRESULT OBJParseVertexData(std::string& objFileContent, const int vertexCount,
+			std::vector<DirectX::XMFLOAT3>& positions,
+			std::vector<std::vector<DirectX::XMFLOAT2>>& uvs,
+			std::vector<DirectX::XMFLOAT3>& normals);
+		static HRESULT OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices);
+	#pragma endregion
 
-	/// <summary>
-	/// Loads an obj and places the data into the given buffers.
-	/// </summary>
-	static HRESULT LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset);
-	static HRESULT OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount);
-	static HRESULT OBJParseVertexData(std::string& objFileContent, const int vertexCount,
-		std::vector<DirectX::XMFLOAT3>& positions,
-		std::vector<std::vector<DirectX::XMFLOAT2>>& uvs,
-		std::vector<DirectX::XMFLOAT3>& normals);
-	static HRESULT OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices);
-private:
-
+	#pragma region glTF
+	public:
+		/// <summary>
+		/// Loads an glTF and places the data into the given buffers.
+		/// </summary>
+		static HRESULT LoadglTF(std::wstring localFileDir, MeshAsset* pMeshAsset);
+	#pragma endregion
 #pragma endregion
 
 #pragma region Textures

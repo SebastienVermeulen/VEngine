@@ -76,60 +76,60 @@ std::wstring FileManager::GetFullFilePath(const std::wstring& filePath)
 }
 
 #pragma region Meshes
-// TO-DO: Add safeties and such to this parsing etc.
-HRESULT FileManager::LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset)
-{
-	// Read the file from disk
-	const std::string absoluteFilePath = V_TEXT(GetAbsoluteExePath() + localFileDir);
-	std::ifstream fileRead{ absoluteFilePath };
-
-	if (!fileRead.is_open())
-	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed opening file for LoadOBJ \"" + absoluteFilePath + "\". With error: " + strerror(errno)));
-		return E_FAIL;
-	}
-
-	std::string objFileContent{};
-	{
-		std::stringstream buffer;
-		buffer << fileRead.rdbuf();
-		objFileContent = buffer.str();
-	}
-	fileRead.close();
-
-	// Regex parse
-	// Basic data
-	int vertexCount, faceCount;
-	if (FAILED(FileManager::OBJParseBasicData(objFileContent, vertexCount, faceCount)))
-	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for the basic data."));
-		return E_FAIL;
-	}
-
-	// Vertex data
-	std::vector<DirectX::XMFLOAT3>& position = pMeshAsset->GetPositions();
-	std::vector<std::vector<DirectX::XMFLOAT2>>& uvs = pMeshAsset->GetUVs();
-	std::vector<DirectX::XMFLOAT3>& normals = pMeshAsset->GetNormals();
-	if (FAILED(FileManager::OBJParseVertexData(objFileContent, vertexCount, position, uvs, normals)))
-	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for vertices."));
-		return E_FAIL;
-	}
-
-	// Index data
-	std::vector<DirectX::XMINT3>& indices = pMeshAsset->GetUnpackedIndicies();
-	if (FAILED(FileManager::OBJParseIndices(objFileContent, faceCount, indices)))
-	{
-		V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for indices."));
-		return E_FAIL;
-	}
-
-	// Pack into the mesh
-	pMeshAsset->RefillVertexVector();
-
-	return S_OK;
-}
-HRESULT FileManager::OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount)
+	#pragma region OBJ
+		HRESULT FileManager::LoadOBJ(std::wstring localFileDir, MeshAsset* pMeshAsset)
+		{
+			// Read the file from disk
+			const std::string absoluteFilePath = V_TEXT(GetAbsoluteExePath() + localFileDir);
+			std::ifstream fileRead{ absoluteFilePath };
+		
+			if (!fileRead.is_open())
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed opening file for LoadOBJ \"" + absoluteFilePath + "\". With error: " + strerror(errno)));
+				return E_FAIL;
+			}
+		
+			std::string objFileContent{};
+			{
+				std::stringstream buffer;
+				buffer << fileRead.rdbuf();
+				objFileContent = buffer.str();
+			}
+			fileRead.close();
+		
+			// Regex parse
+			// Basic data
+			int vertexCount, faceCount;
+			if (FAILED(FileManager::OBJParseBasicData(objFileContent, vertexCount, faceCount)))
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for the basic data."));
+				return E_FAIL;
+			}
+		
+			// Vertex data
+			std::vector<DirectX::XMFLOAT3>& position = pMeshAsset->GetPositions();
+			std::vector<std::vector<DirectX::XMFLOAT2>>& uvs = pMeshAsset->GetUVs();
+			std::vector<DirectX::XMFLOAT3>& normals = pMeshAsset->GetNormals();
+			if (FAILED(FileManager::OBJParseVertexData(objFileContent, vertexCount, position, uvs, normals)))
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for vertices."));
+				return E_FAIL;
+			}
+		
+			// Index data
+			std::vector<DirectX::XMINT3>& indices = pMeshAsset->GetUnpackedIndicies();
+			if (FAILED(FileManager::OBJParseIndices(objFileContent, faceCount, indices)))
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed Regex for indices."));
+				return E_FAIL;
+			}
+		
+			// Pack into the mesh
+			pMeshAsset->RefillVertexVector();
+		
+			return S_OK;
+		}
+		HRESULT FileManager::OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount)
 {
 	std::regex reg{ "# vertex count = (\\d+)" };
 	std::smatch matches{};
@@ -157,10 +157,10 @@ HRESULT FileManager::OBJParseBasicData(std::string& objFileContent, int& outVert
 
 	return S_OK;
 }
-HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int vertexCount, 
-	std::vector<DirectX::XMFLOAT3>& positions,
-	std::vector<std::vector<DirectX::XMFLOAT2>>& uvs, 
-	std::vector<DirectX::XMFLOAT3>& normals)
+		HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int vertexCount, 
+			std::vector<DirectX::XMFLOAT3>& positions,
+			std::vector<std::vector<DirectX::XMFLOAT2>>& uvs, 
+			std::vector<DirectX::XMFLOAT3>& normals)
 {
 	// Vertex data
 	// Pos
@@ -251,7 +251,7 @@ HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int v
 
 	return S_OK;
 }
-HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices)
+		HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices)
 {
 	enum IndexGroup 
 	{
@@ -370,6 +370,46 @@ HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int face
 
 	return S_OK;
 }
+	#pragma endregion
+
+	#pragma region glTF
+		#define TINYGLTF_IMPLEMENTATION
+		#define STB_IMAGE_IMPLEMENTATION
+		#define STB_IMAGE_WRITE_IMPLEMENTATION
+		// #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
+		#pragma warning (push, 0) //Ignore all warnings
+		#include "../AdditionalDependencies/Includes/tinyglTF/tiny_gltf.h"
+		#pragma warning (pop)
+		
+		HRESULT FileManager::LoadglTF(std::wstring localFileDir, MeshAsset* pMeshAsset)
+		{
+			const std::string absoluteFilePath = V_TEXT(GetAbsoluteExePath() + localFileDir);
+		
+			tinygltf::Model model;
+			tinygltf::TinyGLTF loader;
+			std::string err;
+			std::string warn;
+		
+			bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, absoluteFilePath);
+			//bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
+		
+			if (!warn.empty()) 
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Warning glTF: " + warn));
+			}
+			if (!err.empty()) 
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Error glTF: " + err));
+			}
+			if (!ret) 
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("FileManager: Failed to parse glTF."));
+				return E_FAIL;
+			}
+		
+			return S_OK;
+		}
+	#pragma endregion
 #pragma endregion
 
 #pragma region Textures

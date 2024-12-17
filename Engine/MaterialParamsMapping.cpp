@@ -1,13 +1,18 @@
 #include "pch.h"
 #include "MaterialParamsMapping.h"
 
+// TO-DO: Make a reusable interface for this type of item (perhaps 1 for pointers and another for simple structs?)
+
 // ---------------------------
 // MaterialScalerParamsMapping
 // ---------------------------
 
 void MaterialScalarParamsMapping::AddMapping(MaterialScalarParam& newMapping)
 {
-	m_MaterialScalarParams.push_back(newMapping);
+	if (GetMappingbasedOnName(newMapping.m_Name) == nullptr)
+	{
+		m_MaterialScalarParams.push_back(newMapping);
+	}
 
 	// Small safety to prevent params from just deleting themselves due to their potentially temporary nature
 	newMapping.m_Resource = nullptr;
@@ -28,7 +33,10 @@ void MaterialScalarParamsMapping::AddMap(std::vector<MaterialScalarParam>& newMa
 	m_MaterialScalarParams.reserve(newMap.size());
 	for (MaterialScalarParam& iterator : newMap)
 	{
-		m_MaterialScalarParams.push_back(iterator);
+		if (GetMappingbasedOnName(iterator.m_Name) == nullptr)
+		{
+			m_MaterialScalarParams.push_back(iterator);
+		}
 
 		// Small safety to prevent params from just deleting themselves due to their potentially temporary nature
 		iterator.m_Resource = nullptr;

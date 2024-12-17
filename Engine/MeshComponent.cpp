@@ -7,6 +7,7 @@
 #include "MeshWidget.h"
 #include "MeshAsset.h"
 #include "MeshFactory.h"
+#include "ShadowCasting.h"
 
 MeshComponent::MeshComponent(const std::wstring& fileName)
 	:Component()
@@ -87,4 +88,25 @@ void MeshComponent::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_pMaterial->Render(pContext, m_NrIndicies, passNr);
+}
+
+void MeshComponent::RenderShadow(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ShadowCasting* pShadowCasting, int passNr) const
+{
+	if (!pShadowCasting)
+	{
+		return;
+	}
+
+	//Select which vertex buffer to display
+	const UINT stride = sizeof(Vertex);
+	const UINT offset = 0;
+	pContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+
+	//Set the index buffer to active in the input assembler so it can be rendered.
+	pContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	//Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	pShadowCasting->Render(pContext, m_NrIndicies, passNr);
 }

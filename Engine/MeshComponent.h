@@ -20,6 +20,7 @@ public:
 	virtual bool Init() override;
 
 	virtual void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, int passNr = 0) const override;
+	virtual void RenderShadow(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ShadowCasting* pShadowCasting, int passNr = 0) const override;
 
 private:
 	MeshAsset* m_pAsset;

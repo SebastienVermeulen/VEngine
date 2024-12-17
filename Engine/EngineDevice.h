@@ -2,6 +2,7 @@
 
 struct WindowSettings;
 class RenderTarget;
+class DepthStencil;
 struct Vertex;
 
 class EngineDevice final
@@ -51,7 +52,25 @@ public:
 #pragma endregion
 
 #pragma region DepthBuffers
-	inline ID3D11DepthStencilView* GetDepthBuffer() const { return m_pDepthStencilView; }
+	/// <summary>
+	/// Function if you don't know if the stencil exists if not make a new one.
+	/// </summary>
+	DepthStencil* TryGetDepthStencil(bool customDesc, D3D11_TEXTURE2D_DESC desc = {});
+	/// <summary>
+	/// Make a new Depth Stencil, the index of which is passed back via the int reference.
+	/// If no parameters are given defaults will be used.
+	/// </summary>
+	DepthStencil* GetNewDepthStencil(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc = {});
+
+	bool CompareStencilFormats(DepthStencil* pStencil, D3D11_TEXTURE2D_DESC desc);
+
+	/// <summary>
+	/// This also can delete stencils if not used properly
+	/// Don't call this multiple times per frame
+	/// </summary>
+	void UpdateStencilLifeTimes(float deltaTime);
+
+	void ReleaseStencil(DepthStencil*);
 #pragma endregion
 
 #pragma region VertexBuffers/IndexBuffers
@@ -63,8 +82,10 @@ public:
 	inline UINT GetDefaultHeight() const { return m_DefaultHeight; }
 
 private:
-#pragma region RenderTargets
+#pragma region RenderTargets/DepthBuffers
 	RenderTarget* FindAvailableTarget(bool customDesc, D3D11_TEXTURE2D_DESC desc);
+
+	DepthStencil* FindAvailableStencil(bool customDesc, D3D11_TEXTURE2D_DESC desc);
 #pragma endregion
 
 #pragma region DirectX
@@ -76,10 +97,8 @@ private:
 #pragma region RenderTargets/DepthBuffers
 	// TO-DO: Make resising possible
 	std::vector<RenderTarget*> m_RenderTargets;		// The pointer to our backbuffer, now as the render target
-	//TO-DO: Make it possible to have more than one stencil and buffer
 	//TO-DO: Remove stensil from these names, since they are just buffers
-	ID3D11DepthStencilView* m_pDepthStencilView;	// The pointer to our depthbuffer
-	ID3D11Texture2D* m_pDepthStencilBuffer;			// Buffer that holds the depth stencil data
+	std::vector<DepthStencil*> m_DepthStencils;
 #pragma endregion
 
 	UINT m_DefaultWidth, m_DefaultHeight;

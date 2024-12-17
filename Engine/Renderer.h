@@ -8,12 +8,15 @@ class Component;
 class Material;
 class Light;
 class RendererWidget;
+class ShadowCasting;
 class PostProcessPipeline;
 
 struct RenderTargets
 {
 	RenderTarget* m_FinalTarget;
 	RenderTarget* m_FinalSceneTarget;
+
+	DepthStencil* m_DepthBuffer;
 };
 
 class Renderer abstract
@@ -94,6 +97,10 @@ public:
 	inline RenderTarget* GetFinalSceneTarget()
 	{
 		return m_RenderTargets.m_FinalSceneTarget;
+	}	
+	inline DepthStencil* GetSceneDepthBuffer()
+	{
+		return m_RenderTargets.m_DepthBuffer;
 	}
 
 #pragma region RenderHelpers
@@ -117,7 +124,12 @@ protected:
 #pragma region RenderHelpers
 	void UpdateMatrices(Component* pRenderable) const;
 	void UpdateMatrices(Material* pMaterial) const;
-	void UpdateLights(Material* pMaterial);
+	void UpdateLightMatrices(Light* pLight) const;
+	void UpdateWorldMatrix(Component* pRenderables) const;
+	void UpdateLights(Material* pMaterial) const;
+	// TO-DO: This render stuff should be moved to the ShadowCasting class
+	void RenderShadows() const;
+	void UpdateShadows(Material* pMaterial) const;
 #pragma endregion
 
 protected:
@@ -132,6 +144,7 @@ protected:
 	std::vector<Light*> m_Lights;
 	std::vector<Camera*> m_pCameraList;
 	Camera* m_pRenderingCamera;
+	ShadowCasting* m_pShadowCasting;
 	PostProcessPipeline* m_pPostProcessingPipeline;
 
 	DirectX::XMFLOAT4 m_DefaultClearColor;
@@ -139,4 +152,5 @@ protected:
 	RenderType m_RenderType;
 	int m_NrBasisRenderTargets;
 	bool m_UpdateLighting;
+	bool m_RenderShadows;
 };

@@ -3,11 +3,12 @@
 // TO-DO: I don't like this inlude
 #include "Texture.h"
 
+// TO-DO: Mixing these types is asking for troubles
 enum class RenderType : UINT
 {
-	forwards = 0,
-	deferred = 1,
-	lightingPass = 2,
+	deferred = 0,
+	lightingPass = 1,
+	shadowPass = 2,
 	postprocessPass = 3
 };
 enum class LightType : UINT
@@ -46,13 +47,25 @@ struct QuadVertex
 	DirectX::XMFLOAT2 uv;
 };
 
-struct MatrixRenderBuffer final
+// TO-DO: Make this not hardcoded, have an ID determine which one to update
+struct MatrixTransformationContainer final
 {
 	DirectX::XMFLOAT4X4 world;
 	DirectX::XMFLOAT4X4 view;
 	DirectX::XMFLOAT4X4 inverseView;
 	DirectX::XMFLOAT4X4 projection;
 	DirectX::XMFLOAT4X4 worldViewProj;
+
+	void MarkAllForUpdate()
+	{
+		updateWorld = true;
+		updateView = true;
+		updateInverseView = true;
+		updateProjection = true;
+		updateWorldViewProjection = true;
+	}
+
+	bool updateWorld = false, updateView = false, updateInverseView = false, updateProjection = false, updateWorldViewProjection = false;
 };
 
 class RenderTarget final : public Texture
@@ -131,13 +144,91 @@ private:
 	bool m_Used = false;
 };
 
+class DepthStencil final : public Texture
+{
+public:
+	DepthStencil()
+		:Texture{ nullptr, nullptr }
+		, m_pDepthStencilView{}
+		, m_pDepthStencilBuffer{}
+	{
+	}
+	~DepthStencil()
+	{
+		SafeRelease(m_pDepthStencilBuffer);
+		SafeRelease(m_pDepthStencilView);
+	}
+
+	inline ID3D11DepthStencilView** GetStencilViewLocation()
+	{
+		return (ID3D11DepthStencilView**)&m_pDepthStencilView;
+	}
+	inline ID3D11DepthStencilView* GetStencilView()
+	{
+		// TO-DO: This is a neat stopgap to keep targets alive, needs something neater?
+		MarkAsUsed();
+		return m_pDepthStencilView;
+	}
+	inline ID3D11Texture2D** GetStencilBufferLocation()
+	{
+		return (ID3D11Texture2D**)&m_pDepthStencilBuffer;
+	}
+	inline ID3D11Texture2D* GetStencilBuffer()
+	{
+		// TO-DO: This is a neat stopgap to keep targets alive, needs something neater?
+		MarkAsUsed();
+		return m_pDepthStencilBuffer;
+	}
+
+	// TO-DO: This should have a non-member function as well
+	inline bool CompareDesc(const D3D11_TEXTURE2D_DESC& otherDesc) const
+	{
+		D3D11_TEXTURE2D_DESC targetDesc{};
+		m_pDepthStencilBuffer->GetDesc(&targetDesc);
+
+		// TO-DO: Check if this description check is good enough
+		return targetDesc.Width == otherDesc.Width &&
+			targetDesc.Height == otherDesc.Height &&
+			targetDesc.Format == otherDesc.Format &&
+			targetDesc.CPUAccessFlags == otherDesc.CPUAccessFlags &&
+			targetDesc.MiscFlags == otherDesc.MiscFlags;
+	}
+
+	inline void MarkAsUsed()
+	{
+		m_Used = true;
+		m_UnusedTimer = 0.0f;
+	}
+	// TO-DO: Perhaps this would benifit from being automated somehow? (For shaders and such)
+	inline void MarkAsUnused()
+	{
+		m_Used = false;
+	}
+	inline bool IsUsed()
+	{
+		return m_Used;
+	}
+	inline float UpdateTimeSpentUnused(float deltaTime)
+	{
+		return m_UnusedTimer += deltaTime;
+	}
+
+private:
+	ID3D11DepthStencilView* m_pDepthStencilView;	// The pointer to our depthbuffer
+	ID3D11Texture2D* m_pDepthStencilBuffer;			// Buffer that holds the depth stencil data
+
+	float m_UnusedTimer = 0.0f;
+	bool m_Used = false;
+};
+
 struct ShaderLight final
 {
+	DirectX::XMFLOAT4X4 projectionMatrix;
 	DirectX::XMFLOAT4 position;
 	DirectX::XMFLOAT4 direction;
 	DirectX::XMFLOAT3 color;
 	float intensity;
 	LightType type;
-	bool enabled;
+	int shadowIndex; // We need an index in case not all lights shadowcast and we are offset
 	DirectX::XMFLOAT2 padding;
 };

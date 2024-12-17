@@ -198,14 +198,17 @@
     <ClCompile Include="EngineDevice.cpp" />
     <ClCompile Include="EngineSettings.cpp" />
     <ClCompile Include="FileManager.cpp" />
-    <ClCompile Include="ForwardsDX11.cpp" />
     <ClCompile Include="GreyScale.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightWidget.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="MaterialParamsMapping.cpp" />
     <ClCompile Include="MaterialWidget.cpp" />
+    <ClCompile Include="MatrixTransformations.h" />
     <ClCompile Include="RenderAnnotation.cpp" />
+    <ClCompile Include="ShadowCasting.cpp" />
+    <ClCompile Include="ShadowData.cpp" />
+    <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="VMath.cpp" />
     <ClCompile Include="MeshAsset.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
@@ -241,6 +244,10 @@
     <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_rectpack.h" />
     <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_textedit.h" />
     <ClInclude Include="..\AdditionalDependencies\Includes\ImGUI\Include\imstb_truetype.h" />
+    <ClInclude Include="..\AdditionalDependencies\Includes\tinyglTF\json.hpp" />
+    <ClInclude Include="..\AdditionalDependencies\Includes\tinyglTF\stb_image.h" />
+    <ClInclude Include="..\AdditionalDependencies\Includes\tinyglTF\stb_image_write.h" />
+    <ClInclude Include="..\AdditionalDependencies\Includes\tinyglTF\tiny_gltf.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Asset.h" />
     <ClInclude Include="AssetFactory.h" />
@@ -254,7 +261,6 @@
     <ClInclude Include="EngineDevice.h" />
     <ClInclude Include="EngineSettings.h" />
     <ClInclude Include="FileManager.h" />
-    <ClInclude Include="ForwardsDX11.h" />
     <ClInclude Include="GreyScale.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightWidget.h" />
@@ -262,6 +268,9 @@
     <ClInclude Include="MaterialParamsMapping.h" />
     <ClInclude Include="MaterialWidget.h" />
     <ClInclude Include="RenderAnnotation.h" />
+    <ClInclude Include="ShadowCasting.h" />
+    <ClInclude Include="ShadowData.h" />
+    <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="VMath.h" />
     <ClInclude Include="MeshAsset.h" />
     <ClInclude Include="MeshComponent.h" />
@@ -333,11 +342,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="..\Resources\Shaders\ShaderForwards.fx">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShaderP0</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShaderP0</EntryPointName>
+    <FxCompile Include="..\Resources\Shaders\ShadowRendering.fx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
