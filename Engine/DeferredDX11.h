@@ -29,6 +29,7 @@ public:
 	DeferredDX11 operator=(DeferredDX11& other) = delete;
 	DeferredDX11& operator=(DeferredDX11&& other) = delete;
 
+	/* Renderer Interface */ 
 	virtual void Init() override;
 
 	virtual void AllocatePromisedTargets() override;
@@ -37,7 +38,9 @@ public:
 
 	virtual void Render() override;
 	virtual void ClearBuffers() override;
+	/* Renderer Interface */
 
+	void RenderDefferedPass();
 	Material* GetDeferredLightingPassMaterial() const;
 	inline DeferredRenderTargets GetDeferredRenderTargets() const
 	{

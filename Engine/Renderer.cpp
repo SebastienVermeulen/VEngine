@@ -238,8 +238,7 @@ void Renderer::UpdateLightMatrices(Light* pLight) const
 	buffer.updateInverseView = true;
 	buffer.projection = pLight->GetShadowProjectionMatrix();
 	buffer.updateProjection = true;
-	// fuck
-	DirectX::XMFLOAT4X4 worldViewProj
+	DirectX::XMFLOAT4X4 worldViewProj;
 	DirectX::XMStoreFloat4x4(&worldViewProj, DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
 	buffer.worldViewProj = worldViewProj;
 	buffer.updateWorldViewProjection = true;
@@ -285,7 +284,7 @@ void Renderer::UpdateLights(Material* pMaterial) const
 	}
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
 }
-void Renderer::RenderShadows() const
+void Renderer::RenderShadowDepths() const
 {
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};

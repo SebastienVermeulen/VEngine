@@ -179,18 +179,21 @@ void DeferredDX11::Render()
 
 			if (m_RenderShadows)
 			{
-				V_DX11_ANNOTATE(V_WTEXT("Shadowmaps"));
+				V_DX11_ANNOTATE(V_WTEXT("ShadowDepth"));
 				
 				// Render our shadows
-				RenderShadows();
+				RenderShadowDepths();
 				// Update for the final deferred renderpass
 				UpdateShadows(m_pDeferredLightingMaterial);
 			}
 
-			// Update the lights
-			// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
-			//	not updated before the shadows since they don't need this data)
-			UpdateLights(m_pDeferredLightingMaterial);
+			if(m_BatchLights)
+			{
+				// Update the lights
+				// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
+				//	not updated before the shadows since they don't need this data)
+				UpdateLights(m_pDeferredLightingMaterial);
+			}
 		}
 	}
 
@@ -220,7 +223,31 @@ void DeferredDX11::Render()
 			// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			m_pDeferredLightingMaterial->Render(pContext, m_ScreenQuadNrIndicies, 0);
+			{
+				V_DX11_ANNOTATE(V_WTEXT("Directional"));
+
+				// Directional lights
+				for ()
+				{
+				}
+			}
+
+			// Point and spot
+			if (m_BatchLights)
+			{
+				V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
+
+				RenderDefferedPass();
+			}
+			else
+			{
+				V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
+
+				// Render the shadowed light seperately
+				for()
+				{
+				}
+			}
 
 			// Unhook render targets from material
 			ExplicitlyUnbindingRenderTargets(m_pDeferredLightingMaterial);
@@ -300,6 +327,13 @@ void DeferredDX11::SetupTargetsDeferredSecondPass()
 		GetFinalSceneTarget()->GetRenderTargetView()
 	};
 	pContext->OMSetRenderTargets(1, renderTargs, nullptr);
+}
+
+void DeferredDX11::RenderDefferedPass()
+{
+
+
+	m_pDeferredLightingMaterial->Render(pContext, m_ScreenQuadNrIndicies, 0);
 }
 #pragma endregion
 

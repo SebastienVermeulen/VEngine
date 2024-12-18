@@ -128,7 +128,7 @@ protected:
 	void UpdateWorldMatrix(Component* pRenderables) const;
 	void UpdateLights(Material* pMaterial) const;
 	// TO-DO: This render stuff should be moved to the ShadowCasting class
-	void RenderShadows() const;
+	void RenderShadowDepths() const;
 	void UpdateShadows(Material* pMaterial) const;
 #pragma endregion
 
@@ -152,5 +152,6 @@ protected:
 	RenderType m_RenderType;
 	int m_NrBasisRenderTargets;
 	bool m_UpdateLighting;
+	bool m_BatchLights;
 	bool m_RenderShadows;
 };
