@@ -10,6 +10,7 @@
 #include "RenderUtils.h"
 #include "PostProcesses.h"
 #include "RenderAnnotation.h"
+#include "ShadowManager.h"
 
 DeferredDX11::DeferredDX11(EngineDevice* device) 
 	:Renderer(device)
@@ -191,7 +192,7 @@ void DeferredDX11::Render()
 			{
 				// Update the lights
 				// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
-				//	not updated before the shadows since they don't need this data)
+				//	not updated before the shadowsdepths since they don't need this data)
 				UpdateLights(m_pDeferredLightingMaterial);
 			}
 		}
@@ -227,8 +228,12 @@ void DeferredDX11::Render()
 				V_DX11_ANNOTATE(V_WTEXT("Directional"));
 
 				// Directional lights
-				for ()
+				for (Light* Light : m_pShadowManager->GetDirectionalShadowCastingLights())
 				{
+					// TO-DO: Figure out cascades, now only simple 1k-1k
+					UpdateShadows(m_pDeferredLightingMaterial);
+
+					RenderDefferedPass();
 				}
 			}
 
@@ -237,6 +242,8 @@ void DeferredDX11::Render()
 			{
 				V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
 
+				UpdateShadows(m_pDeferredLightingMaterial);
+
 				RenderDefferedPass();
 			}
 			else
@@ -244,8 +251,11 @@ void DeferredDX11::Render()
 				V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
 
 				// Render the shadowed light seperately
-				for()
+				for (Light* Light : m_pShadowManager->GetShadowCastingLights())
 				{
+					UpdateShadows(m_pDeferredLightingMaterial);
+
+					RenderDefferedPass();
 				}
 			}
 
@@ -331,9 +341,7 @@ void DeferredDX11::SetupTargetsDeferredSecondPass()
 
 void DeferredDX11::RenderDefferedPass()
 {
-
-
-	m_pDeferredLightingMaterial->Render(pContext, m_ScreenQuadNrIndicies, 0);
+	m_pDeferredLightingMaterial->Render(m_pDevice->GetDeviceContext(), m_ScreenQuadNrIndicies, 0);
 }
 #pragma endregion
 

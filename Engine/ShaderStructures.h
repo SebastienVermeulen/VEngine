@@ -229,6 +229,8 @@ struct ShaderLight final
 	DirectX::XMFLOAT3 color;
 	float intensity;
 	LightType type;
-	int shadowIndex; // We need an index in case not all lights shadowcast and we are offset
+	// We need an index in case not all lights shadowcast and we are offset,
+	// That way we can easily identify what target we need to use (only needed for batched lights)
+	int shadowIndex; 
 	DirectX::XMFLOAT2 padding;
 };

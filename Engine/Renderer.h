@@ -8,6 +8,7 @@ class Component;
 class Material;
 class Light;
 class RendererWidget;
+class ShadowManager;
 class ShadowCasting;
 class PostProcessPipeline;
 
@@ -127,6 +128,8 @@ protected:
 	void UpdateLightMatrices(Light* pLight) const;
 	void UpdateWorldMatrix(Component* pRenderables) const;
 	void UpdateLights(Material* pMaterial) const;
+	void UpdateShadows(Material* pMaterial, const Light* pLight) const;
+	void UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const;
 	// TO-DO: This render stuff should be moved to the ShadowCasting class
 	void RenderShadowDepths() const;
 	void UpdateShadows(Material* pMaterial) const;
@@ -144,6 +147,7 @@ protected:
 	std::vector<Light*> m_Lights;
 	std::vector<Camera*> m_pCameraList;
 	Camera* m_pRenderingCamera;
+	ShadowManager* m_pShadowManager;
 	ShadowCasting* m_pShadowCasting;
 	PostProcessPipeline* m_pPostProcessingPipeline;
 

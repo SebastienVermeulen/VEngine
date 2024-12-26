@@ -208,6 +208,7 @@
     <ClCompile Include="RenderAnnotation.cpp" />
     <ClCompile Include="ShadowCasting.cpp" />
     <ClCompile Include="ShadowData.cpp" />
+    <ClCompile Include="ShadowManager.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="VMath.cpp" />
     <ClCompile Include="MeshAsset.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="RenderAnnotation.h" />
     <ClInclude Include="ShadowCasting.h" />
     <ClInclude Include="ShadowData.h" />
+    <ClInclude Include="ShadowManager.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="VMath.h" />
     <ClInclude Include="MeshAsset.h" />

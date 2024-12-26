@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "RendererWidget.h"
 #include "PostProcesses.h"
+#include "ShadowManager.h"
 #include "ShadowCasting.h"
 
 EngineDevice* Renderer::m_pDevice = nullptr;
@@ -25,6 +26,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_Lights{}
 	, m_pCameraList{}
 	, m_pRenderingCamera{}
+	, m_pShadowManager{}
 	, m_pShadowCasting{new ShadowCasting()}
 	, m_pPostProcessingPipeline{new PostProcessPipeline()}
 	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
@@ -284,6 +286,14 @@ void Renderer::UpdateLights(Material* pMaterial) const
 	}
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
 }
+void Renderer::UpdateShadows(Material* pMaterial, const Light* pLight) const
+{
+	pMaterial.
+}
+void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
+{
+}
+
 void Renderer::RenderShadowDepths() const
 {
 	const int maxNrLights = Light::GetMaxNrLights();

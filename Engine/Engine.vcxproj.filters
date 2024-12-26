@@ -267,6 +267,9 @@
     <ClCompile Include="MatrixTransformations.h">
       <Filter>Engine Files\Rendering\Core</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowManager.cpp">
+      <Filter>Engine Files\Rendering\Shadows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -465,6 +468,9 @@
       <Filter>Engine Files\Rendering\Shadows</Filter>
     </ClInclude>
     <ClInclude Include="ShadowData.h">
+      <Filter>Engine Files\Rendering\Shadows</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowManager.h">
       <Filter>Engine Files\Rendering\Shadows</Filter>
     </ClInclude>
   </ItemGroup>
