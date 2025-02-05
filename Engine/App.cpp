@@ -40,8 +40,8 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
 {
     EngineManager* pEngineManager = EngineManager::Instance();
 
-    //TO-DO: Engine settigns should be adjustable from some sort of ini file
-    //Apply basic settings
+    // TO-DO: Engine settigns should be adjustable from some sort of ini file
+    // Apply basic settings
     EngineSettings* pEngineSettings = EngineSettings::Instance();
     pEngineSettings->SetVSync(true);
     pEngineSettings->SetRendertypeClean(RenderType::deferred);
@@ -53,21 +53,21 @@ HRESULT App::Init(HINSTANCE hInstance, const int nCmdShow, WindowSettings settin
 		return E_FAIL;
 	}
     
-	//Init the device through the locator
+	// Init the device through the locator
 	EngineDevice* pDevice = pEngineManager->GetDevice(pWindow->GetHWND(), &settings);
     if (m_pProject)
     {
         m_pProject->Init();
     }
 
-    //TO-DO: Engine settings should not hold lighting states, only settings, this needs to be moved to a more temporary structure
-    //Force lighting to be recalculated
+    // TO-DO: Engine settings should not hold lighting states, only settings, this needs to be moved to a more temporary structure
+    // Force lighting to be recalculated
     pEngineSettings->MarkAllLightingDirty(pEngineManager);
     // TO-DO: This should live in some other function I suppose, it is only here to prevent repeated uselless calls
     pEngineManager->GetActiveRenderer()->AllocatePromisedTargets();
 
-    //TO-DO: This should be excludable via some pragma's, since you don't want debug to run when shipping
-    //Init the annotations system for debugging our rendering states
+    // TO-DO: This should be excludable via some pragma's, since you don't want debug to run when shipping
+    // Init the annotations system for debugging our rendering states
     if (RenderAnnotationsContainer::Instance()->Init(pDevice->GetDeviceContext())) 
     {
         V_LOG(LogVerbosity::Warning, V_WTEXT("App: Failed to initialize the RenderAnnotationsContainer."));

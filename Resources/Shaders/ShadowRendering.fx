@@ -3,10 +3,6 @@
 //--------------------------------------------------------------------------------------
 // Structs
 //--------------------------------------------------------------------------------------
-struct VP0_In
-{
-    float3 position : POSITION;
-};
 struct VP0_Out
 {
     float4 position : SV_POSITION;
@@ -50,15 +46,16 @@ BlendState AlphaBlendingOn
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-VP0_Out VShaderP0(VP0_In input)
+// TO-DO: Swap out the Vertex input with a position only model
+VP0_Out VShaderP0(V_In_Shading input)
 {
-    VV0_Out output;
+    VP0_Out output;	
 	
 	//Change the position vector to be 4 units for proper matrix calculations.
     float4 pos = float4(input.position, 1.0f);
 
 	//Calculate the position of the vertex against the world, view, and projection matrices.
-    pos = mul(pos, gWorldViewProj);
+    output.position = mul(pos, gWorldViewProj);
 
     return output;
 }

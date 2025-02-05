@@ -25,13 +25,18 @@ void Light::SetIsShadowCasting(bool enabled)
 	{
 		m_ShadowData.m_pDepthStencil = nullptr;
 	}
+	else 
+	{
+		// TO-DO: Run this from a manager
+		m_ShadowData.m_pDepthStencil = EngineManager::Instance()->GetDevice()->TryGetDepthStencil(false);
+	}
 }
 
 DirectX::XMFLOAT4X4& Light::GetShadowProjectionMatrix()
 {
-	WindowSettings windowSettings = WindowSettings{ 2024, 2024 };
+	WindowSettings windowSettings = WindowSettings{ 1, 1 };
 	// TO-DO: add spotlights
-	CameraSettings cameraSettings = CameraSettings{ -1, 0, 100.0f, 0.01f };
+	CameraSettings cameraSettings = CameraSettings{ -1, 0, 1000.0f, 0.01f };
 
 	m_ProjectionMatrix = TransformationMatrixHelper::GetProjectionMatrix(m_LightType != LightType::directional, windowSettings, cameraSettings);
 

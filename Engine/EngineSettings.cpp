@@ -16,19 +16,23 @@ EngineSettings::~EngineSettings()
 
 void EngineSettings::SetRendertypeClean(RenderType renderType)
 {
-	//Make sure the other render type has up to date lighting info
+	// Make sure the other render type has up to date lighting info
 	EngineManager* pEngineManager = EngineManager::Instance();
 	m_CurrentRenderType = renderType;
 }
 void EngineSettings::SetRendertype(RenderType renderType)
 {
-	//Make sure the other render type has up to date lighting info
+	// Make sure the other render type has up to date lighting info
 	EngineManager* pEngineManager = EngineManager::Instance();
-	pEngineManager->GetActiveRenderer()->CleanPointersToTargets();
-	MarkCurrentLightingDirty(pEngineManager);
-	m_CurrentRenderType = renderType;
-	pEngineManager->GetActiveRenderer()->AllocatePromisedTargets();
-	MarkCurrentLightingDirty(pEngineManager);
+	// Do not swap if the type is the same
+	if (GetRenderType() != renderType)
+	{
+		pEngineManager->GetActiveRenderer()->CleanPointersToTargets();
+		MarkCurrentLightingDirty(pEngineManager);
+		m_CurrentRenderType = renderType;
+		pEngineManager->GetActiveRenderer()->AllocatePromisedTargets();
+		MarkCurrentLightingDirty(pEngineManager);
+	}
 }
 RenderType EngineSettings::GetRenderType() const
 {

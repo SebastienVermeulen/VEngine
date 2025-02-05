@@ -140,12 +140,12 @@ void DeferredDX11::Render()
 		return;
 	}
 
-	// TO-DO: Find a way to just request memory targets and then clear them in a tastfull manner
-	ClearBuffers();
-
 	{
 		V_DX11_ANNOTATE(V_WTEXT("Scene"));
 
+		// TO-DO: Find a way to just request memory targets and then clear them in a tastfull manner
+		ClearBuffers();
+	
 		//**********************************************************************
 		// 	   Main render loop
 		//**********************************************************************
@@ -164,7 +164,7 @@ void DeferredDX11::Render()
 				m_Renderables[i]->Render(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), 0);
 			}
 		}
-
+	
 		// Unhook render targets from material
 		ExplicitlyUnbindingRenderTargets();
 	}
@@ -185,95 +185,95 @@ void DeferredDX11::Render()
 				// Render our shadows
 				RenderShadowDepths();
 				// Update for the final deferred renderpass
-				UpdateShadows(m_pDeferredLightingMaterial);
+	//			UpdateShadows(m_pDeferredLightingMaterial);
 			}
 
 			if(m_BatchLights)
 			{
 				// Update the lights
 				// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
-				//	not updated before the shadowsdepths since they don't need this data)
-				UpdateLights(m_pDeferredLightingMaterial);
+				// not updated before the shadowsdepths since they don't need this data)
+	//			UpdateLights(m_pDeferredLightingMaterial);
 			}
 		}
 	}
 
-	{
-		V_DX11_ANNOTATE(V_WTEXT("Deferred"));
-
-		//**********************************************************************
-		// 	   Final Render for deferred
-		//**********************************************************************
-		{
-			//Set the material buffers
-			m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
-			// Update view matrix
-			UpdateMatrices(m_pDeferredLightingMaterial);
-			// Set the render target
-			SetupTargetsDeferredSecondPass();
-			// Second/Deferred pass
-			// Select which vertex buffer to display
-			const UINT stride = sizeof(QuadVertex);
-			const UINT offset = 0;
-			ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-			pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
-
-			// Set the index buffer to active in the input assembler so it can be rendered.
-			pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-			// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-			{
-				V_DX11_ANNOTATE(V_WTEXT("Directional"));
-
-				// Directional lights
-				for (Light* Light : m_pShadowManager->GetDirectionalShadowCastingLights())
-				{
-					// TO-DO: Figure out cascades, now only simple 1k-1k
-					UpdateShadows(m_pDeferredLightingMaterial);
-
-					RenderDefferedPass();
-				}
-			}
-
-			// Point and spot
-			if (m_BatchLights)
-			{
-				V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
-
-				UpdateShadows(m_pDeferredLightingMaterial);
-
-				RenderDefferedPass();
-			}
-			else
-			{
-				V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
-
-				// Render the shadowed light seperately
-				for (Light* Light : m_pShadowManager->GetShadowCastingLights())
-				{
-					UpdateShadows(m_pDeferredLightingMaterial);
-
-					RenderDefferedPass();
-				}
-			}
-
-			// Unhook render targets from material
-			ExplicitlyUnbindingRenderTargets(m_pDeferredLightingMaterial);
-		}
-
-		MarkTargetsAsNotUsed();
-	}
-
-	//**********************************************************************
-	// 	   Postprocess
-	//**********************************************************************
-	{
-		V_DX11_ANNOTATE(V_WTEXT("Postprocesses"));
-
-		m_pPostProcessingPipeline->RunPostProcesses(m_pDevice, this);
-	}
+	//{
+	//	V_DX11_ANNOTATE(V_WTEXT("Deferred"));
+	//
+	//	//**********************************************************************
+	//	// 	   Final Render for deferred
+	//	//**********************************************************************
+	//	{
+	//		//Set the material buffers
+	//		m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
+	//		// Update view matrix
+	//		UpdateMatrices(m_pDeferredLightingMaterial);
+	//		// Set the render target
+	//		SetupTargetsDeferredSecondPass();
+	//		// Second/Deferred pass
+	//		// Select which vertex buffer to display
+	//		const UINT stride = sizeof(QuadVertex);
+	//		const UINT offset = 0;
+	//		ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+	//		pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
+	//
+	//		// Set the index buffer to active in the input assembler so it can be rendered.
+	//		pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//
+	//		// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+	//		pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//
+	//		{
+	//			V_DX11_ANNOTATE(V_WTEXT("Directional"));
+	//
+	//			// Directional lights
+	//			for (Light* Light : m_pShadowManager->GetDirectionalShadowCastingLights())
+	//			{
+	//				// TO-DO: Figure out cascades, now only simple 1k-1k
+	//				UpdateShadows(m_pDeferredLightingMaterial);
+	//
+	//				RenderDefferedPass();
+	//			}
+	//		}
+	//
+	//		// Point and spot
+	//		if (m_BatchLights)
+	//		{
+	//			V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
+	//
+	//			UpdateShadows(m_pDeferredLightingMaterial);
+	//
+	//			RenderDefferedPass();
+	//		}
+	//		else
+	//		{
+	//			V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
+	//
+	//			// Render the shadowed light seperately
+	//			for (Light* Light : m_pShadowManager->GetShadowCastingLights())
+	//			{
+	//				UpdateShadows(m_pDeferredLightingMaterial);
+	//
+	//				RenderDefferedPass();
+	//			}
+	//		}
+	//
+	//		// Unhook render targets from material
+	//		ExplicitlyUnbindingRenderTargets(m_pDeferredLightingMaterial);
+	//	}
+	//
+	//	MarkTargetsAsNotUsed();
+	//}
+	//
+	////**********************************************************************
+	//// 	   Postprocess
+	////**********************************************************************
+	//{
+	//	V_DX11_ANNOTATE(V_WTEXT("Postprocesses"));
+	//
+	//	m_pPostProcessingPipeline->RunPostProcesses(m_pDevice, this);
+	//}
 
 	//**********************************************************************
 	// 	   Final present + UI (ImGui)

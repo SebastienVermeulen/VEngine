@@ -116,26 +116,6 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
     m_pDeviceContext->RSSetViewports(1, &viewport);
 #pragma endregion
 
-#pragma region DepthBuffer
-    // Describe our Depth/Stencil Buffer
-    D3D11_TEXTURE2D_DESC depthStencilDesc;
-    ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-
-    depthStencilDesc.Width = m_DefaultWidth;
-    depthStencilDesc.Height = m_DefaultHeight;
-    depthStencilDesc.MipLevels = 1;
-    depthStencilDesc.ArraySize = 1;
-    depthStencilDesc.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthStencilDesc.SampleDesc.Count = 1;
-    depthStencilDesc.SampleDesc.Quality = 0;
-    depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    depthStencilDesc.CPUAccessFlags = 0;
-    depthStencilDesc.MiscFlags = 0;
-
-    TryGetDepthStencil(true, depthStencilDesc);
-#pragma endregion 
-
 #pragma region ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -310,8 +290,8 @@ DepthStencil* EngineDevice::TryGetDepthStencil(bool customDesc, D3D11_TEXTURE2D_
 
 DepthStencil* EngineDevice::GetNewDepthStencil(int& index, bool customDesc, D3D11_TEXTURE2D_DESC desc) 
 {
-    index = (int)m_RenderTargets.size();
-    m_RenderTargets.push_back(new RenderTarget());
+    index = (int)m_DepthStencils.size();
+    m_DepthStencils.push_back(new DepthStencil());
 
     // TO-DO: Move this to a reusable spot
     if (!customDesc)

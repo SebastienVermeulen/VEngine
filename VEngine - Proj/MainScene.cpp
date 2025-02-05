@@ -50,6 +50,7 @@ bool MainScene::Init()
 		pMaterial->GetTextureParams().AddMap(TextureParamsDeferredMap);
 		// Set our material
 		pMeshComp->SetMaterial(pMaterial);
+		pMeshComp->SetShadowCasting(true);
 	}
 
 	//Lights
@@ -59,6 +60,7 @@ bool MainScene::Init()
 	pObject->AddRenderType(m_pDirectionalLight, RenderType::deferred);
 	m_pDirectionalLight->SetIntensity(5.0f); 
 	pObject->GetTransform()->Rotate(-45,180,0);
+	m_pDirectionalLight->SetIsShadowCasting(true);
 	objectName = "PointLight";
 	pObject = CreateObject(objectName);
 	pObject->GetTransform()->Translate(-7.0f,0.0f,-7.0f);

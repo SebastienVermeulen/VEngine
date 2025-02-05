@@ -35,6 +35,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 {
     m_pDevice = pDevice;
 	m_pEngineSettings = EngineSettings::Instance();
+	m_pShadowCasting->GetShadowMaterial()->InitShader(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext());
 }
 Renderer::~Renderer()
 {
@@ -205,6 +206,7 @@ void Renderer::LightRemovedFromScene(Light* pLight)
 void Renderer::UpdateMatrices(Component* pRenderable) const
 {
 	MatrixTransformationContainer buffer;
+	buffer.MarkAllForUpdate();
 
 	buffer.world = pRenderable->GetObject()->GetTransform()->GetWorld();
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
@@ -219,6 +221,7 @@ void Renderer::UpdateMatrices(Component* pRenderable) const
 void Renderer::UpdateMatrices(Material* pMaterial) const
 {
 	MatrixTransformationContainer buffer;
+	buffer.MarkAllForUpdate();
 
 	DirectX::XMStoreFloat4x4(&buffer.world, DirectX::XMMatrixIdentity());
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
@@ -233,17 +236,21 @@ void Renderer::UpdateMatrices(Material* pMaterial) const
 void Renderer::UpdateLightMatrices(Light* pLight) const 
 {
 	MatrixTransformationContainer buffer;
+	buffer.MarkAllForUpdate();
+
+	// TO-DO: Based on the light type offset this
+	Transform* pLightTransform = pLight->GetObject()->GetTransform();
+	const DirectX::XMVECTOR& lightBackwards = DirectX::XMVectorScale(DirectX::XMLoadFloat3(&pLightTransform->GetForward()), -50.0f);
+	DirectX::XMFLOAT3 lightBackwardsFloat;
+	DirectX::XMStoreFloat3(&lightBackwardsFloat, lightBackwards);
+	DirectX::XMStoreFloat4x4(&buffer.world, DirectX::XMMatrixTranslation(lightBackwardsFloat.x, lightBackwardsFloat.y, lightBackwardsFloat.z));
 
 	buffer.view = pLight->GetShadowViewMatrix();
-	buffer.updateView = true;
 	buffer.inverseView = pLight->GetShadowViewInverseMatrix();
-	buffer.updateInverseView = true;
 	buffer.projection = pLight->GetShadowProjectionMatrix();
-	buffer.updateProjection = true;
 	DirectX::XMFLOAT4X4 worldViewProj;
 	DirectX::XMStoreFloat4x4(&worldViewProj, DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
 	buffer.worldViewProj = worldViewProj;
-	buffer.updateWorldViewProjection = true;
 
 	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
 }
@@ -258,47 +265,49 @@ void Renderer::UpdateWorldMatrix(Component* pRenderables) const
 }
 void Renderer::UpdateLights(Material* pMaterial) const
 {
-	const int maxNrLights = Light::GetMaxNrLights();
-	std::vector<ShaderLight> lightsStructure{};
-	lightsStructure.reserve(maxNrLights);
-	for (int i{}; i < maxNrLights; ++i)
-	{
-		if (m_Lights.size() > i && m_Lights[i]->IsVisible())
-		{
-			//Add the light to structure for easy use
-			Transform* pTransform = m_Lights[i]->GetObject()->GetTransform();
-			DirectX::XMFLOAT3 pos = pTransform->GetPosition();
-			DirectX::XMFLOAT3 dir = pTransform->GetForward();
-			ShaderLight light{ 
-				DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f},
-				DirectX::XMFLOAT4{dir.x, dir.y, dir.z, 1.0f},
-				m_Lights[i]->GetColor(),
-				m_Lights[i]->GetIntensity(),
-				m_Lights[i]->GetLightType(),
-				m_Lights[i]->GetShadowStartingIndex() };
-			lightsStructure.push_back(light);
-		}
-		else
-		{
-			ShaderLight light{};
-			lightsStructure.push_back(light);
-		}
-	}
-	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
+//	const int maxNrLights = Light::GetMaxNrLights();
+//	std::vector<ShaderLight> lightsStructure{};
+//	lightsStructure.reserve(maxNrLights);
+//	for (int i{}; i < maxNrLights; ++i)
+//	{
+//		if (m_Lights.size() > i && m_Lights[i]->IsVisible())
+//		{
+//			//Add the light to structure for easy use
+//			Transform* pTransform = m_Lights[i]->GetObject()->GetTransform();
+//			DirectX::XMFLOAT3 pos = pTransform->GetPosition();
+//			DirectX::XMFLOAT3 dir = pTransform->GetForward();
+//			ShaderLight light{ 
+//				DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f},
+//				DirectX::XMFLOAT4{dir.x, dir.y, dir.z, 1.0f},
+//				m_Lights[i]->GetColor(),
+//				m_Lights[i]->GetIntensity(),
+//				m_Lights[i]->GetLightType(),
+//				m_Lights[i]->GetShadowStartingIndex() };
+//			lightsStructure.push_back(light);
+//		}
+//		else
+//		{
+//			ShaderLight light{};
+//			lightsStructure.push_back(light);
+//		}
+//	}
+//	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
 }
-void Renderer::UpdateShadows(Material* pMaterial, const Light* pLight) const
-{
-	pMaterial.
-}
-void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
-{
-}
+//void Renderer::UpdateShadows(Material* pMaterial, const Light* pLight) const
+//{
+//	pMaterial.
+//}
+//void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
+//{
+//}
 
 void Renderer::RenderShadowDepths() const
 {
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};
 	lightsStructure.reserve(maxNrLights);
+
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 
 	// Loop over all lights and determine if they should be casting
 	for (int i = 0; i < maxNrLights; ++i)
@@ -312,7 +321,8 @@ void Renderer::RenderShadowDepths() const
 		ShadowData shadowData = m_Lights[i]->GetShadowData();
 		UpdateLightMatrices(m_Lights[i]);
 		// Set the shadow depthbuffer
-		m_pDevice->GetDeviceContext()->OMSetRenderTargets(0, nullptr, shadowData.m_pDepthStencil->GetStencilView());
+		pContext->OMSetRenderTargets(0, nullptr, shadowData.m_pDepthStencil->GetStencilView());
+		pContext->ClearDepthStencilView(shadowData.m_pDepthStencil->GetStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		// Run through all the renderables and render the shadow casting ones
 		for (int i = 0; i < m_Renderables.size(); ++i)
@@ -322,7 +332,7 @@ void Renderer::RenderShadowDepths() const
 				// Update matrices
 				UpdateWorldMatrix(m_Renderables[i]);
 				// Render object to the buffer
-				m_Renderables[i]->RenderShadow(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), m_pShadowCasting, 0);
+				m_Renderables[i]->RenderShadow(m_pDevice->GetDevice(), pContext, m_pShadowCasting, 0);
 			}
 		}
 	}
