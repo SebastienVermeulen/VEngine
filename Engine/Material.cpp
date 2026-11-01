@@ -21,6 +21,9 @@ Material::Material(const std::wstring& effectFile, RenderType type)
 	, m_pWorldViewProj{}
 	, m_LightsBuffer{}
 	, m_LightsBufferVariable{}
+	, m_ShadowTextureArray{}
+	, m_ShadowMap{}
+	, m_ShadowMapBufferVariable{}
 	, m_pLayouts{}
 	, m_pInputLayoutSize{}
 	, m_pNrBasisRenderTargets{3}
@@ -33,6 +36,10 @@ Material::~Material()
 {
 	SafeDelete(m_pWidget);
 
+	// Shadows
+	SafeDelete(m_ShadowTextureArray);
+	SafeRelease(m_ShadowMap);
+	SafeRelease(m_ShadowMapBufferVariable);
 	// Lights
 	SafeRelease(m_LightsBuffer);
 	//Parameters
@@ -283,6 +290,14 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a constant lightbuffer for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 			return hr;
 		}
+
+		m_ShadowMapBufferVariable = m_pEffect->GetVariableByName("shadowStencils");
+		if (!m_ShadowMapBufferVariable->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a ShadowMap Variable for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
+		m_ShadowMap = m_ShadowMapBufferVariable->AsShaderResource();
 	}
 
 	return hr;
@@ -367,7 +382,7 @@ void Material::UpdateMatrix(MatrixTransformationContainer buffer)
 		m_pWorldViewProj->SetMatrix(reinterpret_cast<float*>(&buffer.worldViewProj));
 	}
 }
-void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights)
+void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, const std::vector<ShaderLight>& lights)
 {
 	if (m_LightsBufferVariable && m_LightsBuffer)
 	{
@@ -381,6 +396,95 @@ void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector
 		pContext->Unmap(m_LightsBuffer, 0);
 
 		m_LightsBufferVariable->SetConstantBuffer(m_LightsBuffer);
+	}
+}
+void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalShadowMaps, const std::vector<ShadowData>& shadows)
+{
+	if (!m_ShadowTextureArray || !m_ShadowTextureArray->GetStencilBuffer())//.ArraySize != totalShadowMaps))
+	{
+		m_ShadowTextureArray = new DepthStencil();
+
+		// Define the staging texture
+		D3D11_TEXTURE2D_DESC arrayDesc = {};
+		arrayDesc.Width = 2048;                 // All slices must share the same width
+		arrayDesc.Height = 2048;                // All slices must share the same height
+		arrayDesc.MipLevels = 1;                // Set > 1 if you have mipmaps
+		arrayDesc.ArraySize = totalShadowMaps;  // Number of textures in the array
+		arrayDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R24G8_TYPELESS;
+		arrayDesc.SampleDesc.Count = 1;
+		arrayDesc.SampleDesc.Quality = 0;
+		arrayDesc.Usage = D3D11_USAGE_DEFAULT;
+		arrayDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		arrayDesc.CPUAccessFlags = 0;
+		arrayDesc.MiscFlags = 0;
+
+		HRESULT hr = pDevice->GetDevice()->CreateTexture2D(&arrayDesc, nullptr, m_ShadowTextureArray->GetStencilBufferLocation());
+		if (hr != S_OK)
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a ShadowTextureArray for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+		}
+	}
+	else
+	{
+		D3D11_TEXTURE2D_DESC arrayDesc;
+		m_ShadowTextureArray->GetStencilBuffer()->GetDesc(&arrayDesc);
+
+		if (arrayDesc.ArraySize != totalShadowMaps)
+		{
+			arrayDesc.ArraySize = totalShadowMaps;  // Number of textures in the array
+
+			HRESULT hr = pDevice->GetDevice()->CreateTexture2D(&arrayDesc, nullptr, m_ShadowTextureArray->GetStencilBufferLocation());
+			if (hr != S_OK)
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a ShadowTextureArray for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			}
+		}
+	}
+
+	if (m_ShadowMapBufferVariable && m_ShadowMap)
+	{
+		ID3D11DeviceContext* pContext = pDevice->GetDeviceContext();
+
+		// Allign the data on the CPU and upload step by step
+		std::vector<D3D11_SUBRESOURCE_DATA> initData{};
+		initData.resize(totalShadowMaps);
+
+		int finalIndex = 0;
+		for (int lightIndex = 0; lightIndex < shadows.size(); ++lightIndex)
+		{
+			std::vector<DepthStencil*> DepthStencils = shadows[lightIndex].m_DepthStencils;
+			for (int shadowIndex = 0; shadowIndex < DepthStencils.size(); ++shadowIndex)
+			{
+				ID3D11Texture2D* sourceTexture = DepthStencils[shadowIndex]->GetStencilBuffer();
+
+				// Compute the unique destination subresource index for this array slice
+				UINT destSubresource = D3D11CalcSubresource(0, finalIndex, 1);
+
+				// Execute copy entirely on the GPU VRAM (extremely fast)
+				pContext->CopySubresourceRegion(
+					m_ShadowTextureArray->GetStencilBuffer(),	// Destination resource
+					destSubresource,							// Target subresource (slice index)
+					0, 0, 0,									// DstX, DstY, DstZ offset positions
+					sourceTexture,								// Source texture
+					0,      									// Source subresource is 0 because individual textures only have 1 slice and 1 mip level
+					nullptr										// Source box (nullptr copies the full texture)
+				);
+
+				++finalIndex;
+			}
+		}
+
+		// Create the Shader Resource View (SRV) casting the typeless layout into float depth format
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; // Reads Red channel as depth
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+		srvDesc.Texture2DArray.MostDetailedMip = 0;
+		srvDesc.Texture2DArray.MipLevels = 1;
+		srvDesc.Texture2DArray.FirstArraySlice = 0;
+		srvDesc.Texture2DArray.ArraySize = totalShadowMaps;
+
+		pDevice->GetDevice()->CreateShaderResourceView(m_ShadowTextureArray->GetStencilBuffer(), &srvDesc, m_ShadowTextureArray->GetResourceViewLocation());
+		m_ShadowMap->SetResource(m_ShadowTextureArray->GetResourceView());
 	}
 }
 HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)

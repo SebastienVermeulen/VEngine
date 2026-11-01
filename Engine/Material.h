@@ -7,6 +7,7 @@ class MaterialWidget;
 class EngineDevice;
 class Light;
 class MeshAsset;
+struct ShadowData;
 
 class Material
 {
@@ -24,7 +25,8 @@ public:
 
 	void Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr);
 	void UpdateMatrix(MatrixTransformationContainer buffer);
-	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, std::vector<ShaderLight> lights);
+	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, const std::vector<ShaderLight>& lights);
+	void UpdateMaterialShadowMaps(EngineDevice* pEngineDevice, const int totalShadowMaps, const std::vector<ShadowData>& shadows);
 	HRESULT UpdateParameterValues(EngineDevice* pEngineDevice);
 	HRESULT ExplicitlyUnbindingResources(EngineDevice* pEngineDevice);
 
@@ -81,6 +83,10 @@ private:
 
 	ID3D11Buffer* m_LightsBuffer;
 	ID3DX11EffectConstantBuffer* m_LightsBufferVariable;
+
+	ID3DX11EffectVariable* m_ShadowMapBufferVariable;
+	ID3DX11EffectShaderResourceVariable* m_ShadowMap;
+	DepthStencil* m_ShadowTextureArray;
 
 	//Mappings
 	MaterialScalarParamsMapping m_MaterialScalarParamsMapping;

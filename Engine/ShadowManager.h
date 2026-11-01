@@ -16,6 +16,9 @@ public:
 	std::vector<Light*>& GetDirectionalShadowCastingLights();
 	std::vector<Light*>& GetShadowCastingLights();
 
+	void TryAddLight(Light* pLight);
+	bool TryRemoveLight(Light* pLight);
+
 private:
 	std::vector<Light*> m_DirectionalShadowCastingLights;
 	std::vector<Light*> m_ShadowCastingLights;

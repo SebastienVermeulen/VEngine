@@ -51,6 +51,12 @@ public:
 		Otherwise it might be dangerous.
 	*/
 	virtual void CleanPointersToTargets();
+	/*
+		Assumably these targets will be reused but we shouldn't leave things up to chance.
+
+		To prevent confusion please call this method only from the associated class' "CleanPointersToTargets()".
+	*/
+	virtual void MarkTargetsAsNotUsed();
 
 	virtual void OponActivation();
 	virtual void OponDeactivation();
@@ -125,14 +131,14 @@ protected:
 #pragma region RenderHelpers
 	void UpdateMatrices(Component* pRenderable) const;
 	void UpdateMatrices(Material* pMaterial) const;
-	void UpdateLightMatrices(Light* pLight) const;
+	void UpdateLightMatrices(Light* pLight, const int faceIndex) const;
 	void UpdateWorldMatrix(Component* pRenderables) const;
 	void UpdateLights(Material* pMaterial) const;
+	// TO-DO: This render stuff should be moved to the ShadowCasting class
+	void UpdateLightsShadowData() const;
 	void UpdateShadows(Material* pMaterial, const Light* pLight) const;
 	void UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const;
-	// TO-DO: This render stuff should be moved to the ShadowCasting class
 	void RenderShadowDepths() const;
-	void UpdateShadows(Material* pMaterial) const;
 #pragma endregion
 
 protected:

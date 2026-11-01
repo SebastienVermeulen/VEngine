@@ -34,7 +34,7 @@ public:
 
 	virtual void AllocatePromisedTargets() override;
 	virtual void CleanPointersToTargets() override;
-	virtual void MarkTargetsAsNotUsed();
+	virtual void MarkTargetsAsNotUsed() override;
 
 	virtual void Render() override;
 	virtual void ClearBuffers() override;

@@ -128,8 +128,6 @@ void DeferredDX11::MarkTargetsAsNotUsed()
 	m_DeferredRenderTargets.m_TangentTarget->MarkAsUnused();
 	m_DeferredRenderTargets.m_AlbedoTarget->MarkAsUnused();
 	m_DeferredRenderTargets.m_MetalRoughnessTarget->MarkAsUnused();
-
-	GetSceneDepthBuffer()->MarkAsUnused();
 }
 
 void DeferredDX11::Render()
@@ -182,10 +180,10 @@ void DeferredDX11::Render()
 			{
 				V_DX11_ANNOTATE(V_WTEXT("ShadowDepth"));
 				
+				// Update Underlying data, assigns shadowmaps etc.
+				UpdateLightsShadowData();
 				// Render our shadows
 				RenderShadowDepths();
-				// Update for the final deferred renderpass
-	//			UpdateShadows(m_pDeferredLightingMaterial);
 			}
 
 			if(m_BatchLights)
@@ -198,82 +196,97 @@ void DeferredDX11::Render()
 		}
 	}
 
-	//{
-	//	V_DX11_ANNOTATE(V_WTEXT("Deferred"));
-	//
-	//	//**********************************************************************
-	//	// 	   Final Render for deferred
-	//	//**********************************************************************
-	//	{
-	//		//Set the material buffers
-	//		m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
-	//		// Update view matrix
-	//		UpdateMatrices(m_pDeferredLightingMaterial);
-	//		// Set the render target
-	//		SetupTargetsDeferredSecondPass();
-	//		// Second/Deferred pass
-	//		// Select which vertex buffer to display
-	//		const UINT stride = sizeof(QuadVertex);
-	//		const UINT offset = 0;
-	//		ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-	//		pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
-	//
-	//		// Set the index buffer to active in the input assembler so it can be rendered.
-	//		pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	//
-	//		// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	//		pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//
-	//		{
-	//			V_DX11_ANNOTATE(V_WTEXT("Directional"));
-	//
-	//			// Directional lights
-	//			for (Light* Light : m_pShadowManager->GetDirectionalShadowCastingLights())
-	//			{
-	//				// TO-DO: Figure out cascades, now only simple 1k-1k
-	//				UpdateShadows(m_pDeferredLightingMaterial);
-	//
-	//				RenderDefferedPass();
-	//			}
-	//		}
-	//
-	//		// Point and spot
-	//		if (m_BatchLights)
-	//		{
-	//			V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
-	//
-	//			UpdateShadows(m_pDeferredLightingMaterial);
-	//
-	//			RenderDefferedPass();
-	//		}
-	//		else
-	//		{
-	//			V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
-	//
-	//			// Render the shadowed light seperately
-	//			for (Light* Light : m_pShadowManager->GetShadowCastingLights())
-	//			{
-	//				UpdateShadows(m_pDeferredLightingMaterial);
-	//
-	//				RenderDefferedPass();
-	//			}
-	//		}
-	//
-	//		// Unhook render targets from material
-	//		ExplicitlyUnbindingRenderTargets(m_pDeferredLightingMaterial);
-	//	}
-	//
-	//	MarkTargetsAsNotUsed();
-	//}
-	//
-	////**********************************************************************
-	//// 	   Postprocess
-	////**********************************************************************
-	//{
-	//	V_DX11_ANNOTATE(V_WTEXT("Postprocesses"));
-	//
-	//	m_pPostProcessingPipeline->RunPostProcesses(m_pDevice, this);
-	//}
+	{
+		V_DX11_ANNOTATE(V_WTEXT("Deferred"));
+
+		//**********************************************************************
+		// 	   Final Render for deferred
+		//**********************************************************************
+		{
+			//Set the material buffers
+			m_pDeferredLightingMaterial->UpdateParameterValues(m_pDevice);
+			// Update view matrix
+			UpdateMatrices(m_pDeferredLightingMaterial);
+			// Set the render target
+			SetupTargetsDeferredSecondPass();
+			// Second/Deferred pass
+			// Select which vertex buffer to display
+			const UINT stride = sizeof(QuadVertex);
+			const UINT offset = 0;
+			ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
+			pContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVertexBuffer, &stride, &offset);
+
+			// Set the index buffer to active in the input assembler so it can be rendered.
+			pContext->IASetIndexBuffer(m_pScreenQuadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+			// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+			pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			// TODO: Unify the directional and local lights?
+			{
+				V_DX11_ANNOTATE(V_WTEXT("Directional"));
+
+				// Directional lights
+				std::vector<Light*>& directionalLights = m_pShadowManager->GetDirectionalShadowCastingLights();
+				for (Light* light : directionalLights)
+				{
+					if (m_RenderShadows)
+					{
+						// TO-DO: Figure out cascades, now only simple 1k-1k
+						UpdateShadows(m_pDeferredLightingMaterial, light);
+					}
+
+					RenderDefferedPass();
+				}
+			}
+
+			{
+				// Point and spot
+				std::vector<Light*>& localLights = m_pShadowManager->GetShadowCastingLights();
+
+				if (m_BatchLights)
+				{
+					V_DX11_ANNOTATE(V_WTEXT("BatchedLightRendering"));
+
+					if (m_RenderShadows)
+					{
+						UpdateShadows(m_pDeferredLightingMaterial, localLights);
+					}
+
+					RenderDefferedPass();
+				}
+				else
+				{
+					V_DX11_ANNOTATE(V_WTEXT("LightRendering"));
+
+					// Render the shadowed light seperately
+					for (Light* light : localLights)
+					{
+						if (m_RenderShadows)
+						{
+							UpdateShadows(m_pDeferredLightingMaterial, light);
+						}
+
+						RenderDefferedPass();
+					}
+				}
+			}
+
+			// Unhook render targets from material
+			ExplicitlyUnbindingRenderTargets(m_pDeferredLightingMaterial);
+		}
+
+		MarkTargetsAsNotUsed();
+	}
+
+	//**********************************************************************
+	// 	   Postprocess
+	//**********************************************************************
+	{
+		V_DX11_ANNOTATE(V_WTEXT("Postprocesses"));
+
+		m_pPostProcessingPipeline->RunPostProcesses(m_pDevice, this);
+	}
 
 	//**********************************************************************
 	// 	   Final present + UI (ImGui)

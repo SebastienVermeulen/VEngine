@@ -11,6 +11,8 @@ Light::Light()
 	, m_LightType{ LightType::directional }
 	, m_Intensity{ 1.0f }
 	, m_Enabled{ true }
+	, m_ShadowCasting{ true }
+	, m_ShadowStartingIndex{ 0 }
 {
 	m_CanRender = true;
 }
@@ -23,7 +25,7 @@ void Light::SetIsShadowCasting(bool enabled)
 	m_ShadowCasting = enabled; 
 	if (!m_ShadowCasting)
 	{
-		m_ShadowData.m_pDepthStencil = nullptr;
+		m_ShadowData.Clear();
 	}
 	else 
 	{
@@ -34,9 +36,9 @@ void Light::SetIsShadowCasting(bool enabled)
 
 DirectX::XMFLOAT4X4& Light::GetShadowProjectionMatrix()
 {
-	WindowSettings windowSettings = WindowSettings{ 1, 1 };
+	WindowSettings windowSettings = WindowSettings{ 2024, 2024, 1 };
 	// TO-DO: add spotlights
-	CameraSettings cameraSettings = CameraSettings{ -1, 0, 1000.0f, 0.01f };
+	CameraSettings cameraSettings = CameraSettings{ -1, DirectX::XM_PIDIV4, 100.0f, 0.01f };
 
 	m_ProjectionMatrix = TransformationMatrixHelper::GetProjectionMatrix(m_LightType != LightType::directional, windowSettings, cameraSettings);
 
