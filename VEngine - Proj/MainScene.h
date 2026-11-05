@@ -4,6 +4,7 @@
 class Object;
 class DirectionalLight;
 class PointLight;
+class Material;
 
 class MainScene final : public Scene
 {
@@ -24,4 +25,6 @@ private:
 
 	DirectionalLight* m_pDirectionalLight;
 	PointLight* m_pPointLight;
+
+	std::vector<Material*> m_Materials;
 };

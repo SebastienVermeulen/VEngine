@@ -22,7 +22,7 @@ float TrowbridgeReitz(float3 halfVector, float3 normal, float rougness) //Normal
     float a = rougness * rougness;
     float dotNH = saturate(dot(normal, halfVector));
     float distribution = (dotNH * dotNH) * (a - 1.0f) + 1.0f;
-    return a / max(gPI * distribution * distribution, 0.000001f);
+    return a / max(PI * distribution * distribution, 0.000001f);
 }
 float3 Fresnel(float3 halfVector, float3 camDir, float3 f0) //Fresnel Schlick
 {
@@ -42,7 +42,7 @@ float Schlick(float3 dir, float3 normal, float rougness) //Geometry Schlick-GGX
 float3 BRDF(float3 pixelPos, float3 viewPos, float3 normal, float3 lightDirection, float3 albedo, float metal, float rougness)
 {
     //Diffuse calculations
-    float3 diffuse = albedo / gPI;
+    float3 diffuse = albedo / PI;
     
     //Helping variables
     float3 invViewDir = normalize(viewPos - pixelPos);

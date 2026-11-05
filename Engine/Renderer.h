@@ -133,12 +133,17 @@ protected:
 	void UpdateMatrices(Material* pMaterial) const;
 	void UpdateLightMatrices(Light* pLight, const int faceIndex) const;
 	void UpdateWorldMatrix(Component* pRenderables) const;
-	void UpdateLights(Material* pMaterial) const;
+	void UpdateBatchedLights(Material* pMaterial) const;
+	void UpdateLight(Material* pMaterial, Light* pLight) const;
 	// TO-DO: This render stuff should be moved to the ShadowCasting class
 	void UpdateLightsShadowData() const;
-	void UpdateShadows(Material* pMaterial, const Light* pLight) const;
+	void UpdateShadows(Material* pMaterial, Light* pLight) const;
 	void UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const;
 	void RenderShadowDepths() const;
+#pragma endregion
+
+#pragma region StructPopulators
+	ShaderLight PopulateLightStruct(Light* pLight, const int shadowIndex) const;
 #pragma endregion
 
 protected:

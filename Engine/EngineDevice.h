@@ -78,6 +78,8 @@ public:
 	HRESULT CreateIndexBuffer(std::vector<int>& indices, ID3D11Buffer** ppIndexBuffer) const;
 #pragma endregion
 
+	void SetViewport(const UINT width, const UINT height);
+
 	inline UINT GetDefaultWidth() const { return m_DefaultWidth; }
 	inline UINT GetDefaultHeight() const { return m_DefaultHeight; }
 

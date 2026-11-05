@@ -25,6 +25,8 @@ public:
 	inline LightType GetLightType() const { return m_LightType; }
 	inline float GetIntensity() const { return m_Intensity; }
 	inline bool GetIsEnabled() const { return m_Enabled; }
+	inline float GetNearPlane() const { return m_NearPlane; }
+	inline float GetFarPlane() const { return m_FarPlane; }
 	inline bool GetIsShadowCasting() const { return m_ShadowCasting; }
 	inline ShadowData GetShadowData() const { return m_ShadowData; }
 	inline int GetShadowStartingIndex() const { return m_ShadowStartingIndex; }
@@ -32,8 +34,11 @@ public:
 	inline static int GetMaxNrLights() { return m_MaxLights; }
 
 	DirectX::XMFLOAT4X4& GetShadowProjectionMatrix();
-	DirectX::XMFLOAT4X4& GetShadowViewMatrix();
+	DirectX::XMFLOAT4X4& GetShadowViewMatrix(const int viewIndex);
 	DirectX::XMFLOAT4X4& GetShadowViewInverseMatrix();
+
+	MatrixTransformationContainer ConstructMatrixContainer(const int faceIndex);
+	std::vector<DirectX::XMFLOAT4X4> ConstructWVPContainer();
 
 protected:
 	LightType m_LightType;
@@ -43,6 +48,9 @@ private:
 	DirectX::XMFLOAT3 m_Color;
 	float m_Intensity;
 	bool m_Enabled;
+
+	float m_NearPlane;
+	float m_FarPlane;
 
 	// Shadows
 	ShadowData m_ShadowData;

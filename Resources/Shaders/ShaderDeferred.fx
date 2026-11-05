@@ -53,6 +53,7 @@ DepthStencilState DepthTest
 {
 	DepthEnable = TRUE;
 	DepthWriteMask = ALL;
+    DepthFunc = GREATER_EQUAL;
 };
 BlendState AlphaBlendingOn
 {

@@ -55,6 +55,7 @@ struct MatrixTransformationContainer final
 	DirectX::XMFLOAT4X4 inverseView;
 	DirectX::XMFLOAT4X4 projection;
 	DirectX::XMFLOAT4X4 worldViewProj;
+	DirectX::XMFLOAT4X4 invWorldViewProj;
 
 	void MarkAllForUpdate()
 	{
@@ -63,9 +64,10 @@ struct MatrixTransformationContainer final
 		updateInverseView = true;
 		updateProjection = true;
 		updateWorldViewProjection = true;
+		updateInvWorldViewProj = true;
 	}
 
-	bool updateWorld = false, updateView = false, updateInverseView = false, updateProjection = false, updateWorldViewProjection = false;
+	bool updateWorld = false, updateView = false, updateInverseView = false, updateProjection = false, updateWorldViewProjection = false, updateInvWorldViewProj = false;
 };
 
 class RenderTarget final : public Texture
@@ -223,7 +225,6 @@ private:
 
 struct ShaderLight final
 {
-	DirectX::XMFLOAT4X4 projectionMatrix;
 	DirectX::XMFLOAT4 position;
 	DirectX::XMFLOAT4 direction;
 	DirectX::XMFLOAT3 color;

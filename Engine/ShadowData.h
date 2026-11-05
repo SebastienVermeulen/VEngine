@@ -10,5 +10,7 @@ struct ShadowData
 
 	void Clear() { m_DepthStencils.clear(); }
 
+	void MarkAsUsed();
+
 	std::vector<DepthStencil*> m_DepthStencils;
 };

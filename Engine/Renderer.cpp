@@ -26,7 +26,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_Lights{}
 	, m_pCameraList{}
 	, m_pRenderingCamera{}
-	, m_pShadowManager{new ShadowManager()}
+	, m_pShadowManager{ShadowManager::Instance()}
 	, m_pShadowCasting{new ShadowCasting()}
 	, m_pPostProcessingPipeline{new PostProcessPipeline()}
 	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
@@ -39,7 +39,7 @@ Renderer::Renderer(EngineDevice* pDevice)
 }
 Renderer::~Renderer()
 {
-	SafeDelete(m_pShadowManager);
+	ShadowManager::ReleaseInstance();
 	SafeDelete(m_pShadowCasting);
 	SafeDelete(m_pPostProcessingPipeline);
 	SafeDelete(m_pRendererWidget);
@@ -229,14 +229,14 @@ void Renderer::UpdateMatrices(Component* pRenderable) const
 {
 	MatrixTransformationContainer buffer;
 	buffer.MarkAllForUpdate();
+	buffer.updateInvWorldViewProj = false;
 
 	buffer.world = pRenderable->GetObject()->GetTransform()->GetWorld();
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
 	buffer.inverseView = m_pRenderingCamera->GetViewInverseMatrix();
 	buffer.projection = m_pRenderingCamera->GetProjectionMatrix();
-	DirectX::XMFLOAT4X4 worldViewProj;
-	DirectX::XMStoreFloat4x4(&worldViewProj, DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
-	buffer.worldViewProj = worldViewProj;
+	DirectX::XMMATRIX worldViewProj = DirectX::XMLoadFloat4x4(&buffer.world)* DirectX::XMLoadFloat4x4(&buffer.view)* DirectX::XMLoadFloat4x4(&buffer.projection);
+	DirectX::XMStoreFloat4x4(&buffer.worldViewProj, worldViewProj);
 
 	pRenderable->GetMaterial()->UpdateMatrix(buffer);
 }
@@ -246,58 +246,20 @@ void Renderer::UpdateMatrices(Material* pMaterial) const
 	buffer.MarkAllForUpdate();
 
 	DirectX::XMStoreFloat4x4(&buffer.world, DirectX::XMMatrixIdentity());
+
 	buffer.view = m_pRenderingCamera->GetViewMatrix();
 	buffer.inverseView = m_pRenderingCamera->GetViewInverseMatrix();
 	buffer.projection = m_pRenderingCamera->GetProjectionMatrix();
-	DirectX::XMFLOAT4X4 worldViewProj;
-	DirectX::XMStoreFloat4x4(&worldViewProj, DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
-	buffer.worldViewProj = worldViewProj;
+
+	DirectX::XMMATRIX worldViewProj = DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection);
+	DirectX::XMStoreFloat4x4(&buffer.worldViewProj, worldViewProj);
+	DirectX::XMStoreFloat4x4(&buffer.invWorldViewProj, DirectX::XMMatrixInverse(nullptr, worldViewProj));
 
 	pMaterial->UpdateMatrix(buffer);
 }
 void Renderer::UpdateLightMatrices(Light* pLight, const int faceIndex) const 
 {
-	MatrixTransformationContainer buffer;
-	buffer.MarkAllForUpdate();
-
-	// TO-DO: Based on the light type offset this
-	Transform* pLightTransform = pLight->GetObject()->GetTransform();
-	const DirectX::XMVECTOR& lightBackwards = DirectX::XMVectorScale(DirectX::XMLoadFloat3(&pLightTransform->GetForward()), -50.0f);
-	DirectX::XMFLOAT3 lightBackwardsFloat;
-	DirectX::XMStoreFloat3(&lightBackwardsFloat, lightBackwards);
-	DirectX::XMStoreFloat4x4(&buffer.world, DirectX::XMMatrixTranslation(lightBackwardsFloat.x, lightBackwardsFloat.y, lightBackwardsFloat.z));
-
-	// TODO: I don't like this, hardcoding matrices might be neater?
-	DirectX::XMMATRIX shadowWorld = DirectX::XMLoadFloat4x4(&buffer.world);
-	switch (faceIndex) 
-	{
-	case 0:
-		break;
-	case 1:
-		shadowWorld *= DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(DirectX::XMConvertToRadians(90.0f), 0, 0));
-		break;
-	case 2:
-		shadowWorld *= DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(DirectX::XMConvertToRadians(180.0f), 0, 0));
-		break;
-	case 3:
-		shadowWorld *= DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(DirectX::XMConvertToRadians(270.0f), 0, 0));
-		break;
-	case 4:
-		shadowWorld *= DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(0, DirectX::XMConvertToRadians(90.0f), 0));
-		break;
-	case 5:
-		shadowWorld *= DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(0, DirectX::XMConvertToRadians(-90.0f), 0));
-		break;
-	}
-
-	buffer.view = pLight->GetShadowViewMatrix();
-	buffer.inverseView = pLight->GetShadowViewInverseMatrix();
-	buffer.projection = pLight->GetShadowProjectionMatrix();
-	DirectX::XMFLOAT4X4 worldViewProj;
-	DirectX::XMStoreFloat4x4(&worldViewProj, shadowWorld * DirectX::XMLoadFloat4x4(&buffer.world) * DirectX::XMLoadFloat4x4(&buffer.view) * DirectX::XMLoadFloat4x4(&buffer.projection));
-	buffer.worldViewProj = worldViewProj;
-
-	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
+	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(pLight->ConstructMatrixContainer(faceIndex));
 }
 void Renderer::UpdateWorldMatrix(Component* pRenderables) const 
 {
@@ -309,7 +271,7 @@ void Renderer::UpdateWorldMatrix(Component* pRenderables) const
 	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
 }
 // TODO: Add array for non-casting lights to spare on byte usage
-void Renderer::UpdateLights(Material* pMaterial) const
+void Renderer::UpdateBatchedLights(Material* pMaterial) const
 {
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShaderLight> lightsStructure{};
@@ -320,71 +282,50 @@ void Renderer::UpdateLights(Material* pMaterial) const
 	{
 		if (m_Lights.size() > i && m_Lights[i]->IsVisible())
 		{
-			//Add the light to structure for easy use
-			Transform* pTransform = m_Lights[i]->GetObject()->GetTransform();
-			DirectX::XMFLOAT3 pos = pTransform->GetPosition();
-			DirectX::XMFLOAT3 dir = pTransform->GetForward();
-			ShaderLight light{ 
-				m_Lights[i]->GetShadowProjectionMatrix(),
-				DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f},
-				DirectX::XMFLOAT4{dir.x, dir.y, dir.z, 1.0f},
-				m_Lights[i]->GetColor(),
-				m_Lights[i]->GetIntensity(),
-				m_Lights[i]->GetLightType(),
-				shadowIndex};
-			lightsStructure.push_back(light);
+			// TODO: Handle non-shadowcasting
+			lightsStructure.push_back(PopulateLightStruct(m_Lights[i], shadowIndex));
 
 			m_Lights[i]->SetShadowStartingIndex(shadowIndex);
 			shadowIndex += m_Lights[i]->GetLightType() == LightType::point ? 6 : 1;
 		}
 		else
 		{
+			// TODO: Why is this needed?
 			ShaderLight light{};
 			lightsStructure.push_back(light);
 		}
 	}
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), lightsStructure);
 }
+void Renderer::UpdateLight(Material* pMaterial, Light* pLight) const
+{
+	// We render 1 light at a time here, so the shadow index is always 0
+	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), { PopulateLightStruct(pLight, 0) });
+}
 void Renderer::UpdateLightsShadowData() const
 {
 	const int maxNrLights = Light::GetMaxNrLights();
+	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
 	for (int i{}; i < maxNrLights; ++i)
 	{
-		if (m_Lights.size() > i && m_Lights[i]->IsVisible() && m_Lights[i]->GetIsShadowCasting())
+		if (m_Lights.size() > i)
 		{
-			Light* light = m_Lights[i];
-
-			// Update the number of assigned maps
-			ShadowData shadowData = light->GetShadowData();
-			if (!shadowData.IsEmpty())
-			{
-				continue;
-			}
-
-			// TODO: Allow the light to determine the resolution
-			if (light->GetLightType() == LightType::point)
-			{
-				for (int j = 0; j < 6; ++j)
-				{
-					shadowData.Add(m_pDevice->TryGetDepthStencil(false));
-				}
-			}
-			else
-			{
-				shadowData.Add(m_pDevice->TryGetDepthStencil(false));
-			}
-
-			light->SetShadowData(shadowData);
+			m_pShadowManager->TryGetShadowMaps(pContext, m_Lights[i]);
 		}
 	}
 }
 // TODO: Add permutation that allows 1 shadowmap to be uploaded
-void Renderer::UpdateShadows(Material* pMaterial, const Light* pLight) const
+void Renderer::UpdateShadows(Material* pMaterial, Light* pLight) const
 {
 	pMaterial->UpdateMaterialShadowMaps(m_pDevice, 1, std::vector<ShadowData>{ pLight->GetShadowData() });
+
+	const std::vector<DirectX::XMFLOAT4X4> WVP = { pLight->ConstructWVPContainer() };
+	pMaterial->UpdateLightingWVPBuffer(m_pDevice, 1, WVP);
 }
 void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
 {
+	std::vector<DirectX::XMFLOAT4X4> WVP;
+	
 	const int maxNrLights = Light::GetMaxNrLights();
 	std::vector<ShadowData> lightsStructure{};
 	lightsStructure.reserve(maxNrLights);
@@ -396,18 +337,33 @@ void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLig
 		{
 			//Add the light to structure for easy use
 			lightsStructure.push_back( m_Lights[i]->GetShadowData() );
-			++totalShadowMaps;
+			WVP.append_range(m_Lights[i]->ConstructWVPContainer());
+
+			totalShadowMaps += m_Lights[i]->GetLightType() == LightType::point ? 6 : 1;
 		}
 	}
 	pMaterial->UpdateMaterialShadowMaps(m_pDevice, totalShadowMaps, lightsStructure);
+
+	pMaterial->UpdateLightingWVPBuffer(m_pDevice, totalShadowMaps, WVP);
 }
-//void Renderer::UpdateShadows(Material* pMaterial, const Light* pLight) const
-//{
-//	pMaterial.
-//}
-//void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
-//{
-//}
+
+ShaderLight Renderer::PopulateLightStruct(Light* pLight, const int shadowIndex) const
+{
+	//Add the light to structure for easy use
+	Transform* pTransform = pLight->GetObject()->GetTransform();
+	DirectX::XMFLOAT3 pos = pTransform->GetPosition();
+	DirectX::XMFLOAT3 dir = pTransform->GetForward();
+	ShaderLight light{
+		DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f},
+		DirectX::XMFLOAT4{dir.x, dir.y, dir.z, 1.0f},
+		pLight->GetColor(),
+		pLight->GetIntensity(),
+		pLight->GetLightType(),
+		shadowIndex };
+
+	return light;
+}
+
 
 void Renderer::RenderShadowDepths() const
 {

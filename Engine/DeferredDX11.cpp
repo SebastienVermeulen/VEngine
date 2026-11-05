@@ -179,7 +179,10 @@ void DeferredDX11::Render()
 			if (m_RenderShadows)
 			{
 				V_DX11_ANNOTATE(V_WTEXT("ShadowDepth"));
-				
+
+				// TODO: Should be based on the light
+				m_pDevice->SetViewport(1024, 1024);
+
 				// Update Underlying data, assigns shadowmaps etc.
 				UpdateLightsShadowData();
 				// Render our shadows
@@ -191,13 +194,15 @@ void DeferredDX11::Render()
 				// Update the lights
 				// (Rename needed maybe, just updates the buffers atm. this will be confusing, 
 				// not updated before the shadowsdepths since they don't need this data)
-	//			UpdateLights(m_pDeferredLightingMaterial);
+				UpdateBatchedLights(m_pDeferredLightingMaterial);
 			}
 		}
 	}
 
 	{
 		V_DX11_ANNOTATE(V_WTEXT("Deferred"));
+
+		m_pDevice->SetViewport(m_pDevice->GetDefaultWidth(), m_pDevice->GetDefaultHeight());
 
 		//**********************************************************************
 		// 	   Final Render for deferred
@@ -232,7 +237,7 @@ void DeferredDX11::Render()
 				{
 					if (m_RenderShadows)
 					{
-						// TO-DO: Figure out cascades, now only simple 1k-1k
+						// TO-DO: Figure out cascades, now only simple 2k-2k
 						UpdateShadows(m_pDeferredLightingMaterial, light);
 					}
 
@@ -262,6 +267,7 @@ void DeferredDX11::Render()
 					// Render the shadowed light seperately
 					for (Light* light : localLights)
 					{
+						UpdateLight(m_pDeferredLightingMaterial, light);
 						if (m_RenderShadows)
 						{
 							UpdateShadows(m_pDeferredLightingMaterial, light);
@@ -322,7 +328,7 @@ void DeferredDX11::ClearBuffers()
 	pContext->ClearRenderTargetView(m_DeferredRenderTargets.m_AlbedoTarget->GetRenderTargetView(), &black.x);
 	pContext->ClearRenderTargetView(m_DeferredRenderTargets.m_MetalRoughnessTarget->GetRenderTargetView(), &black.x);
 	// Clear the depth buffer to the max value
-	pContext->ClearDepthStencilView(GetSceneDepthBuffer()->GetStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	pContext->ClearDepthStencilView(GetSceneDepthBuffer()->GetStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
 }
 
 #pragma region RenderHelpers

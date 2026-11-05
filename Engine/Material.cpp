@@ -19,10 +19,17 @@ Material::Material(const std::wstring& effectFile, RenderType type)
 	, m_pInverseView{}
 	, m_pProjection{}
 	, m_pWorldViewProj{}
-	, m_LightsBuffer{}
+	, m_pInvWorldViewProj{}
 	, m_LightsBufferVariable{}
+	, m_LightsBufferShaderResource{}
+	, m_LightsBuffer{}
+	, m_pLightsBufferResourceView{}
+	, m_LightsWVPBufferVariable{}
+	, m_LightsWVPBufferShaderResource{}
+	, m_LightsWVPBuffer{}
+	, m_pLightsWVPBufferResourceView{}
 	, m_ShadowTextureArray{}
-	, m_ShadowMap{}
+	, m_ShadowMapShaderResource{}
 	, m_ShadowMapBufferVariable{}
 	, m_pLayouts{}
 	, m_pInputLayoutSize{}
@@ -38,10 +45,18 @@ Material::~Material()
 
 	// Shadows
 	SafeDelete(m_ShadowTextureArray);
-	SafeRelease(m_ShadowMap);
+	SafeRelease(m_ShadowMapShaderResource);
 	SafeRelease(m_ShadowMapBufferVariable);
+	// Lights WVP
+	SafeRelease(m_pLightsWVPBufferResourceView);
+	SafeRelease(m_LightsWVPBuffer);
+	SafeRelease(m_LightsWVPBufferShaderResource);
+	SafeRelease(m_LightsWVPBufferVariable);
 	// Lights
+	SafeRelease(m_pLightsBufferResourceView);
 	SafeRelease(m_LightsBuffer);
+	SafeRelease(m_LightsBufferShaderResource);
+	SafeRelease(m_LightsBufferVariable);
 	//Parameters
 	m_MaterialTextureParamsMapping.Empty();
 	m_MaterialScalarParamsMapping.Empty();
@@ -117,8 +132,7 @@ HRESULT Material::InitEffect(ID3D11Device* pDevice)
 			pErrorBlob->Release();
 		}
 
-		if (m_pEffect)
-			m_pEffect->Release();
+		SafeRelease(m_pEffect);
 	}
 	return hr;
 }
@@ -219,6 +233,8 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 		m_pProjection = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
 		pEffectVar = m_pEffect->GetVariableBySemantic("WORLDVIEWPROJECTION");
 		m_pWorldViewProj = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
+		pEffectVar = m_pEffect->GetVariableBySemantic("INVERSEWORLDVIEWPROJECTION");
+		m_pInvWorldViewProj = (pEffectVar->IsValid()) ? pEffectVar->AsMatrix() : nullptr;
 	}
 
 	// Textures
@@ -271,33 +287,87 @@ HRESULT Material::InitShaderVariables(ID3D11Device* pDevice)
 
 	if (m_RenderType == RenderType::lightingPass)
 	{
-		m_LightsBufferVariable = m_pEffect->GetConstantBufferByName("Lights");
+		m_LightsBufferVariable = m_pEffect->GetVariableByName("lights");
+		if (!m_LightsBufferVariable->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to get lightbuffer variable for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
+
+		m_LightsBufferShaderResource = m_LightsBufferVariable->AsShaderResource();
+		if (!m_LightsBufferShaderResource->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to get lightbuffer ShaderResource for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
 
 		//Fill in a buffer description.
 		const int maxNrLights = Light::GetMaxNrLights();
-		D3D11_BUFFER_DESC cbDesc;
-		cbDesc.ByteWidth = sizeof(ShaderLight) * maxNrLights;
-		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		cbDesc.MiscFlags = 0;
-		cbDesc.StructureByteStride = 0;
+		D3D11_BUFFER_DESC bDesc;
+		bDesc.ByteWidth = sizeof(ShaderLight) * maxNrLights;
+		bDesc.Usage = D3D11_USAGE_DYNAMIC;
+		bDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		bDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		bDesc.MiscFlags = 0;
+		bDesc.StructureByteStride = 0;
 
 		//Create the buffer.
-		hr = pDevice->CreateBuffer(&cbDesc, NULL, &m_LightsBuffer);
+		hr = pDevice->CreateBuffer(&bDesc, NULL, &m_LightsBuffer);
 		if (FAILED(hr))
 		{
 			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a constant lightbuffer for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 			return hr;
 		}
 
+		D3D11_BUFFER_DESC bufferDesc = {};
+		bufferDesc.ByteWidth = sizeof(ShaderLight) * maxNrLights;
+		bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+		bufferDesc.StructureByteStride = sizeof(ShaderLight);
+
+		pDevice->CreateBuffer(&bufferDesc, NULL, &m_LightsBuffer);
+
+		// Create the Shader Resource View (SRV)
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+		srvDesc.BufferEx.FirstElement = 0;
+		srvDesc.BufferEx.NumElements = maxNrLights;
+		srvDesc.BufferEx.Flags = 0;
+
+		pDevice->CreateShaderResourceView(m_LightsBuffer, &srvDesc, &m_pLightsBufferResourceView);
+
+		// Shadows
+		m_LightsWVPBufferVariable = m_pEffect->GetVariableByName("lightsWVP");
+		if (!m_LightsWVPBufferVariable->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to get lightbufferWVP variable for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
+
+		m_LightsWVPBufferShaderResource = m_LightsWVPBufferVariable->AsShaderResource();
+		if (!m_LightsWVPBufferShaderResource->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to get lightbufferWVP ShaderResource for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
+
+		// TODO: Hook up check to prevent shadowcasting when globally disabled
 		m_ShadowMapBufferVariable = m_pEffect->GetVariableByName("shadowStencils");
 		if (!m_ShadowMapBufferVariable->IsValid())
 		{
 			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a ShadowMap Variable for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
 			return E_FAIL;
 		}
-		m_ShadowMap = m_ShadowMapBufferVariable->AsShaderResource();
+
+		m_ShadowMapShaderResource = m_ShadowMapBufferVariable->AsShaderResource();
+		if (!m_ShadowMapShaderResource->IsValid())
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to get ShadowMap ShaderResource for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			return E_FAIL;
+		}
 	}
 
 	return hr;
@@ -381,6 +451,10 @@ void Material::UpdateMatrix(MatrixTransformationContainer buffer)
 	{
 		m_pWorldViewProj->SetMatrix(reinterpret_cast<float*>(&buffer.worldViewProj));
 	}
+	if (m_pInvWorldViewProj && buffer.updateInvWorldViewProj)
+	{
+		m_pInvWorldViewProj->SetMatrix(reinterpret_cast<float*>(&buffer.invWorldViewProj));
+	}
 }
 void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, const std::vector<ShaderLight>& lights)
 {
@@ -395,22 +469,101 @@ void Material::UpdateMaterialLighting(ID3D11DeviceContext* pContext, const std::
 		//Reenable GPU access to the vertex buffer data.
 		pContext->Unmap(m_LightsBuffer, 0);
 
-		m_LightsBufferVariable->SetConstantBuffer(m_LightsBuffer);
+		m_LightsBufferShaderResource->SetResource(m_pLightsBufferResourceView);
+	}
+}
+void Material::UpdateLightingWVPBuffer(EngineDevice* pDevice, const int totalShadowMaps, const std::vector<DirectX::XMFLOAT4X4>& WVP)
+{
+	if (!m_LightsWVPBuffer || !m_pLightsWVPBufferResourceView)
+	{
+		D3D11_BUFFER_DESC bufferDesc = {};
+		bufferDesc.ByteWidth = sizeof(DirectX::XMFLOAT4X4) * totalShadowMaps;
+		bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+		bufferDesc.StructureByteStride = sizeof(DirectX::XMFLOAT4X4);
+
+		pDevice->GetDevice()->CreateBuffer(&bufferDesc, NULL, &m_LightsWVPBuffer);
+
+		// Create the Shader Resource View (SRV)
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+		srvDesc.BufferEx.FirstElement = 0;
+		srvDesc.BufferEx.NumElements = totalShadowMaps;
+		srvDesc.BufferEx.Flags = 0;
+
+		HRESULT hr = pDevice->GetDevice()->CreateShaderResourceView(m_LightsWVPBuffer, &srvDesc, &m_pLightsWVPBufferResourceView);
+		if (hr != S_OK)
+		{
+			V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a LightsWVPBuffer ResourceView for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+		}
+	}
+	else
+	{
+		D3D11_BUFFER_DESC bufferDesc;
+		m_LightsWVPBuffer->GetDesc(&bufferDesc);
+
+		if ((bufferDesc.ByteWidth / bufferDesc.StructureByteStride) != totalShadowMaps)
+		{
+			bufferDesc.ByteWidth = sizeof(DirectX::XMFLOAT4X4) * totalShadowMaps;
+
+			SafeRelease(m_LightsWVPBuffer);
+
+			HRESULT hr = pDevice->GetDevice()->CreateBuffer(&bufferDesc, NULL, &m_LightsWVPBuffer);
+			if (hr != S_OK)
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a LightsWVPBuffer for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			}
+
+			SafeRelease(m_pLightsWVPBufferResourceView);
+
+			// Create the Shader Resource View (SRV)
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+			srvDesc.BufferEx.FirstElement = 0;
+			srvDesc.BufferEx.NumElements = totalShadowMaps;
+			srvDesc.BufferEx.Flags = 0;
+
+			hr = pDevice->GetDevice()->CreateShaderResourceView(m_LightsWVPBuffer, &srvDesc, &m_pLightsWVPBufferResourceView);
+			if (hr != S_OK)
+			{
+				V_LOG(LogVerbosity::Warning, V_WTEXT("Material: Failed to create a LightsWVPBuffer ResourceView for " + V_TEXT(FileManager::GetFileName(m_EffectFile)) + "."));
+			}
+		}
+	}
+
+	if (m_LightsWVPBufferVariable && m_LightsWVPBuffer)
+	{
+		ID3D11DeviceContext* pContext = pDevice->GetDeviceContext();
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
+		//Disable GPU access to the vertex buffer data.
+		pContext->Map(m_LightsWVPBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+		//Update the vertex buffer here.
+		memcpy(mappedResource.pData, &WVP[0], sizeof(DirectX::XMFLOAT4X4) * totalShadowMaps);
+		//Reenable GPU access to the vertex buffer data.
+		pContext->Unmap(m_LightsWVPBuffer, 0);
+
+		m_LightsWVPBufferShaderResource->SetResource(m_pLightsWVPBufferResourceView);
 	}
 }
 void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalShadowMaps, const std::vector<ShadowData>& shadows)
 {
-	if (!m_ShadowTextureArray || !m_ShadowTextureArray->GetStencilBuffer())//.ArraySize != totalShadowMaps))
+	if (!m_ShadowTextureArray || !m_ShadowTextureArray->GetStencilBuffer())
 	{
 		m_ShadowTextureArray = new DepthStencil();
 
 		// Define the staging texture
 		D3D11_TEXTURE2D_DESC arrayDesc = {};
-		arrayDesc.Width = 2048;                 // All slices must share the same width
-		arrayDesc.Height = 2048;                // All slices must share the same height
+		arrayDesc.Width = 1024;                 // All slices must share the same width
+		arrayDesc.Height = 1024;                // All slices must share the same height
 		arrayDesc.MipLevels = 1;                // Set > 1 if you have mipmaps
 		arrayDesc.ArraySize = totalShadowMaps;  // Number of textures in the array
-		arrayDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R24G8_TYPELESS;
+		arrayDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
 		arrayDesc.SampleDesc.Count = 1;
 		arrayDesc.SampleDesc.Quality = 0;
 		arrayDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -433,6 +586,7 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 		{
 			arrayDesc.ArraySize = totalShadowMaps;  // Number of textures in the array
 
+			// No release needed here since the Stencils are memory managed by the engine
 			HRESULT hr = pDevice->GetDevice()->CreateTexture2D(&arrayDesc, nullptr, m_ShadowTextureArray->GetStencilBufferLocation());
 			if (hr != S_OK)
 			{
@@ -441,7 +595,7 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 		}
 	}
 
-	if (m_ShadowMapBufferVariable && m_ShadowMap)
+	if (m_ShadowMapBufferVariable && m_ShadowTextureArray)
 	{
 		ID3D11DeviceContext* pContext = pDevice->GetDeviceContext();
 
@@ -476,7 +630,7 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 
 		// Create the Shader Resource View (SRV) casting the typeless layout into float depth format
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; // Reads Red channel as depth
+		srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // Reads Red channel as depth
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 		srvDesc.Texture2DArray.MostDetailedMip = 0;
 		srvDesc.Texture2DArray.MipLevels = 1;
@@ -484,7 +638,7 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 		srvDesc.Texture2DArray.ArraySize = totalShadowMaps;
 
 		pDevice->GetDevice()->CreateShaderResourceView(m_ShadowTextureArray->GetStencilBuffer(), &srvDesc, m_ShadowTextureArray->GetResourceViewLocation());
-		m_ShadowMap->SetResource(m_ShadowTextureArray->GetResourceView());
+		m_ShadowMapShaderResource->SetResource(m_ShadowTextureArray->GetResourceView());
 	}
 }
 HRESULT Material::UpdateParameterValues(EngineDevice* pEngineDevice)

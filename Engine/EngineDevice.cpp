@@ -89,31 +89,13 @@ void EngineDevice::InitD3D(HWND hWnd, const WindowSettings settings)
         V_LOG(LogVerbosity::Error, V_WTEXT("EngineDevice: Failed making the main rendertarget."));
     }
 
-    // We ignore the shader resource view as this is the backbuffer and thus should not be used as a shader resource.
-    // Leave code here for future reference.
-    // hr = m_pDevice->CreateShaderResourceView(m_pRenderTargets[0]->pTexture, nullptr, &m_pRenderTargets[0]->pShaderResourceView);
-    // if (hr != S_OK)
-    // {
-    //     V_LOG(V_Fatal, V_WTEXT("EngineDevice: Failed making the main rendertarget ShaderResourceView."));
-    // }
-
-    // TO-DO: It just feels wrong that the backbuffer needs to be marked as unused, perhaps we should just store this guy elsewhere...
-    m_RenderTargets[0]->MarkAsUnused();
+    // Logically the backbuffer is always used and should never be deallocated!
+    m_RenderTargets[0]->MarkAsUsed();
 #pragma endregion
 
 #pragma region Viewport
     // Set the viewport
-    D3D11_VIEWPORT viewport;
-    ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
-
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.Width = (FLOAT)m_DefaultWidth;
-    viewport.Height = (FLOAT)m_DefaultHeight;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    m_pDeviceContext->RSSetViewports(1, &viewport);
+    SetViewport(m_DefaultWidth, m_DefaultHeight);
 #pragma endregion
 
 #pragma region ImGui
@@ -301,7 +283,7 @@ DepthStencil* EngineDevice::GetNewDepthStencil(int& index, bool customDesc, D3D1
         desc.Height = m_DefaultHeight;
         desc.MipLevels = 1;
         desc.ArraySize = 1;
-        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
+        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
         desc.Usage = D3D11_USAGE_DEFAULT;
@@ -338,7 +320,7 @@ DepthStencil* EngineDevice::FindAvailableStencil(bool customDesc, D3D11_TEXTURE2
         desc.Height = m_DefaultHeight;
         desc.MipLevels = 1;
         desc.ArraySize = 1;
-        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
+        desc.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
         desc.Usage = D3D11_USAGE_DEFAULT;
@@ -459,4 +441,19 @@ HRESULT EngineDevice::CreateIndexBuffer(std::vector<int>& indices, ID3D11Buffer*
         V_LOG(LogVerbosity::Warning, V_WTEXT("EngineDevice: Failed making a indexbuffer."));
     }
     return result;
+}
+
+void EngineDevice::SetViewport(const UINT width, const UINT height)
+{
+    D3D11_VIEWPORT viewport;
+    ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = (FLOAT)width;
+    viewport.Height = (FLOAT)height;
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    m_pDeviceContext->RSSetViewports(1, &viewport);
 }

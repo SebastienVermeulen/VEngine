@@ -45,8 +45,8 @@ void Transform::UpdateTransforms()
 	}
 
 	const DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rot);
-	const DirectX::XMVECTOR forward = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(0, 0, 1, 0), rotMat);
-	const DirectX::XMVECTOR right = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(1, 0, 0, 0), rotMat);
+	const DirectX::XMVECTOR forward = DirectX::XMVector3TransformNormal(DirectX::XMVectorSet(0, 0, 1, 0), rotMat);
+	const DirectX::XMVECTOR right = DirectX::XMVector3TransformNormal(DirectX::XMVectorSet(1, 0, 0, 0), rotMat);
 	const DirectX::XMVECTOR up = DirectX::XMVector3Cross(forward, right);
 
 	DirectX::XMStoreFloat3(&m_Forward, forward);

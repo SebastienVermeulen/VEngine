@@ -68,7 +68,8 @@ protected:
 	}
 	inline virtual ~Renderable()
 	{
-		SafeDelete(m_pMaterial);
+		// TODO: Realistically materials can be spread to multiple renderables, maybe instancing and adressess could help here?
+		m_pMaterial = nullptr;
 	}
 
 	Renderable(Renderable& other) = delete;

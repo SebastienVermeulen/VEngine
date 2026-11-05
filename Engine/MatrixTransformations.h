@@ -11,13 +11,20 @@ struct TransformationMatrixHelper
 
 		if (perspectiveProjection)
 		{
-			DirectX::XMStoreFloat4x4(&projectionMatrix, DirectX::XMMatrixPerspectiveFovLH(cameraSettings.FOV, windowSettings.aspectRatio, cameraSettings.nearPlane, cameraSettings.farPlane));
+			DirectX::XMStoreFloat4x4(&projectionMatrix, DirectX::XMMatrixPerspectiveFovLH(cameraSettings.FOV, windowSettings.aspectRatio, cameraSettings.farPlane, cameraSettings.nearPlane));
 		}
 		else
 		{
+			DirectX::XMMATRIX reverseZ(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, -1.0f, 0.0f, // Scale Z by -1
+				0.0f, 0.0f, 1.0f, 1.0f  // Translate Z by +1
+				);
+
 			const float viewWidth = (cameraSettings.size > 0) ? cameraSettings.size * windowSettings.aspectRatio : windowSettings.windowWidth;
 			const float viewHeight = (cameraSettings.size > 0) ? cameraSettings.size : windowSettings.windowHeight;
-			DirectX::XMStoreFloat4x4(&projectionMatrix, DirectX::XMMatrixOrthographicLH(viewWidth, viewHeight, cameraSettings.nearPlane, cameraSettings.farPlane));
+			DirectX::XMStoreFloat4x4(&projectionMatrix, DirectX::XMMatrixOrthographicLH(viewWidth, viewHeight, cameraSettings.nearPlane, cameraSettings.farPlane) * reverseZ);
 		}
 
 		return projectionMatrix;
@@ -30,7 +37,7 @@ struct TransformationMatrixHelper
 		const DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&pTransform->GetForward());
 		const DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&pTransform->GetUp());
 
-		const DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(worldPosition, DirectX::XMVectorAdd(worldPosition, lookAt), upVec);
+		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(worldPosition, DirectX::XMVectorAdd(worldPosition, lookAt), upVec);
 		DirectX::XMStoreFloat4x4(&viewMatrix, view);
 
 		return viewMatrix;

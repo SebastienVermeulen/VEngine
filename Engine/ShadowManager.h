@@ -1,8 +1,9 @@
 #pragma once
+#include "Singleton.h"
 
 class Light;
 
-class ShadowManager
+class ShadowManager : public Singleton<ShadowManager>
 {
 public:
 	ShadowManager();
@@ -18,6 +19,8 @@ public:
 
 	void TryAddLight(Light* pLight);
 	bool TryRemoveLight(Light* pLight);
+
+	void TryGetShadowMaps(ID3D11DeviceContext* pContext, Light* pLight) const;
 
 private:
 	std::vector<Light*> m_DirectionalShadowCastingLights;

@@ -10,7 +10,7 @@ struct CameraSettings final
 public:
 	static inline CameraSettings Default()
 	{
-		CameraSettings cameraSetting{ 25.0f, DirectX::XM_PIDIV4, 100.0f, 0.01f };
+		CameraSettings cameraSetting{ 25.0f, DirectX::XM_PIDIV2, 100.0f, 0.01f };
 		return cameraSetting;
 	}
 

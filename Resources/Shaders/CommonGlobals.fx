@@ -5,18 +5,17 @@
 //--------------------------------------------------------------------------------------
 // Defines
 //--------------------------------------------------------------------------------------
-static const uint gMaxLights = 10;
-static const uint gLightDirectional = 0;
-static const uint gLightPoint = 1;
+#define MAX_LIGHTS 10
+#define LIGHT_DIRECTIONAL 0
+#define LIGHT_POINT 1
 
-static const float gPI = 3.14159265359f;
+#define PI 3.14159265359f
 
 //--------------------------------------------------------------------------------------
 // Structs
 //--------------------------------------------------------------------------------------
 struct Light
 {
-    float4x4 worldViewProj; // This may vary between directional and others
     float4 position;
     float4 direction;
     float3 color;

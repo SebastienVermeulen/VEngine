@@ -26,6 +26,7 @@ public:
 	void Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr);
 	void UpdateMatrix(MatrixTransformationContainer buffer);
 	void UpdateMaterialLighting(ID3D11DeviceContext* pContext, const std::vector<ShaderLight>& lights);
+	void UpdateLightingWVPBuffer(EngineDevice* pDevice, const int totalShadowMaps, const std::vector<DirectX::XMFLOAT4X4>& WVP);
 	void UpdateMaterialShadowMaps(EngineDevice* pEngineDevice, const int totalShadowMaps, const std::vector<ShadowData>& shadows);
 	HRESULT UpdateParameterValues(EngineDevice* pEngineDevice);
 	HRESULT ExplicitlyUnbindingResources(EngineDevice* pEngineDevice);
@@ -80,12 +81,20 @@ private:
 	ID3DX11EffectMatrixVariable* m_pInverseView;
 	ID3DX11EffectMatrixVariable* m_pProjection;
 	ID3DX11EffectMatrixVariable* m_pWorldViewProj;
+	ID3DX11EffectMatrixVariable* m_pInvWorldViewProj;
 
+	ID3DX11EffectVariable* m_LightsWVPBufferVariable;
+	ID3DX11EffectShaderResourceVariable* m_LightsWVPBufferShaderResource;
+	ID3D11Buffer* m_LightsWVPBuffer;
+	ID3D11ShaderResourceView* m_pLightsWVPBufferResourceView;
+
+	ID3DX11EffectVariable* m_LightsBufferVariable;
+	ID3DX11EffectShaderResourceVariable* m_LightsBufferShaderResource;
 	ID3D11Buffer* m_LightsBuffer;
-	ID3DX11EffectConstantBuffer* m_LightsBufferVariable;
+	ID3D11ShaderResourceView* m_pLightsBufferResourceView;
 
 	ID3DX11EffectVariable* m_ShadowMapBufferVariable;
-	ID3DX11EffectShaderResourceVariable* m_ShadowMap;
+	ID3DX11EffectShaderResourceVariable* m_ShadowMapShaderResource;
 	DepthStencil* m_ShadowTextureArray;
 
 	//Mappings

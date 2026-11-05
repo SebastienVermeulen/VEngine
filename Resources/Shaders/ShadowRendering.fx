@@ -20,25 +20,12 @@ float4x4 gWorldViewProj : WORLDVIEWPROJECTION;
 //--------------------------------------------------------------------------------------
 // States
 //--------------------------------------------------------------------------------------
-SamplerState samLinear
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;// or Mirror or Clamp or Border
-    AddressV = Wrap;// or Mirror or Clamp or Border
-};
-
 DepthStencilState DepthTest
 {
 	DepthEnable = TRUE;
 	DepthWriteMask = ALL;
+    DepthFunc = GREATER_EQUAL;
 };
-BlendState AlphaBlendingOn
-{
-    BlendEnable[0] = TRUE;
-    DestBlend = INV_SRC_ALPHA;
-    SrcBlend = SRC_ALPHA;
-};
-
 
 //--------------------------------------------------------------------------------------
 // FirstPass
@@ -55,7 +42,7 @@ VP0_Out VShaderP0(V_In_Shading input)
     float4 pos = float4(input.position, 1.0f);
 
 	//Calculate the position of the vertex against the world, view, and projection matrices.
-    output.position = mul(pos, gWorldViewProj);
+    output.position = mul(mul(pos, gWorld), gWorldViewProj);
 
     return output;
 }

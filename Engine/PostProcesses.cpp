@@ -56,7 +56,7 @@ void PostProcesses::RunPostProcesses(EngineDevice* pDevice, Renderer* pRenderer)
 
 	{
 		// Copy to the final buffer, so we also leave the base scene untouched for some techniques
-		screenSpaceCopy.RunEffect(pDevice, EngineManager::Instance()->GetActiveRenderer()->GetFinalSceneTarget(), pPostProcessSwapChain->GetTarget());
+		screenSpaceCopy.RunEffect(pDevice, pRenderer->GetFinalSceneTarget(), pPostProcessSwapChain->GetTarget());
 	
 		pPostProcessSwapChain->Swap();
 	}
@@ -67,7 +67,7 @@ void PostProcesses::RunPostProcesses(EngineDevice* pDevice, Renderer* pRenderer)
 	}
 	
 	// Copy to the final target
-	screenSpaceCopy.RunEffect(pDevice, pPostProcessSwapChain->GetSource(), EngineManager::Instance()->GetActiveRenderer()->GetFinalTarget());
+	screenSpaceCopy.RunEffect(pDevice, pPostProcessSwapChain->GetSource(), pRenderer->GetFinalTarget());
 
 	DeallocatePromisedTargets();
 }

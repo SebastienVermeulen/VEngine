@@ -98,13 +98,13 @@ void MeshAsset::RefillVertexVector()
 		// -------
 		// Normals
 		DirectX::XMFLOAT3 normal{};
-		if (m_MeshSettings.m_GeneratedNormals && !m_MeshSettings.m_CombineNormals)
+		if (m_MeshSettings.m_GeneratedNormals && m_MeshSettings.m_CombineNormals)
 		{
-			normal = m_Normals[index.z];
+			normal = m_Normals[index.x];
 		}
 		else 
 		{
-			normal = m_Normals[index.x];
+			normal = m_Normals[index.z];
 		}
 		// -------
 		//   UVs
