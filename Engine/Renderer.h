@@ -131,15 +131,8 @@ protected:
 #pragma region RenderHelpers
 	void UpdateMatrices(Component* pRenderable) const;
 	void UpdateMatrices(Material* pMaterial) const;
-	void UpdateLightMatrices(Light* pLight, const int faceIndex) const;
-	void UpdateWorldMatrix(Component* pRenderables) const;
 	void UpdateBatchedLights(Material* pMaterial) const;
 	void UpdateLight(Material* pMaterial, Light* pLight) const;
-	// TO-DO: This render stuff should be moved to the ShadowCasting class
-	void UpdateLightsShadowData() const;
-	void UpdateShadows(Material* pMaterial, Light* pLight) const;
-	void UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const;
-	void RenderShadowDepths() const;
 #pragma endregion
 
 #pragma region StructPopulators
@@ -154,12 +147,14 @@ protected:
 
 	RenderTargets m_RenderTargets;
 
+	// Components
 	std::vector<Component*> m_Renderables;
 	std::vector<Light*> m_Lights;
 	std::vector<Camera*> m_pCameraList;
 	Camera* m_pRenderingCamera;
+
+	// Render Features
 	ShadowManager* m_pShadowManager;
-	ShadowCasting* m_pShadowCasting;
 	PostProcessPipeline* m_pPostProcessingPipeline;
 
 	DirectX::XMFLOAT4 m_DefaultClearColor;

@@ -72,6 +72,8 @@ technique11 FullCopy
 {
     pass P0
     {
+        SetBlendState(NoBlending, float4(0, 0, 0, 0), 0xFFFFFFFF);
+
         SetVertexShader(CompileShader(vs_4_0, VShader_Common()));
         SetGeometryShader(NULL);
         SetPixelShader(CompileShader(ps_4_0, FullCopyPShader()));
@@ -81,6 +83,8 @@ technique11 TargetedCopy
 {
     pass P0
     {
+        SetBlendState(NoBlending, float4(0, 0, 0, 0), 0xFFFFFFFF);
+
         SetVertexShader(CompileShader(vs_4_0, VShader_Common()));
         SetGeometryShader(NULL);
         SetPixelShader(CompileShader(ps_4_0, TargetedCopyPShader()));

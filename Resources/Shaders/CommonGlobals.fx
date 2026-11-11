@@ -64,6 +64,12 @@ DepthStencilState DepthTestNone_Common
     DepthWriteMask = ZERO;
 };
 
+BlendState NoBlending
+{
+    BlendEnable[0] = FALSE;
+    RenderTargetWriteMask[0] = 0x0F; // Write to all RGBA channels (D3D11_COLOR_WRITE_ENABLE_ALL)
+};
+
 //----------------------------------------
 // Vertex Shaders
 //----------------------------------------

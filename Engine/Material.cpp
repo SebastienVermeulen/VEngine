@@ -427,6 +427,9 @@ void Material::Render(ID3D11DeviceContext* pContext, UINT nrIndices, int passNr)
 
 	m_pTechnique->GetPassByIndex(passNr)->Apply(0, pContext);
 	pContext->DrawIndexed(nrIndices, 0, 0);
+
+	// Unbind Blendstate
+	pContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
 void Material::UpdateMatrix(MatrixTransformationContainer buffer)
@@ -586,7 +589,9 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 		{
 			arrayDesc.ArraySize = totalShadowMaps;  // Number of textures in the array
 
-			// No release needed here since the Stencils are memory managed by the engine
+			ID3D11Texture2D* pDepthStencilBuffer = m_ShadowTextureArray->GetStencilBuffer();
+			SafeRelease(pDepthStencilBuffer);
+
 			HRESULT hr = pDevice->GetDevice()->CreateTexture2D(&arrayDesc, nullptr, m_ShadowTextureArray->GetStencilBufferLocation());
 			if (hr != S_OK)
 			{
@@ -636,6 +641,9 @@ void Material::UpdateMaterialShadowMaps(EngineDevice* pDevice, const int totalSh
 		srvDesc.Texture2DArray.MipLevels = 1;
 		srvDesc.Texture2DArray.FirstArraySlice = 0;
 		srvDesc.Texture2DArray.ArraySize = totalShadowMaps;
+
+		ID3D11ShaderResourceView* pShaderResourceView = m_ShadowTextureArray->GetResourceView();
+		SafeRelease(pShaderResourceView);
 
 		pDevice->GetDevice()->CreateShaderResourceView(m_ShadowTextureArray->GetStencilBuffer(), &srvDesc, m_ShadowTextureArray->GetResourceViewLocation());
 		m_ShadowMapShaderResource->SetResource(m_ShadowTextureArray->GetResourceView());

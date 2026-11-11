@@ -27,20 +27,17 @@ Renderer::Renderer(EngineDevice* pDevice)
 	, m_pCameraList{}
 	, m_pRenderingCamera{}
 	, m_pShadowManager{ShadowManager::Instance()}
-	, m_pShadowCasting{new ShadowCasting()}
 	, m_pPostProcessingPipeline{new PostProcessPipeline()}
-	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.2f, 0.4f, 0.0f} }
+	, m_DefaultClearColor{ DirectX::XMFLOAT4{0.0f, 0.0f, 0.0f, 0.0f} }
 	, m_NrBasisRenderTargets{5} // TO-DO: Uh oh, what was I thinking
 	, m_UpdateLighting{false}
 {
     m_pDevice = pDevice;
 	m_pEngineSettings = EngineSettings::Instance();
-	m_pShadowCasting->GetShadowMaterial()->InitShader(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext());
 }
 Renderer::~Renderer()
 {
 	ShadowManager::ReleaseInstance();
-	SafeDelete(m_pShadowCasting);
 	SafeDelete(m_pPostProcessingPipeline);
 	SafeDelete(m_pRendererWidget);
 	for (int i = 0; i < m_Renderables.size(); ++i)
@@ -59,6 +56,9 @@ void Renderer::Init()
 {
 	// Reserve our lights
 	m_Lights.reserve(Light::GetMaxNrLights());
+
+	// Make sure our shadowCasting material also gets initialized
+	m_pShadowManager->InitMaterials(m_pDevice);
 
 	// Make sure the postprocessing pass also gets initialized
 	m_pPostProcessingPipeline->Init(m_pDevice);
@@ -257,19 +257,6 @@ void Renderer::UpdateMatrices(Material* pMaterial) const
 
 	pMaterial->UpdateMatrix(buffer);
 }
-void Renderer::UpdateLightMatrices(Light* pLight, const int faceIndex) const 
-{
-	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(pLight->ConstructMatrixContainer(faceIndex));
-}
-void Renderer::UpdateWorldMatrix(Component* pRenderables) const 
-{
-	MatrixTransformationContainer buffer;
-
-	buffer.world = pRenderables->GetObject()->GetTransform()->GetWorld();
-	buffer.updateWorld = true;
-
-	m_pShadowCasting->GetShadowMaterial()->UpdateMatrix(buffer);
-}
 // TODO: Add array for non-casting lights to spare on byte usage
 void Renderer::UpdateBatchedLights(Material* pMaterial) const
 {
@@ -302,50 +289,6 @@ void Renderer::UpdateLight(Material* pMaterial, Light* pLight) const
 	// We render 1 light at a time here, so the shadow index is always 0
 	pMaterial->UpdateMaterialLighting(m_pDevice->GetDeviceContext(), { PopulateLightStruct(pLight, 0) });
 }
-void Renderer::UpdateLightsShadowData() const
-{
-	const int maxNrLights = Light::GetMaxNrLights();
-	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-	for (int i{}; i < maxNrLights; ++i)
-	{
-		if (m_Lights.size() > i)
-		{
-			m_pShadowManager->TryGetShadowMaps(pContext, m_Lights[i]);
-		}
-	}
-}
-// TODO: Add permutation that allows 1 shadowmap to be uploaded
-void Renderer::UpdateShadows(Material* pMaterial, Light* pLight) const
-{
-	pMaterial->UpdateMaterialShadowMaps(m_pDevice, 1, std::vector<ShadowData>{ pLight->GetShadowData() });
-
-	const std::vector<DirectX::XMFLOAT4X4> WVP = { pLight->ConstructWVPContainer() };
-	pMaterial->UpdateLightingWVPBuffer(m_pDevice, 1, WVP);
-}
-void Renderer::UpdateShadows(Material* pMaterial, const std::vector<Light*> pLights) const
-{
-	std::vector<DirectX::XMFLOAT4X4> WVP;
-	
-	const int maxNrLights = Light::GetMaxNrLights();
-	std::vector<ShadowData> lightsStructure{};
-	lightsStructure.reserve(maxNrLights);
-	int totalShadowMaps = 0;
-
-	for (int i{}; i < maxNrLights; ++i)
-	{
-		if (m_Lights.size() > i && m_Lights[i]->IsVisible() && m_Lights[i]->GetIsShadowCasting())
-		{
-			//Add the light to structure for easy use
-			lightsStructure.push_back( m_Lights[i]->GetShadowData() );
-			WVP.append_range(m_Lights[i]->ConstructWVPContainer());
-
-			totalShadowMaps += m_Lights[i]->GetLightType() == LightType::point ? 6 : 1;
-		}
-	}
-	pMaterial->UpdateMaterialShadowMaps(m_pDevice, totalShadowMaps, lightsStructure);
-
-	pMaterial->UpdateLightingWVPBuffer(m_pDevice, totalShadowMaps, WVP);
-}
 
 ShaderLight Renderer::PopulateLightStruct(Light* pLight, const int shadowIndex) const
 {
@@ -362,68 +305,6 @@ ShaderLight Renderer::PopulateLightStruct(Light* pLight, const int shadowIndex) 
 		shadowIndex };
 
 	return light;
-}
-
-
-void Renderer::RenderShadowDepths() const
-{
-	const int maxNrLights = Light::GetMaxNrLights();
-	std::vector<ShaderLight> lightsStructure{};
-	lightsStructure.reserve(maxNrLights);
-
-	ID3D11DeviceContext* pContext = m_pDevice->GetDeviceContext();
-
-	// Loop over all lights and determine if they should be casting
-	for (int i = 0; i < maxNrLights; ++i)
-	{
-		if (m_Lights.size() <= i || !m_Lights[i]->GetIsShadowCasting())
-		{
-			continue;
-		}
-
-		// If they can cast we push their info to the GPU for rendering
-		ShadowData shadowData = m_Lights[i]->GetShadowData();
-		// We need to render 6 faces for pointlights, hence first check if a pointlight
-		if (m_Lights[i]->GetLightType() == LightType::point)
-		{
-			for (int faceIndex = 0; faceIndex < 6; ++faceIndex)
-			{
-				UpdateLightMatrices(m_Lights[i], faceIndex);
-				// Set the shadow depthbuffer
-				m_pDevice->GetDeviceContext()->OMSetRenderTargets(0, nullptr, shadowData.m_DepthStencils[faceIndex]->GetStencilView());
-
-				// Run through all the renderables and render the shadow casting ones
-				for (int i = 0; i < m_Renderables.size(); ++i)
-				{
-					if (m_Renderables[i]->IsShadowCasting())
-					{
-						// Update matrices
-						UpdateWorldMatrix(m_Renderables[i]);
-						// Render object to the buffer
-						m_Renderables[i]->RenderShadow(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), m_pShadowCasting, 0);
-					}
-				}
-			}
-		}
-		else 
-		{
-			UpdateLightMatrices(m_Lights[i], 0);
-			// Set the shadow depthbuffer
-			m_pDevice->GetDeviceContext()->OMSetRenderTargets(0, nullptr, shadowData.m_DepthStencils[0]->GetStencilView());
-
-			// Run through all the renderables and render the shadow casting ones
-			for (int i = 0; i < m_Renderables.size(); ++i)
-			{
-				if (m_Renderables[i]->IsShadowCasting())
-				{
-					// Update matrices
-					UpdateWorldMatrix(m_Renderables[i]);
-					// Render object to the buffer
-					m_Renderables[i]->RenderShadow(m_pDevice->GetDevice(), m_pDevice->GetDeviceContext(), m_pShadowCasting, 0);
-				}
-			}
-		}
-	}
 }
 
 void Renderer::ExplicitlyUnbindingRenderTargets(Material* pMaterial)

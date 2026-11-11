@@ -130,246 +130,246 @@ std::wstring FileManager::GetFullFilePath(const std::wstring& filePath)
 			return S_OK;
 		}
 		HRESULT FileManager::OBJParseBasicData(std::string& objFileContent, int& outVertexCount, int& outFaceCount)
-{
-	std::regex reg{ "# vertex count = (\\d+)" };
-	std::smatch matches{};
-	std::regex_search(objFileContent, matches, reg);
-
-	if (!matches.size())
-	{
-		return E_FAIL;
-	}
-
-	outVertexCount = std::stoi(matches[1]);
-	objFileContent = matches.suffix().str();
-
-	reg = { "# face count = (\\d+)" };
-	matches = {};
-	std::regex_search(objFileContent, matches, reg);
-
-	if (!matches.size())
-	{
-		return E_FAIL;
-	}
-
-	outFaceCount = std::stoi(matches[1]);
-	objFileContent = matches.suffix().str();
-
-	return S_OK;
-}
+		{
+			std::regex reg{ "# vertex count = (\\d+)" };
+			std::smatch matches{};
+			std::regex_search(objFileContent, matches, reg);
+		
+			if (!matches.size())
+			{
+				return E_FAIL;
+			}
+		
+			outVertexCount = std::stoi(matches[1]);
+			objFileContent = matches.suffix().str();
+		
+			reg = { "# face count = (\\d+)" };
+			matches = {};
+			std::regex_search(objFileContent, matches, reg);
+		
+			if (!matches.size())
+			{
+				return E_FAIL;
+			}
+		
+			outFaceCount = std::stoi(matches[1]);
+			objFileContent = matches.suffix().str();
+		
+			return S_OK;
+		}
 		HRESULT FileManager::OBJParseVertexData(std::string& objFileContent, const int vertexCount, 
 			std::vector<DirectX::XMFLOAT3>& positions,
 			std::vector<std::vector<DirectX::XMFLOAT2>>& uvs, 
 			std::vector<DirectX::XMFLOAT3>& normals)
-{
-	// Vertex data
-	// Pos
-	std::regex reg{ "v (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
-	std::smatch matches{};
-	positions.reserve(vertexCount);
-	for (int idx = 0; idx < vertexCount; ++idx)
-	{
-		std::regex_search(objFileContent, matches, reg);
-
-		if (!matches.size())
 		{
-			return E_FAIL;
-		}
-
-		positions.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
-		objFileContent = matches.suffix().str();
-	}
-
-	// UVs
-	reg = { "vt (-?\\d+.?\\d?) (-?\\d+.?\\d?) \\[(\\d)\\]\\n" };
-	matches = {};
-	{
-		int nrUVMaps = 1;
-		uvs.push_back({});
-		int uvCount = 0;
-		while (true)
-		{
-			std::regex_search(objFileContent, matches, reg);
-
-			if (!matches.size())
+			// Vertex data
+			// Pos
+			std::regex reg{ "v (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
+			std::smatch matches{};
+			positions.reserve(vertexCount);
+			for (int idx = 0; idx < vertexCount; ++idx)
 			{
-				if (uvCount == 0)
+				std::regex_search(objFileContent, matches, reg);
+		
+				if (!matches.size())
 				{
-					return S_OK;
+					return E_FAIL;
 				}
-				else
+		
+				positions.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
+				objFileContent = matches.suffix().str();
+			}
+		
+			// UVs
+			reg = { "vt (-?\\d+.?\\d?) (-?\\d+.?\\d?) \\[(\\d)\\]\\n" };
+			matches = {};
+			{
+				int nrUVMaps = 1;
+				uvs.push_back({});
+				int uvCount = 0;
+				while (true)
 				{
-					break;
+					std::regex_search(objFileContent, matches, reg);
+		
+					if (!matches.size())
+					{
+						if (uvCount == 0)
+						{
+							return S_OK;
+						}
+						else
+						{
+							break;
+						}
+					}
+		
+					// First confirm the number of maps that need to be accounted for
+					// Idx math, every 4th match (count starting at 0) is the map idx
+					const int uvMapIdx = std::stoi(matches[3]);
+					if (nrUVMaps < uvMapIdx)
+					{
+						nrUVMaps = uvMapIdx;
+						uvs.resize(nrUVMaps);
+					}
+		
+					// Collect UVs
+					uvs[uvMapIdx].emplace_back(std::stof(matches[1]), std::stof(matches[2]));
+		
+					objFileContent = matches.suffix().str();
+					++uvCount;
 				}
 			}
-
-			// First confirm the number of maps that need to be accounted for
-			// Idx math, every 4th match (count starting at 0) is the map idx
-			const int uvMapIdx = std::stoi(matches[3]);
-			if (nrUVMaps < uvMapIdx)
+		
+			// Normals
+			reg = { "vn (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
+			matches = {};
 			{
-				nrUVMaps = uvMapIdx;
-				uvs.resize(nrUVMaps);
-			}
-
-			// Collect UVs
-			uvs[uvMapIdx].emplace_back(std::stof(matches[1]), std::stof(matches[2]));
-
-			objFileContent = matches.suffix().str();
-			++uvCount;
-		}
-	}
-
-	// Normals
-	reg = { "vn (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3}) (-?\\d*\\.?\\d*e?-?\\d{0,3})\\n" };
-	matches = {};
-	{
-		int normalCount = 0;
-		while (true)
-		{
-			std::regex_search(objFileContent, matches, reg);
-
-			if (!matches.size())
-			{
-				if (normalCount == 0)
+				int normalCount = 0;
+				while (true)
 				{
-					V_LOG(LogVerbosity::Log, V_WTEXT("No Normal data present in obj."));
-					return S_OK;
-				}
-				else
-				{
-					break;
+					std::regex_search(objFileContent, matches, reg);
+		
+					if (!matches.size())
+					{
+						if (normalCount == 0)
+						{
+							V_LOG(LogVerbosity::Log, V_WTEXT("No Normal data present in obj."));
+							return S_OK;
+						}
+						else
+						{
+							break;
+						}
+					}
+		
+					normals.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
+		
+					objFileContent = matches.suffix().str();
+					++normalCount;
 				}
 			}
-
-			normals.emplace_back(std::stof(matches[1]), std::stof(matches[2]), std::stof(matches[3]));
-
-			objFileContent = matches.suffix().str();
-			++normalCount;
+		
+			return S_OK;
 		}
-	}
-
-	return S_OK;
-}
 		HRESULT FileManager::OBJParseIndices(std::string& objFileContent, const int faceCount, std::vector<DirectX::XMINT3>& indices)
-{
-	enum IndexGroup 
-	{
-		P,
-		PUV,
-		PUVN,
-		PN
-	};
-
-	// Parse a face to see what type of index structure it holds
-	IndexGroup indexGroup;
-	{
-		// Check if there is a comment and if so remove it from the string
-		size_t commentCheck = (size_t)objFileContent.find_first_of("#");
-		if (commentCheck != std::string::npos)
 		{
-			commentCheck = (size_t)objFileContent.find_first_of("\n");
-			objFileContent = objFileContent.substr(commentCheck + 1, objFileContent.size() - (commentCheck + 1));
-		}
-
-		// Locate an example of an indexgroup
-		size_t firstFacePos = (size_t)objFileContent.find_first_of("f");
-		if (firstFacePos == std::string::npos)
-		{
-			return E_FAIL;
-		}
-		size_t indexStartPos = (size_t)objFileContent.find_first_of(" ", firstFacePos);
-		size_t indexEndPos = (size_t)objFileContent.find_first_of(" ", indexStartPos + 1);
-		std::string firstIndexGroup = objFileContent.substr(indexStartPos, indexEndPos - indexStartPos);
-	
-		// Check what type of group it is with some checks
-		size_t firstSlash = (size_t)firstIndexGroup.find("/");
-		size_t secondSlash = (size_t)firstIndexGroup.find("/", firstSlash + 1);
-		if (firstSlash == std::wstring::npos) // "X"
-		{
-			indexGroup = IndexGroup::P;
-		}
-		else if (secondSlash == std::wstring::npos) // "X/Y"
-		{
-			indexGroup = IndexGroup::PUV;
-		}
-		else if (secondSlash - firstSlash == 1) // "X//Z"
-		{
-			indexGroup = IndexGroup::PN;
-		}
-		else  // "X/Y/Z"
-		{
-			indexGroup = IndexGroup::PUVN;
-		}
-	}
-
-	// Match our data
-	std::regex reg{};
-	switch (indexGroup)
-	{
-	case IndexGroup::P:
-		reg = { "f (\\d+) (\\d+) (\\d+)" };
-		break;
-	case IndexGroup::PUV:
-		reg = { "f (\\d+)\\/(\\d+) (\\d+)\\/(\\d+) (\\d+)\\/(\\d+)" };
-		break;
-	case IndexGroup::PUVN:
-		reg = { "f (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+)" };
-		break;
-	case IndexGroup::PN:
-		reg = { "f (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+)" };
-		break;
-	}
-	std::smatch matches{};
-
-	indices.reserve(faceCount);
-	int indexCount = 0;
-	while (true)
-	{
-		std::regex_search(objFileContent, matches, reg);
-
-		if (!matches.size())
-		{
-			if (indexCount == 0)
+			enum IndexGroup 
 			{
-				return E_FAIL;
+				P,
+				PUV,
+				PUVN,
+				PN
+			};
+		
+			// Parse a face to see what type of index structure it holds
+			IndexGroup indexGroup;
+			{
+				// Check if there is a comment and if so remove it from the string
+				size_t commentCheck = (size_t)objFileContent.find_first_of("#");
+				if (commentCheck != std::string::npos)
+				{
+					commentCheck = (size_t)objFileContent.find_first_of("\n");
+					objFileContent = objFileContent.substr(commentCheck + 1, objFileContent.size() - (commentCheck + 1));
+				}
+		
+				// Locate an example of an indexgroup
+				size_t firstFacePos = (size_t)objFileContent.find_first_of("f");
+				if (firstFacePos == std::string::npos)
+				{
+					return E_FAIL;
+				}
+				size_t indexStartPos = (size_t)objFileContent.find_first_of(" ", firstFacePos);
+				size_t indexEndPos = (size_t)objFileContent.find_first_of(" ", indexStartPos + 1);
+				std::string firstIndexGroup = objFileContent.substr(indexStartPos, indexEndPos - indexStartPos);
+			
+				// Check what type of group it is with some checks
+				size_t firstSlash = (size_t)firstIndexGroup.find("/");
+				size_t secondSlash = (size_t)firstIndexGroup.find("/", firstSlash + 1);
+				if (firstSlash == std::wstring::npos) // "X"
+				{
+					indexGroup = IndexGroup::P;
+				}
+				else if (secondSlash == std::wstring::npos) // "X/Y"
+				{
+					indexGroup = IndexGroup::PUV;
+				}
+				else if (secondSlash - firstSlash == 1) // "X//Z"
+				{
+					indexGroup = IndexGroup::PN;
+				}
+				else  // "X/Y/Z"
+				{
+					indexGroup = IndexGroup::PUVN;
+				}
 			}
-			else
+		
+			// Match our data
+			std::regex reg{};
+			switch (indexGroup)
 			{
+			case IndexGroup::P:
+				reg = { "f (\\d+) (\\d+) (\\d+)" };
+				break;
+			case IndexGroup::PUV:
+				reg = { "f (\\d+)\\/(\\d+) (\\d+)\\/(\\d+) (\\d+)\\/(\\d+)" };
+				break;
+			case IndexGroup::PUVN:
+				reg = { "f (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+) (\\d+)\\/(\\d+)\\/(\\d+)" };
+				break;
+			case IndexGroup::PN:
+				reg = { "f (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+) (\\d+)\\/\\/(\\d+)" };
 				break;
 			}
+			std::smatch matches{};
+		
+			indices.reserve(faceCount);
+			int indexCount = 0;
+			while (true)
+			{
+				std::regex_search(objFileContent, matches, reg);
+		
+				if (!matches.size())
+				{
+					if (indexCount == 0)
+					{
+						return E_FAIL;
+					}
+					else
+					{
+						break;
+					}
+				}
+		
+				switch (indexGroup)
+				{
+				case IndexGroup::P:
+					indices.emplace_back(std::stoi(matches[1]) - 1, -1, -1);
+					indices.emplace_back(std::stoi(matches[2]) - 1, -1, -1);
+					indices.emplace_back(std::stoi(matches[3]) - 1, -1, -1);
+					break;
+				case IndexGroup::PUV:
+					indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, -1);
+					indices.emplace_back(std::stoi(matches[3]) - 1, std::stoi(matches[4]) - 1, -1);
+					indices.emplace_back(std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1, -1);
+					break;
+				case IndexGroup::PUVN:
+					indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, std::stoi(matches[3]) - 1);
+					indices.emplace_back(std::stoi(matches[4]) - 1, std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1);
+					indices.emplace_back(std::stoi(matches[7]) - 1, std::stoi(matches[8]) - 1, std::stoi(matches[9]) - 1);
+					break;
+				case IndexGroup::PN:
+					indices.emplace_back(std::stoi(matches[1]) - 1, -1, std::stoi(matches[2]) - 1);
+					indices.emplace_back(std::stoi(matches[3]) - 1, -1, std::stoi(matches[4]) - 1);
+					indices.emplace_back(std::stoi(matches[5]) - 1, -1, std::stoi(matches[6]) - 1);
+					break;
+				}
+		
+				objFileContent = matches.suffix().str();
+				++indexCount;
+			}
+		
+			return S_OK;
 		}
-
-		switch (indexGroup)
-		{
-		case IndexGroup::P:
-			indices.emplace_back(std::stoi(matches[1]) - 1, -1, -1);
-			indices.emplace_back(std::stoi(matches[2]) - 1, -1, -1);
-			indices.emplace_back(std::stoi(matches[3]) - 1, -1, -1);
-			break;
-		case IndexGroup::PUV:
-			indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, -1);
-			indices.emplace_back(std::stoi(matches[3]) - 1, std::stoi(matches[4]) - 1, -1);
-			indices.emplace_back(std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1, -1);
-			break;
-		case IndexGroup::PUVN:
-			indices.emplace_back(std::stoi(matches[1]) - 1, std::stoi(matches[2]) - 1, std::stoi(matches[3]) - 1);
-			indices.emplace_back(std::stoi(matches[4]) - 1, std::stoi(matches[5]) - 1, std::stoi(matches[6]) - 1);
-			indices.emplace_back(std::stoi(matches[7]) - 1, std::stoi(matches[8]) - 1, std::stoi(matches[9]) - 1);
-			break;
-		case IndexGroup::PN:
-			indices.emplace_back(std::stoi(matches[1]) - 1, -1, std::stoi(matches[2]) - 1);
-			indices.emplace_back(std::stoi(matches[3]) - 1, -1, std::stoi(matches[4]) - 1);
-			indices.emplace_back(std::stoi(matches[5]) - 1, -1, std::stoi(matches[6]) - 1);
-			break;
-		}
-
-		objFileContent = matches.suffix().str();
-		++indexCount;
-	}
-
-	return S_OK;
-}
 	#pragma endregion
 
 	#pragma region glTF

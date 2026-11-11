@@ -64,6 +64,7 @@ protected:
 		:m_pMaterial{}
 		, m_CanRender{false}
 		, m_Visible{true}
+		, m_ShadowCasting(true)
 	{
 	}
 	inline virtual ~Renderable()

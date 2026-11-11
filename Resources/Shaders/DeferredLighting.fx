@@ -49,8 +49,6 @@ Texture2D gAlbedoMap;
 Texture2D gMetalRoughnessMap;
 
 //Global math vars
-float3 gBackGroundColor = float3(0.0f, 0.2f, 0.4f);
-
 float gAlbedoMultiply = 1.0f;
 float gMetalnessMultiply = 1.0f;
 float gRoughnessMultiply = 1.0f;
@@ -75,6 +73,18 @@ DepthStencilState DepthTestDeferred
 {
     DepthEnable = FALSE;
     DepthWriteMask = ZERO;
+};
+
+BlendState AdditiveBlending
+{
+    BlendEnable[0] = TRUE;
+    SrcBlend = ONE;
+    DestBlend = ONE;
+    BlendOp = ADD;
+    SrcBlendAlpha = ONE;
+    DestBlendAlpha = ZERO;
+    BlendOpAlpha = ADD;
+    RenderTargetWriteMask = 0x0F; // D3D11_COLOR_WRITE_ENABLE_ALL
 };
 
 //--------------------------------------------------------------------------------------
@@ -153,7 +163,7 @@ float4 PShaderP1(PP1_In input) : SV_TARGET
 	//Clearbuffer .a is set to 0, in the first pass pixelshader it is set to 1.0f
     if (!all(albedo.a))
     {
-        return float4(gBackGroundColor, 1.0f);
+        return (float4)0.0f;
     }
     float3 color = float3(0.0f, 0.0f, 0.0f);
 
@@ -208,6 +218,7 @@ technique11 Default
     {
         SetRasterizerState(Culling_Common);
         SetDepthStencilState(DepthTestDeferred, 0);
+        SetBlendState(AdditiveBlending, float4(1.0f, 1.0f, 1.0f, 1.0f), 0xFFFFFFFF);
 
         SetVertexShader(CompileShader(vs_4_0, VShader_Common()));
         SetGeometryShader(NULL);

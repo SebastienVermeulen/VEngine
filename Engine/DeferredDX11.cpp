@@ -184,9 +184,9 @@ void DeferredDX11::Render()
 				m_pDevice->SetViewport(1024, 1024);
 
 				// Update Underlying data, assigns shadowmaps etc.
-				UpdateLightsShadowData();
+				m_pShadowManager->UpdateShadowDepthData(m_pDevice);
 				// Render our shadows
-				RenderShadowDepths();
+				m_pShadowManager->RenderShadowDepths(m_pDevice, m_Renderables);
 			}
 
 			if(m_BatchLights)
@@ -238,7 +238,7 @@ void DeferredDX11::Render()
 					if (m_RenderShadows)
 					{
 						// TO-DO: Figure out cascades, now only simple 2k-2k
-						UpdateShadows(m_pDeferredLightingMaterial, light);
+						m_pShadowManager->UpdateShadowProjectionData(m_pDeferredLightingMaterial, m_pDevice, light);
 					}
 
 					RenderDefferedPass();
@@ -247,7 +247,7 @@ void DeferredDX11::Render()
 
 			{
 				// Point and spot
-				std::vector<Light*>& localLights = m_pShadowManager->GetShadowCastingLights();
+				std::vector<Light*>& localLights = m_pShadowManager->GetLocalShadowCastingLights();
 
 				if (m_BatchLights)
 				{
@@ -255,7 +255,7 @@ void DeferredDX11::Render()
 
 					if (m_RenderShadows)
 					{
-						UpdateShadows(m_pDeferredLightingMaterial, localLights);
+						m_pShadowManager->UpdateShadowProjectionData(m_pDeferredLightingMaterial, m_pDevice, localLights);
 					}
 
 					RenderDefferedPass();
@@ -270,7 +270,7 @@ void DeferredDX11::Render()
 						UpdateLight(m_pDeferredLightingMaterial, light);
 						if (m_RenderShadows)
 						{
-							UpdateShadows(m_pDeferredLightingMaterial, light);
+							m_pShadowManager->UpdateShadowProjectionData(m_pDeferredLightingMaterial, m_pDevice, light);
 						}
 
 						RenderDefferedPass();

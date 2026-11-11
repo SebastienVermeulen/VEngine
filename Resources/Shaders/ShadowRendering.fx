@@ -56,6 +56,7 @@ technique11 Default
 	{
 		SetRasterizerState(Culling_Common);
 		SetDepthStencilState(DepthTest, 0);
+        SetBlendState(NoBlending, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
 		SetVertexShader( CompileShader( vs_4_0, VShaderP0() ) );
 		SetGeometryShader( NULL );
